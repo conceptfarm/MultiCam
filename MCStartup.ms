@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- MCStartup.ms
 -- By Ilya Floussov (ilya@conceptfarm.ca)
--- Dec 16th 2001
+-- Dec 16th 2018
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
