@@ -13,18 +13,20 @@ fn checkMacro macro =
 (
 	local update = false
 	local localScript = (getDir #scripts + "\\MultiCam\\" + macro + ".ms")
-	local remoteScript = ((getfiles (multiCamRepo + macro + "*.ms")))[(getfiles (multiCamRepo+ macro + "*.ms")).count]
+	local remoteScript = ((getfiles (multiCamRepo + macro + "*.ms")))[(getfiles (multiCamRepo + macro + "*.ms")).count]
 	
 	print ("--------------- Info for Macro: "+macro+" ---------------")
 	
 	if ((doesFileExist localScript)==true) then
 	(					
 		print ("INFO: Local file for macro "+macro+" is found.")
+		
 		if (doesFileExist remoteScript) then 
 		(
 			print ("INFO: Remote file for macro "+macro+" is found.")
 			
-			if (getFileModDate remoteScript > getFileModDate localScript ) then 
+			--ISSUE: getFileModDate comparison is flawed
+			if ( ( ( (dotnetclass "System.IO.File").GetLastWriteTime(remoteScript) ).ticks) > (((dotnetclass "System.IO.File").GetLastWriteTime(localScript)).ticks) ) then 
 			(
 				print ("INFO: Update to "+macro+" is found.")
 				
@@ -63,6 +65,8 @@ fn checkMacro macro =
 			)
 			else
 			(
+				print ("INFO: Last update to local script "+macro+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(localScript) ).ticks)) as string)
+				print ("INFO: Last update to remote script "+macro+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(remoteScript) ).ticks)) as string)
 				print ("INFO: No update for macro "+macro+" is available, loading local.")
 				try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
 			)

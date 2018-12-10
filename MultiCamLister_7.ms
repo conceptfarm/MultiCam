@@ -411,20 +411,20 @@ Icon:#("Lights",7)
 				
 				-- First Frame
 				vrayMCLister.maxLightsRC.addControl #spinner (("FirstFrameName" + vrayMCLister.count as string) as name) "" paramStr:(" type:#integer range:[-1000000,1000000," + sA_firstFrame + "] align:#left width:57 offset:["+(framesX) as string+","+ (-24+ vrayMCLister.yOffset) as string + "] height:21")
- 				vrayMCLister.maxLightsRC.addHandler (("FirstFrameName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].firstFrame_sp = n")
+ 				vrayMCLister.maxLightsRC.addHandler (("FirstFrameName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("if (n > vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp) then (n = vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp);vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].firstFrame_sp = n;FirstFrameName" + (vrayMCLister.count as string)+".value = n")
  				
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("FirstFrameName" + vrayMCLister.count as string) as name)
 				
 				--Last Frame
 				vrayMCLister.maxLightsRC.addControl #spinner (("LastFrameName" + vrayMCLister.count as string) as name) "" paramStr:(" type:#integer range:[-1000000,1000000," + sA_lastFrame + "] align:#left width:57 offset:["+(framesX+70) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] height:21")
- 				vrayMCLister.maxLightsRC.addHandler (("LastFrameName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp = n")
+ 				vrayMCLister.maxLightsRC.addHandler (("LastFrameName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("if (n < vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].firstFrame_sp) then (n = vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].firstFrame_sp);vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp = n;LastFrameName" + (vrayMCLister.count as string)+".value = n")
 				
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("LastFrameName" + vrayMCLister.count as string) as name)
 				
 				--Get 
 				vrayMCLister.maxLightsRC.addControl #button (("Get" + vrayMCLister.count as string) as name) "Get" paramStr:(" offset:["+(framesX + 132) as string+","+ (-28+ vrayMCLister.yOffset) as string + "] align:#left width:40 height:21")
 				vrayMCLister.maxLightsRC.addHandler (("Get" + vrayMCLister.count as string) as name) #'pressed' filter:on codeStr:("fr = vrayMCLister.GetStartEndKeys vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1]; if fr!=undefined then (FirstFrameName"+vrayMCLister.count as string+".value = fr[1]; LastFrameName"+vrayMCLister.count as string+".value = fr[2];vrayMCLister.LightIndex["+vrayMCLister.count as string+"][1].modifiers[#Submitter_Attributes].firstFrame_sp=fr[1];vrayMCLister.LightIndex["+vrayMCLister.count as string+"][1].modifiers[#Submitter_Attributes].lastFrame_sp=fr[2])")
-				
+				 
 				--vrayMCLister.maxLightsRC.addControl #groupbox (("useHideLayersGroup" + vrayMCLister.count as string) as name) "Hide Layers" paramStr:(" offset:[310,"+ (-44+ vrayMCLister.yOffset) as string + "] width:450 height:45")
 				
 				--Workaround with clearselection(), if the object is selected and another non-selected option is toggled the selected object's properties change, but this is only a dislay isses, the toggled object's property is actually set
@@ -475,6 +475,9 @@ Icon:#("Lights",7)
 				vrayMCLister.maxLightsRC.addControl #spinner (("HeightName" + vrayMCLister.count as string) as name) "" paramStr:(" type:#integer range:[-1000000,1000000," + sA_lastFrame + "] align:#left width:57 offset:["+(resolutionX+115) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] height:21")
  				vrayMCLister.maxLightsRC.addHandler (("HeightName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp = n")
 				
+				--Get Width Height
+				vrayMCLister.maxLightsRC.addControl #checkbutton (("getResolution" + vrayMCLister.count as string) as name) "Get" paramStr:(" offset:["+(resolutionX + 190) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
+				vrayMCLister.maxLightsRC.addHandler (("getResolution" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.LightIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #getImgFrame_btn state;"+("getResolution" + vrayMCLister.count as string)+".checked = false")
 				
 				--use HDRI
 				vrayMCLister.maxLightsRC.addControl #checkbox (("useHDRI" + vrayMCLister.count as string) as name) "Use" paramStr:(" checked:" + (vrayMCLister.getModifierProp vrayMCLister.LightIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHDRIMap_chb) as string + " offset:["+(hdriX) as string+","+ (-28+ vrayMCLister.yOffset) as string + "] width:45 height:21")

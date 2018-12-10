@@ -363,7 +363,6 @@ version:0.909
 				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 				hdriMap_ro.hdriMapLinkStatus = "Not Linked"
 				hdriMap_ro.hdriMapLink_lbl.text = "Not Linked"
-				
 			)
 		)
 		
@@ -378,7 +377,6 @@ version:0.909
 				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 				hdriMap_ro.hdriMapLinkStatus = "Not Used"
 				hdriMap_ro.hdriMapLink_lbl.text = "Not Used"
-				
 			)
 			else
 			(
@@ -404,6 +402,24 @@ version:0.909
 		useHeightWidth_chb type:#boolean animatable:false ui:useHeightWidth_chb default:false
 		imgWidth_sp type:#integer animatable:false ui:imgWidth_sp default:1920
 		imgHeight_sp type:#integer animatable:false ui:imgHeight_sp default:1080
+		
+		on getImgFrame_btn set val do
+		(
+			if val == true then
+			(
+				if (myrend.output_getsetsfrommax == false) then
+				(
+					resolution_ro.imgWidth_sp.value = myrend.output_width
+					resolution_ro.imgHeight_sp.value = myrend.output_height
+				)
+				else
+				(
+					resolution_ro.imgWidth_sp.value = renderWidth
+					resolution_ro.imgHeight_sp.value = renderHeight
+				)
+				getImgFrame_btn = false
+			)
+		)
 	)
 	
 
@@ -421,22 +437,12 @@ version:0.909
 		
 		on openSubmitter_btn pressed do
 		(
-			try (macros.run "ilya_s Scripts" "MultiCamRender")
-			catch
-			(
-				macros.load "X:\\00-000_ScriptTest\\scripts\\MultiCam901.ms"
-				macros.run "ilya_s Scripts" "MultiCamRender"
-			)
+			macros.run "ilya_s Scripts" "MultiCamSubmitter"
 		)
 		
 		on openLister_btn pressed do
 		(
-			try (macros.runmacros.run "ilya_s Scripts" "MultiCamLister")
-			catch
-			(
-				macros.load "X:\\00-000_ScriptTest\\scripts\\MultiCam901.ms"
-				macros.run "ilya_s Scripts" "MultiCamLister"
-			)
+			macros.run "ilya_s Scripts" "MultiCamLister"
 		)
 		
 	)--end rollout
@@ -737,7 +743,7 @@ version:0.909
 		checkbox useHeightWidth_chb "Use Custom Size"
 		spinner imgWidth_sp "  Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state 
 		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state 
-		button getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
+		checkbutton getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
 		
 		global myrend = renderers.current
 		
@@ -748,7 +754,7 @@ version:0.909
 			getImgFrame_btn.enabled = state
 		)
 		
-		on getImgFrame_btn pressed do
+/* 		on getImgFrame_btn pressed do
 		(
 			if (myrend.output_getsetsfrommax == false) then
 			(
@@ -760,7 +766,7 @@ version:0.909
 				imgWidth_sp.value = renderWidth
 				imgHeight_sp.value = renderHeight
 			)
-		)
+		) */
 	)
 	
 	

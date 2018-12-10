@@ -416,7 +416,7 @@ buttontext:"v.902"
 		vfbControl #bkgr false		
 	)
 	
-	fn AddCallbackLatest =
+	fn AddCallbackLatest denoise:true =
 	(
 		makedir (rootnode.CA_frameOutput + "Latest")
 			
@@ -436,12 +436,15 @@ buttontext:"v.902"
 		
 		tempFile = (getDir #downloads)+ "\\Temp_.jpg"					
 		
-		a = "vfbControl #srgb true; vfbControl #setchannel 0; vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
+		local setChannel = ""
+		if not denoise then (setChannel = "vfbControl #setchannel 0;")
+		
+		a = "vfbControl #srgb true;"+setChannel+";vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
 		--a = "vfbControl #srgb true; vfbControl #setchannel 0; vfbControl #rgb true; vfbControl #saveimage \"" + tempFile +"\"; tempb = openBitMap \"" + tempFile +"\"; newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile  \"" + tempFile +"\""
 		callbacks.addscript #postRender a persistent:true id:#copyLatest_callback
 	)
 	
-	fn AddCallbackJPG =
+	fn AddCallbackJPG denoise:true =
 	(
 		local outputFile = ""
 		
@@ -458,8 +461,11 @@ buttontext:"v.902"
 		
 		tempFile = (getDir #downloads)+ "\\Temp_.jpg"					
 		
+		local setChannel = ""
+		if not denoise then (setChannel = "vfbControl #setchannel 0;")
+		
 		--a = "vfbControl #srgb true; vfbControl #setchannel 0; vfbControl #rgb true; vfbControl #saveimage \"" + tempFile +"\"; tempb = openBitMap \"" + tempFile +"\"; newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile  \"" + tempFile +"\""
-		a = "vfbControl #srgb true; vfbControl #setchannel 0; vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
+		a = "vfbControl #srgb true;"+setChannel+"vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
 		callbacks.addscript #postRenderFrame a persistent:true id:#copyJPG_callback
 	)
 	
