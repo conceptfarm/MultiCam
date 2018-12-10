@@ -269,10 +269,10 @@
 --moved frameout to top
 
 
-macroScript MultiCamRender
+macroScript MultiCamSubmitter
 category:"ilya_s Scripts"
-tooltip:"v.901"
-buttontext:"v.901"
+tooltip:"v.902"
+buttontext:"v.902"
 (
 	global SMTDSettings
 	global SMTDFunctions
@@ -2646,20 +2646,22 @@ buttontext:"v.901"
 	editText jobPrefix_txt "" pos:[88,16] width:100
 	label FileExtension "Extension:" pos:[220,18] 
 	dropDownList extSelection "" pos:[280,14] width:57 height:21 selection: rootnode.CA_extensionType items:extensionsList
-		
-	groupBox FrameOutGrp "Frames Output" pos:[16,48] width:538 height:115
+	
+	local groupWidth = 538
+	
+	groupBox FrameOutGrp "Frames Output" pos:[16,48] width:groupWidth height:115
 		
 		radioButtons pathRootChoice "" pos:[32,65] enabled:true labels: outputPaths default:rootnode.CA_frameOutputType columns:1
 		--radioButtons pathRootChoice "" pos:[32,65] enabled:true labels: #("Y:\\RenderOutput\\Project\\", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom") default:rootnode.CA_frameOutputType columns:1
 		button pathButton "..." pos:[50,130] enabled:false
 		editText pathLable "" text:rootnode.CA_frameOutputCustom pos:[90,132] width:440 height:18
 		
-	groupBox PassTypeGrp "Pass Directory" pos:[16,172] width:538 height:75
+	groupBox PassTypeGrp "Pass Directory" pos:[16,172] width:groupWidth height:75
 		radioButtons out_type "" pos:[32,188] height:176 enabled:true labels:#("Today's Date", "01.Sky", "02.Background", "03.Foreground", "04.PeopleCars", "Date+Custom", "06.Z-Depth", "07.ExtraPass02", "08.ExtraPass03", "Custom") default:rootnode.CA_passDirectoryType columns:5
 		editText customPassDate "" text:rootnode.CA_passDateCustom pos:[32,220] width:100 height:16 enabled:false
 		editText customPass "" text:rootnode.CA_passCustom pos:[427,220] width:100 height:16 enabled:false
 	
-	groupBox ImageControlsGrp "Other Controls" pos:[16,255] width:538 height:128
+	groupBox ImageControlsGrp "Other Controls" pos:[16,255] width:groupWidth height:128
 		label IRnthLbl "IR nth Frame" pos:[32,275] width:64 height:16
 		spinner nthspinner "" pos:[101,275] width:48 height:16 enabled:true range:[1,100,rootnode.CA_IRNthFrame] type:#integer scale:1 	
 		label FRnthLbl "FR nth Frame" pos:[32,305] width:70 height:16
@@ -2675,7 +2677,7 @@ buttontext:"v.901"
 	checkbox z_check "Z-Depth as EXR" pos:[350,329] height:16
 	checkbox singleOverride_check "Submit First Frame Only" pos:[350,356] height:16
 	
-	groupBox FAGrp "Fully Automated: All Scene Cameras" pos:[16,400] width:538 height:72
+	groupBox FAGrp "Fully Automated: All Scene Cameras" pos:[16,400] width:groupWidth height:72
 		button FA_fly_btn "Fly Thru" width:40 height:32 enabled:false across: 8 pos:[FAGrp.pos.x+16,FAGrp.pos.y+24] 
 		button FA_single_btn "Single Frame" width:40 height:32 enabled:false pos:[FA_fly_btn.pos.x+40 + 8,FAGrp.pos.y+24]
 		button FA_nogi_btn "No GI" width:40 height:32 enabled:false pos:[FA_single_btn.pos.x+40 + 8,FAGrp.pos.y+24]
@@ -2687,7 +2689,7 @@ buttontext:"v.901"
 		button FA_VDR_btn "VDR" width:40 height:32 enabled:false pos:[FA_BFS_btn.pos.x+40 + 8,FAGrp.pos.y+24]
 	
 	
-	groupBox SaGrp "Semi Automated: Per Camera" pos:[16,490] width:538 height:120
+	groupBox SaGrp "Semi Automated: Per Camera" pos:[16,490] width:groupWidth height:120
 		dropDownList camSelection "Scene Cameras" width:344 height:40 items:mycamsnames_array enabled:true pos:[SaGrp.pos.x+16,SaGrp.pos.y+16] 
 		checkbutton CamCheck_btn "Select Cameras"  width:140 height:24 pos:[camSelection.pos.x+344+16,SaGrp.pos.y+32] 
 		button SA_fly_btn "Fly Thru"  width:40 height:32 enabled:false pos:[SaGrp.pos.x+16,camSelection.pos.y+40] 
