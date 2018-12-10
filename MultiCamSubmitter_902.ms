@@ -2639,7 +2639,7 @@ buttontext:"v.902"
 --########################--
 	
 
-	rollout multiCam_floater "Ilya's Submitter v.901" width:570 height:625
+	rollout multiCam_floater "Ilya's Submitter v.902" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
@@ -2648,6 +2648,9 @@ buttontext:"v.902"
 	dropDownList extSelection "" pos:[280,14] width:57 height:21 selection: rootnode.CA_extensionType items:extensionsList
 	
 	local groupWidth = 538
+	local buttonSpace = 8
+	local buttonN = 9
+	local buttonW = (groupWidth - 2*(2*buttonSpace) - (buttonN-1)*buttonSpace)/buttonN
 	
 	groupBox FrameOutGrp "Frames Output" pos:[16,48] width:groupWidth height:115
 		
@@ -2678,29 +2681,29 @@ buttontext:"v.902"
 	checkbox singleOverride_check "Submit First Frame Only" pos:[350,356] height:16
 	
 	groupBox FAGrp "Fully Automated: All Scene Cameras" pos:[16,400] width:groupWidth height:72
-		button FA_fly_btn "Fly Thru" width:40 height:32 enabled:false across: 8 pos:[FAGrp.pos.x+16,FAGrp.pos.y+24] 
-		button FA_single_btn "Single Frame" width:40 height:32 enabled:false pos:[FA_fly_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_nogi_btn "No GI" width:40 height:32 enabled:false pos:[FA_single_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_as_is_btn "AS IS" width:40 height:32 enabled:false pos:[FA_nogi_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_pv_btn "PreVw" width:40 height:32 enabled:false pos:[FA_as_is_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_an_btn "Ani" width:40 height:32 enabled:false pos:[FA_pv_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_BF_btn "BF" width:40 height:32 enabled:false pos:[FA_an_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_BFS_btn "BFS" width:40 height:32 enabled:false pos:[FA_BF_btn.pos.x+40 + 8,FAGrp.pos.y+24]
-		button FA_VDR_btn "VDR" width:40 height:32 enabled:false pos:[FA_BFS_btn.pos.x+40 + 8,FAGrp.pos.y+24]
+		button FA_fly_btn "Fly Thru" width:buttonW height:32 enabled:false across: 8 pos:[FAGrp.pos.x+(2*buttonSpace),FAGrp.pos.y+24] 
+		button FA_single_btn "Single Frame" width:buttonW height:32 enabled:false pos:[FA_fly_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_nogi_btn "No GI" width:buttonW height:32 enabled:false pos:[FA_single_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_as_is_btn "AS IS" width:buttonW height:32 enabled:false pos:[FA_nogi_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_pv_btn "PreVw" width:buttonW height:32 enabled:false pos:[FA_as_is_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_an_btn "Ani" width:buttonW height:32 enabled:false pos:[FA_pv_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_BF_btn "BF" width:buttonW height:32 enabled:false pos:[FA_an_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_BFS_btn "BFS" width:buttonW height:32 enabled:false pos:[FA_BF_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
+		button FA_VDR_btn "VDR" width:buttonW height:32 enabled:false pos:[FA_BFS_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24]
 	
 	
 	groupBox SaGrp "Semi Automated: Per Camera" pos:[16,490] width:groupWidth height:120
-		dropDownList camSelection "Scene Cameras" width:344 height:40 items:mycamsnames_array enabled:true pos:[SaGrp.pos.x+16,SaGrp.pos.y+16] 
+		dropDownList camSelection "Scene Cameras" width:344 height:40 items:mycamsnames_array enabled:true pos:[SaGrp.pos.x+(2*buttonSpace),SaGrp.pos.y+16] 
 		checkbutton CamCheck_btn "Select Cameras"  width:140 height:24 pos:[camSelection.pos.x+344+16,SaGrp.pos.y+32] 
-		button SA_fly_btn "Fly Thru"  width:40 height:32 enabled:false pos:[SaGrp.pos.x+16,camSelection.pos.y+40] 
-		button SA_single_btn "Single Frame"  width:40 height:32 enabled:false pos:[SA_fly_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_nogi_btn "No GI"  width:40 height:32 enabled:false pos:[SA_single_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_as_is_btn "AS IS"  width:40 height:32 enabled:false pos:[SA_nogi_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_pv_btn "PreVw"  width:40 height:32 enabled:false pos:[SA_as_is_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_an_btn "Ani"  width:40 height:32 enabled:false pos:[SA_pv_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_BF_btn "BF"  width:40 height:32 enabled:false pos:[SA_an_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_BFS_btn "BFS" width:40 height:32 enabled:false pos:[SA_BF_btn.pos.x+40 + 8,camSelection.pos.y+40]
-		button SA_VDR_btn "VDR" width:40 height:32 enabled:false pos:[SA_BFS_btn.pos.x+40 + 8,camSelection.pos.y+40]
+		button SA_fly_btn "Fly Thru"  width:buttonW height:32 enabled:false pos:[SaGrp.pos.x+(2*buttonSpace),camSelection.pos.y+40] 
+		button SA_single_btn "Single Frame"  width:buttonW height:32 enabled:false pos:[SA_fly_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_nogi_btn "No GI"  width:buttonW height:32 enabled:false pos:[SA_single_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_as_is_btn "AS IS"  width:buttonW height:32 enabled:false pos:[SA_nogi_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_pv_btn "PreVw"  width:buttonW height:32 enabled:false pos:[SA_as_is_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_an_btn "Ani"  width:buttonW height:32 enabled:false pos:[SA_pv_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_BF_btn "BF"  width:buttonW height:32 enabled:false pos:[SA_an_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_BFS_btn "BFS" width:buttonW height:32 enabled:false pos:[SA_BF_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
+		button SA_VDR_btn "VDR" width:buttonW height:32 enabled:false pos:[SA_BFS_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
 
 		
 	fn updateFrameOut = 
