@@ -282,11 +282,11 @@ buttontext:"v.902"
 	global multiCam_floater
 	global camChecklistRO
 
-	global mycams
-	global suns
-	global mycamsnames_array 
+	global sceneCams
+	global vraySuns
+	global sceneCamsNames_array 
 
-	global myrend
+	global vrayRend
 	global begframe
 	global endframe
 	global anim_bmp
@@ -424,11 +424,11 @@ buttontext:"v.902"
 		
 		if rootnode.CA_extension == ".exr" then
 		(
-			outputFile = myrend.output_rawfilename
+			outputFile = vrayRend.output_rawfilename
 		)
 		else 
 		(
-			outputFile = myrend.output_splitfilename
+			outputFile = vrayRend.output_splitfilename
 		)
 		
 		--outFileRGB = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
@@ -450,11 +450,11 @@ buttontext:"v.902"
 		
 		if rootnode.CA_extension == ".exr" then
 		(
-			outputFile = myrend.output_rawfilename
+			outputFile = vrayRend.output_rawfilename
 		)
 		else 
 		(
-			outputFile = myrend.output_splitfilename
+			outputFile = vrayRend.output_splitfilename
 		)
 		
 		outFileRGB = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
@@ -608,10 +608,10 @@ buttontext:"v.902"
 	fn rendGetRes = 
 	(
 		result = #()
-		if (myrend.output_getsetsfrommax == false) then
+		if (vrayRend.output_getsetsfrommax == false) then
 		(
-			result[1] = myrend.output_width
-			result[2] = myrend.output_height
+			result[1] = vrayRend.output_width
+			result[2] = vrayRend.output_height
 		)
 		else
 		(
@@ -623,10 +623,10 @@ buttontext:"v.902"
 	
 	fn rendSetRes arr = 
 	(
-		if (myrend.output_getsetsfrommax == false) then
+		if (vrayRend.output_getsetsfrommax == false) then
 		(
-			myrend.output_width = arr[1]
-			myrend.output_height = arr[2]
+			vrayRend.output_width = arr[1]
+			vrayRend.output_height = arr[2]
 		)
 		else
 		(
@@ -640,20 +640,20 @@ buttontext:"v.902"
 		environmentMap = arr[1]
 		useEnvironmentMap = arr[2]
 		
-		myrend.environment_gi_on = arr[3]
-		myrend.environment_gi_color_multiplier = arr[4]
-		myrend.environment_gi_map = arr[5]
-		myrend.environment_gi_map_on = arr[6]
+		vrayRend.environment_gi_on = arr[3]
+		vrayRend.environment_gi_color_multiplier = arr[4]
+		vrayRend.environment_gi_map = arr[5]
+		vrayRend.environment_gi_map_on = arr[6]
 		
-		myrend.environment_rr_on = arr[7]
-		myrend.environment_rr_color_multiplier = arr[8]
-		myrend.environment_rr_map = arr[9]
-		myrend.environment_rr_map_on = arr[10]
+		vrayRend.environment_rr_on = arr[7]
+		vrayRend.environment_rr_color_multiplier = arr[8]
+		vrayRend.environment_rr_map = arr[9]
+		vrayRend.environment_rr_map_on = arr[10]
   
-		myrend.environment_refract_on = arr[11]
-		myrend.environment_refract_color_multiplier = arr[12]
-		myrend.environment_refract_map = arr[13]
-		myrend.environment_refract_map_on = arr[14]
+		vrayRend.environment_refract_on = arr[11]
+		vrayRend.environment_refract_color_multiplier = arr[12]
+		vrayRend.environment_refract_map = arr[13]
+		vrayRend.environment_refract_map_on = arr[14]
 	)
 	
 	fn getEnvSettings = 
@@ -663,20 +663,20 @@ buttontext:"v.902"
 		arr[1] = environmentMap
 		arr[2] = useEnvironmentMap 
 		
-		arr[3] = myrend.environment_gi_on
-		arr[4] = myrend.environment_gi_color_multiplier
-		arr[5] = myrend.environment_gi_map
-		arr[6] = myrend.environment_gi_map_on
+		arr[3] = vrayRend.environment_gi_on
+		arr[4] = vrayRend.environment_gi_color_multiplier
+		arr[5] = vrayRend.environment_gi_map
+		arr[6] = vrayRend.environment_gi_map_on
 		
-		arr[7] = myrend.environment_rr_on
-		arr[8] = myrend.environment_rr_color_multiplier
-		arr[9] = myrend.environment_rr_map
-		arr[10] = myrend.environment_rr_map_on
+		arr[7] = vrayRend.environment_rr_on
+		arr[8] = vrayRend.environment_rr_color_multiplier
+		arr[9] = vrayRend.environment_rr_map
+		arr[10] = vrayRend.environment_rr_map_on
   
-		arr[11] = myrend.environment_refract_on
-		arr[12] = myrend.environment_refract_color_multiplier
-		arr[13] = myrend.environment_refract_map
-		arr[14] = myrend.environment_refract_map_on
+		arr[11] = vrayRend.environment_refract_on
+		arr[12] = vrayRend.environment_refract_color_multiplier
+		arr[13] = vrayRend.environment_refract_map
+		arr[14] = vrayRend.environment_refract_map_on
 		
 		return arr
 	)
@@ -713,13 +713,13 @@ buttontext:"v.902"
 		(
 			m = allMods[1]
 			
-			if (m.useSunpoints_chb == true and suns.count == 1) then
+			if (m.useSunpoints_chb == true and vraySuns.count == 1) then
 			(
 				--endSetRes #(m.imgWidth_sp, m.imgHeight_sp)
-				suns[1].pos = (execute m.sP_txt)
-				suns[1].target.pos = (execute m.sT_txt)
+				vraySuns[1].pos = (execute m.sP_txt)
+				vraySuns[1].target.pos = (execute m.sT_txt)
 			)
-			else if (m.useSunpoints_chb == true and suns.count == 0) then
+			else if (m.useSunpoints_chb == true and vraySuns.count == 0) then
 			(
 				MessageBox ("No VRay Sun in the scene found but Use Sunpoints in ON. Either uncheck Use Sunpoints or create a VRay Sun.") title:"Minor Error" beep:false
 			)
@@ -924,11 +924,11 @@ buttontext:"v.902"
 			
 			if rootnode.CA_extension == ".exr" then
 			(
-				outputFile = myrend.output_rawfilename
+				outputFile = vrayRend.output_rawfilename
 			)
 			else 
 			(
-				outputFile = myrend.output_splitfilename
+				outputFile = vrayRend.output_splitfilename
 			)
 		
 			theInputPath = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
@@ -1168,15 +1168,15 @@ buttontext:"v.902"
 		local prevWidth = ""
 		local prevHeight = ""
 
-		if (myrend.output_getsetsfrommax == false) then
+		if (vrayRend.output_getsetsfrommax == false) then
 		(
-			prevWidth = myrend.output_width as string
+			prevWidth = vrayRend.output_width as string
 		)
 		else (prevWidth = renderWidth as string)
 
-		if (myrend.output_getsetsfrommax == false) then
+		if (vrayRend.output_getsetsfrommax == false) then
 		(
-			prevHeight = myrend.output_height as string
+			prevHeight = vrayRend.output_height as string
 		)
 		else (prevHeight = renderHeight as string)
 
@@ -1194,33 +1194,33 @@ buttontext:"v.902"
 
 	fn exrSettingsOff = 
 	(
-		myrend.output_on=true
+		vrayRend.output_on=true
 		defaultVFB()
-		myrend.output_useram = true
-		myrend.output_saverawfile = false
-		myrend.output_splitgbuffer = false
-		myrend.output_saveFile = false
-		myrend.output_splitRGB = false
-		myrend.output_splitAlpha = false
-		myrend.output_splitfilename = ""		
-		myrend.output_rawfilename = ""
+		vrayRend.output_useram = true
+		vrayRend.output_saverawfile = false
+		vrayRend.output_splitgbuffer = false
+		vrayRend.output_saveFile = false
+		vrayRend.output_splitRGB = false
+		vrayRend.output_splitAlpha = false
+		vrayRend.output_splitfilename = ""		
+		vrayRend.output_rawfilename = ""
 	)
 	
 	
 	fn exrSettings = 
 	(
-		myrend.output_on=true
+		vrayRend.output_on=true
 		defaultVFB()
-		myrend.output_useram = true
-		myrend.output_saverawfile = true
-		myrend.output_splitgbuffer = false
-		myrend.output_saveFile = false
-		myrend.output_splitRGB = false
-		myrend.output_splitAlpha = false
-		myrend.output_splitfilename = ""		
-		myrend.output_force32bit_3dsmax_vfb = true
-		myrend.fileName_addDot = true
-		myrend.output_rawfilename = rootnode.CA_frameOutput +"\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + rootnode.CA_extension
+		vrayRend.output_useram = true
+		vrayRend.output_saverawfile = true
+		vrayRend.output_splitgbuffer = false
+		vrayRend.output_saveFile = false
+		vrayRend.output_splitRGB = false
+		vrayRend.output_splitAlpha = false
+		vrayRend.output_splitfilename = ""		
+		vrayRend.output_force32bit_3dsmax_vfb = true
+		vrayRend.fileName_addDot = true
+		vrayRend.output_rawfilename = rootnode.CA_frameOutput +"\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + rootnode.CA_extension
 		
 	)
 		
@@ -1228,20 +1228,20 @@ buttontext:"v.902"
 	(
 		if override != "" then overrideExt = override 
 		else (overrideExt = rootnode.CA_extension)
-		myrend.output_on=true
+		vrayRend.output_on=true
 		defaultVFB()
-		myrend.output_useram = true
-		myrend.output_saverawfile = false
-		myrend.output_rawfilename = ""
-		myrend.output_splitgbuffer = true
-		myrend.output_saveFile = true
-		myrend.output_splitRGB = true
-		myrend.output_splitAlpha = false
-		myrend.output_splitfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
+		vrayRend.output_useram = true
+		vrayRend.output_saverawfile = false
+		vrayRend.output_rawfilename = ""
+		vrayRend.output_splitgbuffer = true
+		vrayRend.output_saveFile = true
+		vrayRend.output_splitRGB = true
+		vrayRend.output_splitAlpha = false
+		vrayRend.output_splitfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		mybitmap = bitmap 320 240 color:white gamma: 0.454545
 		mybitmap.filename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		save mybitmap
-		myrend.output_splitbitmap = mybitmap
+		vrayRend.output_splitbitmap = mybitmap
 		close mybitmap
 		free mybitmap
 		
@@ -1272,22 +1272,22 @@ buttontext:"v.902"
 						oldRE = re.getElementsActive()
 						re.SetElementsActive false
 						rendOutputFilename = ""								 --reset render 
-						--myrend = renderers.current
+						--vrayRend = renderers.current
 						fullfilename = maxFilePath + currentCameraName
-						myrend.gi_on = true
-						myrend.gi_primary_type = 0      						-- Irradiance Map
-						myrend.gi_secondary_type = 3 						-- Light Cashe
+						vrayRend.gi_on = true
+						vrayRend.gi_primary_type = 0      						-- Irradiance Map
+						vrayRend.gi_secondary_type = 3 						-- Light Cashe
 						irmap_name = fullfilename +"_"+ rootnode.CA_passDirectory +".vrmap"
 						lightcache_name = fullfilename + "_" + rootnode.CA_passDirectory +".vrlmap"
-						myrend.adv_irradmap_loadFileName = irmap_name
-						myrend.adv_irradmap_autoSave = true
-						myrend.adv_irradmap_autoSaveFileName = irmap_name
-						myrend.lightcache_loadFileName = lightcache_name
-						myrend.lightcache_autosave = true
-						myrend.lightcache_autosaveFileName = lightcache_name
-						myrend.options_dontRenderImage = true
-						myrend.adv_irradmap_mode = 1        						-- Multiframe Incremental
-						myrend.lightcache_mode = 1          						-- Fly Through
+						vrayRend.adv_irradmap_loadFileName = irmap_name
+						vrayRend.adv_irradmap_autoSave = true
+						vrayRend.adv_irradmap_autoSaveFileName = irmap_name
+						vrayRend.lightcache_loadFileName = lightcache_name
+						vrayRend.lightcache_autosave = true
+						vrayRend.lightcache_autosaveFileName = lightcache_name
+						vrayRend.options_dontRenderImage = true
+						vrayRend.adv_irradmap_mode = 1        						-- Multiframe Incremental
+						vrayRend.lightcache_mode = 1          						-- Fly Through
 						rendFieldRender = false 
 						rendTimeType = 2                    						-- time output in render dialogue 2 is active time segment
 						rendSaveFile = false                						-- Don't save the image output 
@@ -1332,9 +1332,9 @@ buttontext:"v.902"
 						
 						rendSaveFile = true
 						re.SetElementsActive oldRE
-						myrend.adv_irradmap_mode = 2
-						myrend.lightcache_mode = 2
-						myrend.options_dontRenderImage = false
+						vrayRend.adv_irradmap_mode = 2
+						vrayRend.lightcache_mode = 2
+						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
 						rendShowVFB = false
 						rendSaveFile = false
@@ -1396,19 +1396,19 @@ buttontext:"v.902"
 						--Vray Properties
 						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
-						--myrend = renderers.current
-						myrend.gi_on = true
-						myrend.adv_irradmap_loadFileName = ""
-						myrend.adv_irradmap_autoSave = false
-						myrend.adv_irradmap_autoSaveFileName = ""
-						myrend.lightcache_loadFileName = ""
-						myrend.lightcache_autosave = false
-						myrend.lightcache_autosaveFileName = ""				
-						myrend.gi_primary_type = 0      												-- Irradiance Map
-						myrend.gi_secondary_type = 3 												-- Light Cashe
-						myrend.adv_irradmap_mode = 0
-						myrend.lightcache_mode = 0
-						myrend.options_dontRenderImage = false
+						--vrayRend = renderers.current
+						vrayRend.gi_on = true
+						vrayRend.adv_irradmap_loadFileName = ""
+						vrayRend.adv_irradmap_autoSave = false
+						vrayRend.adv_irradmap_autoSaveFileName = ""
+						vrayRend.lightcache_loadFileName = ""
+						vrayRend.lightcache_autosave = false
+						vrayRend.lightcache_autosaveFileName = ""				
+						vrayRend.gi_primary_type = 0      												-- Irradiance Map
+						vrayRend.gi_secondary_type = 3 												-- Light Cashe
+						vrayRend.adv_irradmap_mode = 0
+						vrayRend.lightcache_mode = 0
+						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
 						if (SingleFrame == false) then (rendTimeType = 2)
 						else (rendTimeType = 1)
@@ -1470,8 +1470,8 @@ buttontext:"v.902"
 						--Vray Properties
 						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
-						myrend.gi_on = false
-						myrend.options_dontRenderImage = false
+						vrayRend.gi_on = false
+						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
 						if (SingleFrame == false) then (rendTimeType = 2)
 						else (rendTimeType = 1)
@@ -1531,7 +1531,7 @@ buttontext:"v.902"
 						--Vray Properties
 						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
-						myrend.options_dontRenderImage = false
+						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
 						if (SingleFrame == false) then (rendTimeType = 2)
 						else (rendTimeType = 1)                    											-- time output in render dialogue 2 is active time segment
@@ -1599,7 +1599,7 @@ buttontext:"v.902"
 						--Vray Properties
 						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
-						myrend.options_dontRenderImage = false
+						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
 						if (SingleFrame == false) then (rendTimeType = 2)
 						else (rendTimeType = 1)                    											-- time output in render dialogue 2 is active time segment
@@ -1670,34 +1670,34 @@ buttontext:"v.902"
 		--Vray ANIMATED GEOMETRY Settings
 		------------------------------------------------------------------
 			old_settings = #( 
-			myrend.lightcache_prefilter_on,
-			myrend.lightcache_useForGlossyRays,
-			myrend.lightcache_subdivs,
-			myrend.lightcache_prefilter_samples,
-			myrend.lightcache_interpSamples,
-			myrend.gi_irradmap_interpSamples			
+			vrayRend.lightcache_prefilter_on,
+			vrayRend.lightcache_useForGlossyRays,
+			vrayRend.lightcache_subdivs,
+			vrayRend.lightcache_prefilter_samples,
+			vrayRend.lightcache_interpSamples,
+			vrayRend.gi_irradmap_interpSamples			
 			) 
 						--Vray Properties
 						renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
-						myrend.gi_on = true
-						myrend.gi_primary_type = 0      						-- Irradiance Map
-						myrend.gi_secondary_type = 3 						-- Light Cashe
-						myrend.adv_irradmap_mode = 6        						-- prepass	
-						myrend.gi_irradmap_interpSamples = old_settings[6]		
+						vrayRend.gi_on = true
+						vrayRend.gi_primary_type = 0      						-- Irradiance Map
+						vrayRend.gi_secondary_type = 3 						-- Light Cashe
+						vrayRend.adv_irradmap_mode = 6        						-- prepass	
+						vrayRend.gi_irradmap_interpSamples = old_settings[6]		
 						irmap_name = fullfilename + "_" + rootnode.CA_passDirectory +".vrmap"
-						myrend.adv_irradmap_loadFileName = irmap_name
-						myrend.adv_irradmap_autoSave = true
-						myrend.adv_irradmap_autoSaveFileName = irmap_name
-						myrend.gi_irradmap_multipleViews =  true --use camera path
-						myrend.lightcache_multipleViews = true --use camera path
-						myrend.lightcache_mode = 0 --single frame
-						myrend.lightcache_scale = 1 --world scale
-						myrend.lightcache_sampleSize = 0.590551 --0.015m
-						myrend.lightcache_interpSamples = 5
-						myrend.lightcache_storeDirectLight = 0
-						myrend.options_dontRenderImage = true
+						vrayRend.adv_irradmap_loadFileName = irmap_name
+						vrayRend.adv_irradmap_autoSave = true
+						vrayRend.adv_irradmap_autoSaveFileName = irmap_name
+						vrayRend.gi_irradmap_multipleViews =  true --use camera path
+						vrayRend.lightcache_multipleViews = true --use camera path
+						vrayRend.lightcache_mode = 0 --single frame
+						vrayRend.lightcache_scale = 1 --world scale
+						vrayRend.lightcache_sampleSize = 0.590551 --0.015m
+						vrayRend.lightcache_interpSamples = 5
+						vrayRend.lightcache_storeDirectLight = 0
+						vrayRend.options_dontRenderImage = true
 						
 						rendTimeType = 2  
 						rendNThFrame = 1
@@ -1740,20 +1740,20 @@ buttontext:"v.902"
 						
 						
 						rendSaveFile = true
-						myrend.adv_irradmap_mode = 7
-						myrend.gi_irradmap_interpSamples = 5
-						myrend.lightcache_loadFileName = ""
-						myrend.lightcache_autosave = false
-						myrend.lightcache_autosaveFileName = ""			
-						myrend.lightcache_mode = 0
-						myrend.lightcache_scale = 0
-						myrend.lightcache_prefilter_on = old_settings[1]
-						myrend.lightcache_useForGlossyRays  = old_settings[2]
-						myrend.lightcache_subdivs  = old_settings[3]
-						myrend.lightcache_prefilter_samples  = old_settings[4]
-						myrend.lightcache_interpSamples  = old_settings[5] 
-						myrend.gi_secondary_type = 0 	
-						myrend.options_dontRenderImage = false
+						vrayRend.adv_irradmap_mode = 7
+						vrayRend.gi_irradmap_interpSamples = 5
+						vrayRend.lightcache_loadFileName = ""
+						vrayRend.lightcache_autosave = false
+						vrayRend.lightcache_autosaveFileName = ""			
+						vrayRend.lightcache_mode = 0
+						vrayRend.lightcache_scale = 0
+						vrayRend.lightcache_prefilter_on = old_settings[1]
+						vrayRend.lightcache_useForGlossyRays  = old_settings[2]
+						vrayRend.lightcache_subdivs  = old_settings[3]
+						vrayRend.lightcache_prefilter_samples  = old_settings[4]
+						vrayRend.lightcache_interpSamples  = old_settings[5] 
+						vrayRend.gi_secondary_type = 0 	
+						vrayRend.options_dontRenderImage = false
 
 						rendFieldRender = false 
 						rendShowVFB = false
@@ -1817,20 +1817,20 @@ buttontext:"v.902"
 						renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
-						myrend.gi_on = true
-						myrend.gi_primary_type = 2      						-- Brute Force
-						myrend.gi_secondary_type = 3 						-- Light Cashe
-						myrend.lightcache_multipleViews = true --use camera path
-						myrend.lightcache_mode = 0 --single frame				
-						myrend.lightcache_loadFileName = ""
-						myrend.lightcache_autosave = false
-						myrend.lightcache_autosaveFileName = ""			
-						myrend.lightcache_scale = 0 -- screen 
-						myrend.lightcache_prefilter_on = false
-						myrend.lightcache_useForGlossyRays  = false
-						myrend.lightcache_subdivs  = 2000
-						myrend.lightcache_interpSamples  = 10
-						myrend.options_dontRenderImage = false
+						vrayRend.gi_on = true
+						vrayRend.gi_primary_type = 2      						-- Brute Force
+						vrayRend.gi_secondary_type = 3 						-- Light Cashe
+						vrayRend.lightcache_multipleViews = true --use camera path
+						vrayRend.lightcache_mode = 0 --single frame				
+						vrayRend.lightcache_loadFileName = ""
+						vrayRend.lightcache_autosave = false
+						vrayRend.lightcache_autosaveFileName = ""			
+						vrayRend.lightcache_scale = 0 -- screen 
+						vrayRend.lightcache_prefilter_on = false
+						vrayRend.lightcache_useForGlossyRays  = false
+						vrayRend.lightcache_subdivs  = 2000
+						vrayRend.lightcache_interpSamples  = 10
+						vrayRend.options_dontRenderImage = false
 
 						rendFieldRender = false 
 						rendShowVFB = false
@@ -1899,23 +1899,23 @@ buttontext:"v.902"
 						fullfilename = maxFilePath + currentCameraName
 						
 						oldOptions = #()
-						oldOptions[1] =myrend.gi_on  
-						oldOptions[2] =myrend.options_shadows  
-						oldOptions[3] =myrend.options_maps
-						oldOptions[4] =myrend.options_reflectionRefraction  
-						oldOptions[5] =myrend.options_glossyEffects  
-						oldOptions[6] =myrend.options_lights  
-						oldOptions[7] =myrend.options_hiddenLights  
-						oldOptions[8] =myrend.options_dontRenderImage  
+						oldOptions[1] =vrayRend.gi_on  
+						oldOptions[2] =vrayRend.options_shadows  
+						oldOptions[3] =vrayRend.options_maps
+						oldOptions[4] =vrayRend.options_reflectionRefraction  
+						oldOptions[5] =vrayRend.options_glossyEffects  
+						oldOptions[6] =vrayRend.options_lights  
+						oldOptions[7] =vrayRend.options_hiddenLights  
+						oldOptions[8] =vrayRend.options_dontRenderImage  
 		
-						myrend.gi_on = false
-						myrend.options_shadows = false
-						myrend.options_maps = true
-						myrend.options_reflectionRefraction = false
-						myrend.options_glossyEffects = false
-						myrend.options_lights = false
-						myrend.options_hiddenLights = false
-						myrend.options_dontRenderImage = false
+						vrayRend.gi_on = false
+						vrayRend.options_shadows = false
+						vrayRend.options_maps = true
+						vrayRend.options_reflectionRefraction = false
+						vrayRend.options_glossyEffects = false
+						vrayRend.options_lights = false
+						vrayRend.options_hiddenLights = false
+						vrayRend.options_dontRenderImage = false
 
 						rendFieldRender = false 
 						rendShowVFB = false
@@ -1958,8 +1958,8 @@ buttontext:"v.902"
 						print ("number of eles post Sphere " + re.NumRenderElements()  as string)
 						
 						
-						myrend.imageSampler_renderMask_type = 0
-						myrend.imageSamper_renderMask_texmap = undefined 	
+						vrayRend.imageSampler_renderMask_type = 0
+						vrayRend.imageSamper_renderMask_texmap = undefined 	
 						clearSelection()
 						for o in objects where o.gbufferchannel == 42 do (o.renderable = true; selectmore o)
 						IsolateSelection.EnterIsolateSelectionMode()  -- Tools: Isolate Selection
@@ -1996,27 +1996,27 @@ buttontext:"v.902"
 		--Vray Frames-
 		------------------------------------------------------------------		
 						
-						myrend.gi_on = oldOptions[1]
-						myrend.options_shadows = oldOptions[2]
-						myrend.options_maps = oldOptions[3]
-						myrend.options_reflectionRefraction = oldOptions[4]
-						myrend.options_glossyEffects = oldOptions[5]
-						myrend.options_lights = oldOptions[6]
-						myrend.options_hiddenLights = oldOptions[7]
-						myrend.options_dontRenderImage = oldOptions[8]
+						vrayRend.gi_on = oldOptions[1]
+						vrayRend.options_shadows = oldOptions[2]
+						vrayRend.options_maps = oldOptions[3]
+						vrayRend.options_reflectionRefraction = oldOptions[4]
+						vrayRend.options_glossyEffects = oldOptions[5]
+						vrayRend.options_lights = oldOptions[6]
+						vrayRend.options_hiddenLights = oldOptions[7]
+						vrayRend.options_dontRenderImage = oldOptions[8]
 
-						myrend.gi_primary_type = 2      						-- Brute Force
-						myrend.gi_secondary_type = 3 						-- Light Cashe
-						myrend.lightcache_multipleViews = true --use camera path
-						myrend.lightcache_mode = 0 --single frame				
-						myrend.lightcache_loadFileName = ""
-						myrend.lightcache_autosave = false
-						myrend.lightcache_autosaveFileName = ""			
-						myrend.lightcache_scale = 0 -- screen 
-						myrend.lightcache_prefilter_on = false
-						myrend.lightcache_useForGlossyRays  = false
-						myrend.lightcache_subdivs  = 2000
-						myrend.lightcache_interpSamples  = 10
+						vrayRend.gi_primary_type = 2      						-- Brute Force
+						vrayRend.gi_secondary_type = 3 						-- Light Cashe
+						vrayRend.lightcache_multipleViews = true --use camera path
+						vrayRend.lightcache_mode = 0 --single frame				
+						vrayRend.lightcache_loadFileName = ""
+						vrayRend.lightcache_autosave = false
+						vrayRend.lightcache_autosaveFileName = ""			
+						vrayRend.lightcache_scale = 0 -- screen 
+						vrayRend.lightcache_prefilter_on = false
+						vrayRend.lightcache_useForGlossyRays  = false
+						vrayRend.lightcache_subdivs  = 2000
+						vrayRend.lightcache_interpSamples  = 10
 						
 						print ("number of eles pre delete " + re.NumRenderElements() as string)
 						
@@ -2037,8 +2037,8 @@ buttontext:"v.902"
 						sphereMask.name = "SphereMask"
 						sphereMask.output.output_amount = 15
 						
-						myrend.imageSampler_renderMask_type = 1
-						myrend.imageSamper_renderMask_texmap = sphereMask 
+						vrayRend.imageSampler_renderMask_type = 1
+						vrayRend.imageSamper_renderMask_texmap = sphereMask 
 						for o in objects where o.gbufferchannel == 42 do (o.renderable = false)
 						IsolateSelection.ExitIsolateSelectionMode()
 						rendHidden = oldRenderHidden
@@ -2097,10 +2097,10 @@ buttontext:"v.902"
 	fn FA_flythrough_fn = 
 	(	
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2117,10 +2117,10 @@ buttontext:"v.902"
 	fn FA_single_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2137,10 +2137,10 @@ buttontext:"v.902"
 	fn FA_nogi_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2156,10 +2156,10 @@ buttontext:"v.902"
 	fn FA_as_is_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2175,10 +2175,10 @@ buttontext:"v.902"
 	fn FA_VDR_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2201,10 +2201,10 @@ buttontext:"v.902"
 
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
-			for i = 1 to  mycams.count do
+			for i = 1 to  sceneCams.count do
 			(
-				currentCameraName = mycams[i].name as string
-				currentCamera = mycams[i]
+				currentCameraName = sceneCams[i].name as string
+				currentCamera = sceneCams[i]
 				viewport.setCamera currentCamera
 				parseRangeFile currentCamera
 				if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName); preview_jpg())
@@ -2251,10 +2251,10 @@ buttontext:"v.902"
 	fn FA_animated_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2269,10 +2269,10 @@ buttontext:"v.902"
 	fn FA_bruteForce_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2287,10 +2287,10 @@ buttontext:"v.902"
 	fn FA_bruteForceSphere_fn = 
 	(
 		getOldRPS()
-		for i = 1 to  mycams.count do
+		for i = 1 to  sceneCams.count do
 		(
-			currentCameraName = mycams[i].name as string
-			currentCamera = mycams[i]
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
@@ -2699,7 +2699,7 @@ buttontext:"v.902"
 	
 	
 	groupBox SaGrp "Semi Automated: Per Camera" pos:[16,490] width:groupWidth height:120
-		dropDownList camSelection "Scene Cameras" width:344 height:40 items:mycamsnames_array enabled:true pos:[SaGrp.pos.x+(2*buttonSpace),SaGrp.pos.y+16] 
+		dropDownList camSelection "Scene Cameras" width:344 height:40 items:sceneCamsNames_array enabled:true pos:[SaGrp.pos.x+(2*buttonSpace),SaGrp.pos.y+16] 
 		checkbutton CamCheck_btn "Select Cameras"  width:140 height:24 pos:[camSelection.pos.x+344+16,SaGrp.pos.y+32] 
 		button SA_fly_btn "Fly Thru"  width:buttonW height:32 enabled:false pos:[SaGrp.pos.x+(2*buttonSpace),camSelection.pos.y+40] 
 		button SA_single_btn "Single Frame"  width:buttonW height:32 enabled:false pos:[SA_fly_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
@@ -3029,9 +3029,9 @@ buttontext:"v.902"
 		
 		if (camSelection.selection != 1) then 
 		(
-			currentCamera = getnodebyname mycamsnames_array[i]
+			currentCamera = getnodebyname sceneCamsNames_array[i]
 			viewport.setCamera currentCamera
-			currentCameraName = mycamsnames_array[i] as string
+			currentCameraName = sceneCamsNames_array[i] as string
 			print ("Current camera is " + currentCameraName)
 			parseRangeFile currentCamera
 			moveSunToPoint()
@@ -3084,10 +3084,10 @@ buttontext:"v.902"
 	
 	on pathButton pressed do
 	(
-		try (myrend.output_splitfilename = getBitmapSaveFileName  caption:"Click OK" filename:"Go to Dir an Click Save.tga"
+		try (vrayRend.output_splitfilename = getBitmapSaveFileName  caption:"Click OK" filename:"Go to Dir an Click Save.tga"
 			if true then
 			(	
-				rootnode.CA_frameOutput = getFilenamePath myrend.output_splitfilename
+				rootnode.CA_frameOutput = getFilenamePath vrayRend.output_splitfilename
 				rootnode.CA_frameOutputCustom = rootnode.CA_frameOutput
 				pathLable.text = (rootnode.CA_frameOutputCustom)
 				FA_fly_btn.enabled = true 
@@ -3342,7 +3342,7 @@ buttontext:"v.902"
 			--fill in spreadshit dotNet version
 			ItemsArray = #() --array to collect the list items
 			
-			for o in mycams do
+			for o in sceneCams do
 			(
 				li = dotNetObject "System.Windows.Forms.ListViewItem" o.name
 				append ItemsArray li
@@ -3372,11 +3372,11 @@ buttontext:"v.902"
 		
 		while errorCheck != true do
 		(
-			myrend = renderers.current
+			vrayRend = renderers.current
 			
-			if(myrend != undefined) then 
+			if(vrayRend != undefined) then 
 			(
-				if ((myrend.classid[1] == 1941615238) and (myrend.classid[2] == 2012806412)) != true then
+				if ((vrayRend.classid[1] == 1941615238) and (vrayRend.classid[2] == 2012806412)) != true then
 				(
 					MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
 					exit
@@ -3396,28 +3396,28 @@ buttontext:"v.902"
 			)
 				
 			
-			print ("Using " + myrend as string +" to render.")
+			print ("Using " + vrayRend as string +" to render.")
 			
-			mycams = for o in cameras where (superclassof o == camera) collect o
-			mycamsnames_array_temp = for o in mycams collect o.name
-			mycamsnames_array_temp = makeUniqueArray mycamsnames_array_temp
-			mycamsnames_array = sort mycamsnames_array_temp
+			sceneCams = for o in cameras where (superclassof o == camera) collect o
+			sceneCamsNames_array_temp = for o in sceneCams collect o.name
+			sceneCamsNames_array_temp = makeUniqueArray sceneCamsNames_array_temp
+			sceneCamsNames_array = sort sceneCamsNames_array_temp
 			
-			if mycamsnames_array.count != mycams.count then 
+			if sceneCamsNames_array.count != sceneCams.count then 
 			(
-				MessageBox ("There are " + (mycams.count - mycamsnames_array.count) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
+				MessageBox ("There are " + (sceneCams.count - sceneCamsNames_array.count) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
 				exit
 			)
 			
-			print ("Found " + mycams.count as string + " cameras in the scene.")
+			print ("Found " + sceneCams.count as string + " cameras in the scene.")
 			spacer = #("Select Camera to Render")
-			mycamsnames_array = join spacer mycamsnames_array
+			sceneCamsNames_array = join spacer sceneCamsNames_array
 			
-			suns = for o in lights where (classof o == VRaySun) collect o
+			vraySuns = for o in lights where (classof o == VRaySun) collect o
 			
-			if suns.count > 1 then 
+			if vraySuns.count > 1 then 
 			(
-				MessageBox ("There are " + (suns.count) as string + " VRaySuns in the scene. There can only be one.") title:"Duplicate Suns"
+				MessageBox ("There are " + (vraySuns.count) as string + " VRayvraySuns in the scene. There can only be one.") title:"Duplicate vraySuns"
 				exit
 			)
 			

@@ -19,6 +19,26 @@ version:0.909
 	--FUNCTIONS------------------------------------
 	-----------------------------------------------------
 	
+	fn checkRenderer = 
+	(
+		local rend = renderers.current
+		
+		if (rend != undefined) then 
+		(
+			if ((rend.classid[1] == 1941615238) and (rend.classid[2] == 2012806412)) != true then
+			(
+				MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
+				rend = undefined
+			)
+		) 
+		else 
+		(
+			MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
+		)
+		return rend
+	)
+
+
 	fn getVraySunInScene = 
 	(
 		result = undefined
@@ -332,7 +352,7 @@ version:0.909
 		)	
 		
 	)
-	
+
 	parameters hdriMap_params rollout:hdriMap_ro
 	(
 		--HDRI MAP
@@ -389,11 +409,7 @@ version:0.909
 			hdriMap_ro.hdriMapGIMult_sp.enabled = state
 			hdriMap_ro.hdriMapReflMult_sp.enabled = state
 			hdriMap_ro.hdriMapRefrMult_sp.enabled = state
-		)
-		
-		
-		
-		
+		)	
 	)
 	
 	parameters resolution_params rollout:resolution_ro
@@ -402,24 +418,6 @@ version:0.909
 		useHeightWidth_chb type:#boolean animatable:false ui:useHeightWidth_chb default:false
 		imgWidth_sp type:#integer animatable:false ui:imgWidth_sp default:1920
 		imgHeight_sp type:#integer animatable:false ui:imgHeight_sp default:1080
-		
-		on getImgFrame_btn set val do
-		(
-			if val == true then
-			(
-				if (myrend.output_getsetsfrommax == false) then
-				(
-					resolution_ro.imgWidth_sp.value = myrend.output_width
-					resolution_ro.imgHeight_sp.value = myrend.output_height
-				)
-				else
-				(
-					resolution_ro.imgWidth_sp.value = renderWidth
-					resolution_ro.imgHeight_sp.value = renderHeight
-				)
-				getImgFrame_btn = false
-			)
-		)
 	)
 	
 
@@ -476,7 +474,6 @@ version:0.909
 			if state == false then
 			(
 				showSunPoint_btn.checked = false
-				
 				unregisterRedrawViewsCallback gwDisplay
 			)
 		)
@@ -520,9 +517,6 @@ version:0.909
 				MessageBox "Submitter no longer uses these helpers, use these as a placeholder or for debugging purposes."
 			)
 		)
-		
-
-		
 
 	)
 
@@ -743,9 +737,7 @@ version:0.909
 		checkbox useHeightWidth_chb "Use Custom Size"
 		spinner imgWidth_sp "  Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state 
 		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state 
-		checkbutton getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
-		
-		global myrend = renderers.current
+		button getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
 		
 		on useHeightWidth_chb changed state do 
 		(
@@ -754,24 +746,29 @@ version:0.909
 			getImgFrame_btn.enabled = state
 		)
 		
-/* 		on getImgFrame_btn pressed do
+ 		on getImgFrame_btn pressed do
 		(
-			if (myrend.output_getsetsfrommax == false) then
+			local vrayRend = checkRenderer()
+			if vrayRend != undefined then
 			(
-				imgWidth_sp.value = myrend.output_width
-				imgHeight_sp.value = myrend.output_height
+				if (vrayRend.output_getsetsfrommax == false) then
+				(
+					imgWidth_sp.value = vrayRend.output_width
+					imgHeight_sp.value = vrayRend.output_height
+				)
+				else
+				(
+					imgWidth_sp.value = renderWidth
+					imgHeight_sp.value = renderHeight
+				)
 			)
-			else
+			else 
 			(
-				imgWidth_sp.value = renderWidth
-				imgHeight_sp.value = renderHeight
+				MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
 			)
-		) */
+		) 
 	)
-	
-	
-	
-	
+		
 	rollout import_ro "Import from Old"
 	(
 		button importFromOld_bn "Import from Old" width:buttonWidth
@@ -905,43 +902,50 @@ version:0.909
 	
 	on load do
 	(
-		if (hdriMap_btn != undefined and hdriMap_btn.cropplace_u.controller != undefined) then
+		if (multiCamUsable == true) then
 		(
-			m = hdriMap_btn
-			if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
+			if (hdriMap_btn != undefined and hdriMap_btn.cropplace_u.controller != undefined) then
 			(
-				relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
-				if (relink == true) then
+				m = hdriMap_btn
+				if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
 				(
-					------NEEDS TESTING----------
-					allSuns = for o in objects where classof o == VraySun collect o
-					if (allSuns.count == 1 ) then
+					relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
+					if (relink == true) then
 					(
-						m.cropplace_u.controller = float_script()
-						
-						sun = allSuns[1]
-						sunTarget = sun.target
-						hdriMapOffset_sp.controller = Bezier_Float()
-						
-						m.cropplace_on = true
-						m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
-						m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
-						m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
-						m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
-						--We use addNode because of circular dependency
-						m.cropplace_u.controller.addNode "offset" $
-						
-						--issue: when copy and pasted the link will be broken
-						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[1].'hdriMapOffset_sp') 360 )/360.0"
-						m.cropplace_u.controller.script = scriptstring
-					)
-					else if (allSuns.count > 1) then (MessageBox "RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!")
-					else
-					(
-						MessageBox "RELINK FAILED!\nNo VraySun in the scene."
+						------NEEDS TESTING----------
+						allSuns = for o in objects where classof o == VraySun collect o
+						if (allSuns.count == 1 ) then
+						(
+							m.cropplace_u.controller = float_script()
+							
+							sun = allSuns[1]
+							sunTarget = sun.target
+							hdriMapOffset_sp.controller = Bezier_Float()
+							
+							m.cropplace_on = true
+							m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
+							m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
+							m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
+							m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
+							--We use addNode because of circular dependency
+							m.cropplace_u.controller.addNode "offset" $
+							
+							--issue: when copy and pasted the link will be broken
+							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[1].'hdriMapOffset_sp') 360 )/360.0"
+							m.cropplace_u.controller.script = scriptstring
+						)
+						else if (allSuns.count > 1) then (MessageBox "RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!")
+						else
+						(
+							MessageBox "RELINK FAILED!\nNo VraySun in the scene."
+						)
 					)
 				)
 			)
+		)
+		else 
+		(
+			MessageBox ("MultiCam script is not loaded properly, MultiCam Attribute cannot be created.\nCheck MAXScript Listener.")
 		)
 		showSunPoint_btn = false
 	)
@@ -959,8 +963,38 @@ version:0.909
 -- 	
  	on attachedToNode this do
  	(
- 		result = for m in this.modifiers where (classof m == SubmitterAttributes) collect m
-		if result.count > 1 then (MessageBox "attachedToNode ")
+		result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == SubmitterAttributes) collect i
+		print result.count
+		if (result.count > 1 and multiCamUsable == true) then 
+		(
+			local qb = QueryBox "There are more than one MultiCam Attribute added to this object.\nOverwrite?\nYES - Delete old replace with new\nNO - Do not add the new modifier, leave as is."
+			if qb == true then
+			(
+				for i = result.count to 2 by -1 do
+				(
+					print ("false - deleting " + i as string)
+					deleteModifier this (result[i])
+				)
+			)
+			else 
+			(
+				for i = result.count - 1 to 1 by -1 do
+				(
+					print ("true - deleting " + i as string)
+					deleteModifier this (result[i])
+				)
+			)
+		)
+		else if (result.count >= 1 and multiCamUsable == false) then
+		(
+			MessageBox ("MultiCam script is not loaded properly, MultiCam Attribute cannot be created.\nCheck MAXScript Listener.")
+			for i = result.count to 1 by -1 do
+			(
+				print ("no good to go - deleting " + i as string)
+				--deleteModifier this i
+				this.modifiers[result[i]].enabled = false
+			)
+		)
  	)	
 		
 	on deleted  do
@@ -979,6 +1013,5 @@ version:0.909
 		)
 		
 		unregisterRedrawViewsCallback gwDisplay
-		--MessageBox "detachedFromNode  "
 	)
 )
