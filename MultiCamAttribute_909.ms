@@ -41,16 +41,17 @@ version:0.909
 
 	fn getVraySunInScene = 
 	(
-		result = undefined
-		allSuns = for o in objects where classof o == VraySun collect o
+		local result = undefined
+		local allSuns = for o in objects where classof o == VraySun collect o
+
 		if (allSuns.count == 1 ) then
 		(
 			result = allSuns[1]
 		)
-		else if (allSuns.count > 1) then (MessageBox "There are " + allSuns.count as string + " in the scene.\nThere can only be one!"; result = undefined)
+		else if (allSuns.count > 1) then (MessageBox ("There are " + allSuns.count as string + " in the scene.\nThere can only be one!"); result = undefined)
 		else
 		(
-			MessageBox "No VraySun in the scene."
+			MessageBox ("No VraySun in the scene.")
 			result = undefined
 		)
 		return result
@@ -357,14 +358,42 @@ version:0.909
 	(
 		--HDRI MAP
 		useHDRIMap_chb type:#boolean animatable:false ui:useHDRIMap_chb default:false
+		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn
+		hdriMapLinkStatus type:#string animatable:false default:"Not Linked" --ui:hdriMapLink_lbl
+		hdriMapLink_lbl type:#string animatable:false ui:hdriMapLink_lbl
+		hdriMapLink_btn type:#boolean animatable:false ui:hdriMapLink_btn default:false
+		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
 		hdriMapOffset_sp type:#float animatable:true ui:hdriMapOffset_sp default:0.0
 		hdriMapGIMult_sp type:#float animatable:false ui:hdriMapGIMult_sp default:1.0
 		hdriMapReflMult_sp type:#float animatable:false ui:hdriMapReflMult_sp default:1.0
 		hdriMapRefrMult_sp type:#float animatable:false ui:hdriMapRefrMult_sp default:1.0
-		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn 
-		hdriMapLinkStatus type:#string animatable:false default:"Not Linked" --ui:hdriMapLink_lbl
-		hdriMapLink_lbl type:#string animatable:false ui:hdriMapLink_lbl 
-		
+
+		on useHDRIMap_chb set state do 
+		(
+			print "use hdri triggered"
+			hdriMap_ro.hdriMap_btn.enabled = state
+			hdriMap_ro.hdriMapLink_lbl.enabled = state
+			
+			if state == false then
+			(
+				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
+				try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+				hdriMapLinkStatus = "Not Used"
+				hdriMapLink_lbl = "Not Used"
+			)
+			else
+			(
+				this.checkHDRIconnection()				
+			)
+			
+			hdriMap_ro.hdriMapLink_btn.enabled = state
+			hdriMap_ro.hdriMapEdit_btn.enabled = state
+			hdriMap_ro.hdriMapOffset_sp.enabled = state
+			hdriMap_ro.hdriMapGIMult_sp.enabled = state
+			hdriMap_ro.hdriMapReflMult_sp.enabled = state
+			hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+		)
+
 		on hdriMap_btn set val do
 		(
 			if (classof val == VRayHDRI) then
@@ -386,30 +415,75 @@ version:0.909
 			)
 		)
 		
-		on useHDRIMap_chb set state do 
+
+		on hdriMapEdit_btn set val do
 		(
-			hdriMap_ro.hdriMap_btn.enabled = state
-			hdriMap_ro.hdriMapLink_lbl.enabled = state
-			
-			if state == false then
+			if val == true then
 			(
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-				hdriMap_ro.hdriMapLinkStatus = "Not Used"
-				hdriMap_ro.hdriMapLink_lbl.text = "Not Used"
+				if (hdriMap_btn != undefined) then
+				(
+					MatEditor.Open() 
+					medit.PutMtlToMtlEditor hdriMap_btn 1
+					medit.SetActiveMtlSlot 1 true
+				)
+				else (MessageBox ("No VrayHDRI map in the map slot."))
+				
+				hdriMapEdit_btn = false
 			)
-			else
-			(
-				this.checkHDRIconnection()				
+		)
+
+
+		on hdriMapLink_btn set val do
+		(
+			if val == true then
+			(	
+				if ((getVraySunInScene()) != undefined) then
+				(
+					if (hdriMap_btn != undefined) then
+					(
+						local m = hdriMap_btn
+						m.cropplace_u.controller = float_script()
+						
+						local sun = getVraySunInScene()
+						sunTarget = sun.target
+						saModifier = this
+						saModifier.hdriMapOffset_sp.controller = Bezier_Float()
+						
+						m.cropplace_on = true
+						m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
+						m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
+						m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
+						m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
+						--We use addNode because of circular dependency
+						m.cropplace_u.controller.addNode "offset" (refs.dependentNodes saModifier)[1]
+						
+						--issue: when copy and pasted the link will be broken
+						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#Submitter_Attributes].'hdriMapOffset_sp') 360 )/360.0"
+						m.cropplace_u.controller.script = scriptstring
+						
+						try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
+						hdriMapLinkStatus = "Linked"
+						hdriMapLink_lbl = "Linked"
+					)
+					else
+					(
+						MessageBox ("The map is not a VrayHDRI map.")
+						try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+						hdriMapLinkStatus = "Not Linked"
+						hdriMapLink_lbl = "Not Linked"
+					)
+				)
+				else
+				(
+					Messagebox ("No Suns")
+					try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+					hdriMapLinkStatus = "Not Used"
+					hdriMapLink_lbl = "Not Used"
+				)
+
+				hdriMapLink_btn = false
 			)
-			
-			hdriMap_ro.hdriMapLink_btn.enabled = state
-			hdriMap_ro.hdriMapEdit_btn.enabled = state
-			hdriMap_ro.hdriMapOffset_sp.enabled = state
-			hdriMap_ro.hdriMapGIMult_sp.enabled = state
-			hdriMap_ro.hdriMapReflMult_sp.enabled = state
-			hdriMap_ro.hdriMapRefrMult_sp.enabled = state
-		)	
+		)
 	)
 	
 	parameters resolution_params rollout:resolution_ro
@@ -514,7 +588,7 @@ version:0.909
 				sunTargetName = "SunTarget_" + selection[1].name
 				sunPoint = point name: sunPointName pos: (execute sP_txt.text) constantscreensize: on
 				sunTarget = point name: sunTargetName pos: (execute sT_txt.text) constantscreensize: on
-				MessageBox "Submitter no longer uses these helpers, use these as a placeholder or for debugging purposes."
+				MessageBox ("Submitter no longer uses these helpers, use these as a placeholder or for debugging purposes.")
 			)
 		)
 
@@ -544,7 +618,7 @@ version:0.909
 				firstFrame_sp.value = camAnimation[1]
 				lastFrame_sp.value = camAnimation[camAnimation.count]
 			)
-			else (MessageBox "No Animation")
+			else (MessageBox ("No Animation"))
 		)
 	)
 	
@@ -577,89 +651,18 @@ version:0.909
 		checkbox useHDRIMap_chb "Use HDRI Map"
 		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth
 		dotnetcontrol hdriMapLink_lbl "Label" text:hdriMapLinkStatus height:20 align:#center  width:buttonWidth
-		button hdriMapLink_btn "Link Map to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
-		button hdriMapEdit_btn "Edit in MEdit" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		checkbutton hdriMapLink_btn "Link Map to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		checkbutton hdriMapEdit_btn "Edit in MEdit" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
 		spinner hdriMapOffset_sp "U Offsets:"  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state
 		spinner hdriMapGIMult_sp   "    GI mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
 		spinner hdriMapReflMult_sp "Ref_L mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
 		spinner hdriMapRefrMult_sp "Ref_R mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
 		
--- 		fn checkHDRIconnection =
--- 		(
--- 			if (hdriMap_btn.map != undefined and hdriMap_btn.map.cropplace_u.controller != undefined) then
--- 			(
--- 				if (refs.dependentNodes ((hdriMap_btn.map.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
--- 				(
--- 					--MessageBox "Sun and HDRI Map link is broken.\nRelink"
--- 					hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red
--- 					hdriMapLink_lbl.text = "Not Linked"
--- 					hdriMapLinkStatus = "Not Linked"
--- 				)
--- 				else
--- 				(
--- 					hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green
--- 					hdriMapLink_lbl.text = "Linked"
--- 					hdriMapLinkStatus = "Linked"
--- 				)
--- 			)
--- 			else
--- 			(
--- 				hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray
--- 				hdriMapLink_lbl.text = "Not Used"
--- 				hdriMapLinkStatus = "Not Used"
--- 			)
--- 		)
 		
 		on hdriMap_ro open do
 		(
 			hdriMapLink_lbl.TextAlign = (dotnetclass "System.Drawing.ContentAlignment").MiddleCenter
 			checkHDRIconnection()
-		)
-		
-		on hdriMapLink_btn pressed do
-		(
-			if ((getVraySunInScene()) != undefined) then
-			(
-				if (hdriMap_btn.map != undefined) then
-				(
-					m = hdriMap_btn.map
-					m.cropplace_u.controller = float_script()
-					
-					local sun = getVraySunInScene()
-					sunTarget = sun.target
-					saModifier = modpanel.getCurrentObject()
-					saModifier.hdriMapOffset_sp.controller = Bezier_Float()
-					
-					m.cropplace_on = true
-					m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
-					m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
-					m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
-					m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
-					--We use addNode because of circular dependency
-					m.cropplace_u.controller.addNode "offset" $
-					
-					--issue: when copy and pasted the link will be broken
-					scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[1].'hdriMapOffset_sp') 360 )/360.0"
-					m.cropplace_u.controller.script = scriptstring
-					
-					hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green
-					hdriMapLink_lbl.text = "Linked"
-					hdriMapLinkStatus = "Linked"
-				)
-				else
-				(
-					MessageBox "The map is not a VrayHDRI map."
-					hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray
-					hdriMapLink_lbl.text = "Not Linked"
-					hdriMapLinkStatus = "Not Linked"
-				)
-			)
-			else
-			(
-				hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray
-				hdriMapLink_lbl.text = "Not Used"
-				hdriMapLinkStatus = "Not Used"
-			)
 		)
 		
 		on hdriMapOffset_sp changed n do
@@ -670,66 +673,10 @@ version:0.909
 			)
 			else
 			(
-				MessageBox "HDRI Map not linked to sun or no HDRI map defined"
+				MessageBox ("HDRI Map not linked to sun or no HDRI map defined")
 				hdriMapOffset_sp.value = 0
 			)
 		)
-		
--- 		on hdriMap_btn picked m do
--- 		(
--- 			if (classof m == VRayHDRI) then
--- 			(
--- 				hdriMap_btn.caption = m.name + " (" + (classof m) as string+")"
--- 				hdriMapName = m.name + " (" + (classof m) as string+")"
--- 				hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red
--- 				hdriMapLink_lbl.text = "Not Linked"
--- 				hdriMapLinkStatus = "Not Linked"
--- 			)
--- 			else
--- 			(
--- 				hdriMap_btn.caption = "None"
--- 				hdriMap_btn.map = undefined
--- 				hdriMapName = "None"
--- 				hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray
--- 				hdriMapLink_lbl.text = "Not Linked"
--- 				hdriMapLinkStatus = "Not Linked"
--- 			)
--- 		)			
-		
--- 		on useHDRIMap_chb changed state do 
--- 		(
--- 			hdriMap_btn.enabled = state
--- 			hdriMapLink_lbl.enabled = state
--- 			
--- 			if state == false then
--- 			(
--- 				hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray
--- 				hdriMapLink_lbl.text = "Not Used"
--- 				hdriMapLinkStatus = "Not Used"
--- 			)
--- 			else
--- 			(
--- 				checkHDRIconnection()				
--- 			)
--- 			
--- 			hdriMapLink_btn.enabled = state
--- 			hdriMapEdit_btn.enabled = state
--- 			hdriMapOffset_sp.enabled = state
--- 			hdriMapGIMult_sp.enabled = state
--- 			hdriMapReflMult_sp.enabled = state
--- 			hdriMapRefrMult_sp.enabled = state
--- 		)
-		
-		on hdriMapEdit_btn pressed do
-		(
-			if (hdriMap_btn.map != undefined) then
-			(
-				MatEditor.Open() 
-				medit.PutMtlToMtlEditor hdriMap_btn.map 1
-				medit.SetActiveMtlSlot 1 true
-			)
-			else (MessageBox "No VrayHDRI map in the map slot.")
-		)		
 	)
 	
 	rollout resolution_ro "Resolution"
@@ -863,7 +810,7 @@ version:0.909
 			(
 				if ((getVraySunInScene()) != undefined) then
 				(
-					Messagebox "No sunpoints found, using current sun position."
+					Messagebox ("No sunpoints found, using current sun position.")
 					
 					changeStateSunpoints true
 					
@@ -873,7 +820,7 @@ version:0.909
 				)
 				else
 				(
-					Messagebox "No sunpoints or VraySun found, sunpoints are not imported"
+					Messagebox ("No sunpoints or VraySun found, sunpoints are not imported")
 					changeStateSunpoints false
 				)
 			)
@@ -928,16 +875,17 @@ version:0.909
 							m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
 							m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
 							--We use addNode because of circular dependency
-							m.cropplace_u.controller.addNode "offset" $
+							--Needs testing $ may not work
+							m.cropplace_u.controller.addNode "offset" (refs.dependentNodes this)[1] --$
 							
 							--issue: when copy and pasted the link will be broken
-							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[1].'hdriMapOffset_sp') 360 )/360.0"
+							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#Submitter_Attributes].'hdriMapOffset_sp') 360 )/360.0"
 							m.cropplace_u.controller.script = scriptstring
 						)
-						else if (allSuns.count > 1) then (MessageBox "RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!")
+						else if (allSuns.count > 1) then (MessageBox ("RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!"))
 						else
 						(
-							MessageBox "RELINK FAILED!\nNo VraySun in the scene."
+							MessageBox ("RELINK FAILED!\nNo VraySun in the scene.")
 						)
 					)
 				)
