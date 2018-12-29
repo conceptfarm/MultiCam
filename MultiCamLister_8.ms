@@ -429,7 +429,7 @@ Icon:#("Lights",7)
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("useSunpoints" + vrayMCLister.count as string) as name)
 				
 				--showSunpoints
-				vrayMCLister.maxCamerasRC.addControl #checkbutton (("showSunpoints" + vrayMCLister.count as string) as name) "Show" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useSunpoints_chb) as string + " offset:["+(sunpointsX+45) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
+				vrayMCLister.maxCamerasRC.addControl #checkbutton (("showSunpoints" + vrayMCLister.count as string) as name) "Show" paramStr:(" checked:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #showSunPoint_btn) as string + " enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useSunpoints_chb) as string + " offset:["+(sunpointsX+45) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
 				vrayMCLister.maxCamerasRC.addHandler (("showSunpoints" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #showSunPoint_btn state")
 				
 				--getSunpoints
@@ -486,7 +486,7 @@ Icon:#("Lights",7)
 				vrayMCLister.maxCamerasRC.addControl #mapbutton (("hdriMap" + vrayMCLister.count as string) as name) (if (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #hdriMap_btn) != undefined then ((classof (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #hdriMap_btn)) as string)else("None")) paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHDRIMap_chb) as string + " offset:["+(hdriX+45) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:60 height:21 ")
 				vrayMCLister.maxCamerasRC.addHandler (("hdriMap" + vrayMCLister.count as string) as name) #'picked val' filter:on codeStr:(" 
 					vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #hdriMap_btn val;
-					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".caption = (if (classof val) != VRayHDRI then (\"None\") else ((classof val) as string))")
+					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".caption = (if (classof val) != VRayHDRI then (\"None\") else ((classof val) as string));prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
 				
 				--Link to Sun
 				vrayMCLister.maxCamerasRC.addControl #checkbutton (("linkToSun" + vrayMCLister.count as string) as name) "Link" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHDRIMap_chb) as string + " offset:["+(hdriX + 110) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")

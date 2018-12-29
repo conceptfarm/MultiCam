@@ -25,7 +25,7 @@ fn checkMacro macro =
 		(
 			print ("INFO: Remote file for macro "+macro+" is found.")
 			
-			--ISSUE: getFileModDate comparison is flawed can't compare dates that way use dot net instead
+			--ISSUE: getFileModDate comparison is flawed, can't compare dates that way, use dotnet instead
 			if ( ( ( (dotnetclass "System.IO.File").GetLastWriteTime(remoteScript) ).ticks) > (((dotnetclass "System.IO.File").GetLastWriteTime(localScript)).ticks) ) then 
 			(
 				print ("INFO: Update to "+macro+" is found.")
@@ -112,8 +112,8 @@ fn checkMacro macro =
 	)
 )
 
-MCL = checkMacro "MultiCamLister"
 MCA = checkMacro "MultiCamAttribute"
+MCL = checkMacro "MultiCamLister"
 MCS = checkMacro "MultiCamSubmitter"
 if (MCL == true and MCA == true and MCS == true) then
 (

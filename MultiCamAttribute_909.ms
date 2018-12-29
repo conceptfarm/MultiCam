@@ -10,10 +10,10 @@ version:0.909
 	local objectName = ""
 	local buttonWidth = 135
 	local gwDisplaySunpoints
-	local layers_ro
-	local sunpoints_ro
-	local resolution_ro
-	local hdriMap_ro
+	--local layers_ro
+	--local sunpoints_ro
+	--local resolution_ro
+	--local hdriMap_ro
 	
 	-----------------------------------------------------
 	--FUNCTIONS------------------------------------
@@ -111,72 +111,74 @@ version:0.909
 	
 	fn changeStateLayers state = 
 	(
-		layers_ro.useHideLayers_chb.checked = state
-		layers_ro.hideLayers_lb.enabled = state
-		layers_ro.clearLayers_btn.enabled = state
-		layers_ro.addLayers_btn.enabled = state
-		layers_ro.removeLayers_btn.enabled = state
+		this.layers_ro.useHideLayers_chb.checked = state
+		this.layers_ro.hideLayers_lb.enabled = state
+		this.layers_ro.clearLayers_btn.enabled = state
+		this.layers_ro.addLayers_btn.enabled = state
+		this.layers_ro.removeLayers_btn.enabled = state
 	)
 	
 	fn changeStateSunpoints state = 
 	(
-		sunpoints_ro.useSunpoints_chb.checked = state
-		sunpoints_ro.sP_txt.enabled = state
-		sunpoints_ro.sT_txt.enabled = state
-		sunpoints_ro.showSunPoint_btn.enabled = state
-		sunpoints_ro.readSunPos_btn.enabled = state
-		sunpoints_ro.moveSunToPos_btn.enabled = state
-		sunpoints_ro.createSunPoint_btn.enabled = state
+		this.sunpoints_ro.useSunpoints_chb.checked = state
+		this.sunpoints_ro.sP_txt.enabled = state
+		this.sunpoints_ro.sT_txt.enabled = state
+		this.sunpoints_ro.showSunPoint_btn.enabled = state
+		this.sunpoints_ro.readSunPos_btn.enabled = state
+		this.sunpoints_ro.moveSunToPos_btn.enabled = state
+		this.sunpoints_ro.createSunPoint_btn.enabled = state
 	)
 
 	fn changeStateResolution state = 
 	(
-		resolution_ro.useHeightWidth_chb.checked = state
-		resolution_ro.imgWidth_sp.enabled = state
-		resolution_ro.imgHeight_sp.enabled = state
-		resolution_ro.getImgFrame_btn.enabled = state
+		this.resolution_ro.useHeightWidth_chb.checked = state
+		this.resolution_ro.imgWidth_sp.enabled = state
+		this.resolution_ro.imgHeight_sp.enabled = state
+		this.resolution_ro.getImgFrame_btn.enabled = state
 	)
 	
 	fn changeStateHDRI state = 
 	(
-		hdriMap_ro.useHDRIMap_chb.checked = state
-		hdriMap_ro.hdriMap_btn.enabled = state
-		hdriMap_ro.hdriMapLink_lbl.enabled = state
-		hdriMap_ro.hdriMapLink_btn.enabled = state
-		hdriMap_ro.hdriMapEdit_btn.enabled = state
-		hdriMap_ro.hdriMapOffset_sp.enabled = state
-		hdriMap_ro.hdriMapGIMult_sp.enabled = state
-		hdriMap_ro.hdriMapReflMult_sp.enabled = state
-		hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+		this.hdriMap_ro.useHDRIMap_chb.checked = state
+		this.hdriMap_ro.hdriMap_btn.enabled = state
+		this.hdriMap_ro.hdriMapLink_lbl.enabled = state
+		this.hdriMap_ro.hdriMapLink_btn.enabled = state
+		this.hdriMap_ro.hdriMapEdit_btn.enabled = state
+		this.hdriMap_ro.hdriMapOffset_sp.enabled = state
+		this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
+		this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
+		this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
 	)
 	
 	
 	fn checkHDRIconnection =
 	(
-		if (hdriMap_ro.hdriMap_btn.map != undefined and hdriMap_ro.hdriMap_btn.map.cropplace_u.controller != undefined and hdriMap_ro.hdriMap_btn.enabled == true) then
+		if (this.hdriMap_btn != undefined and this.hdriMap_btn.cropplace_u.controller != undefined and this.hdriMap_ro.hdriMap_btn.enabled == true) then
 		(
-			if (refs.dependentNodes ((hdriMap_ro.hdriMap_btn.map.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
+			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
 			(
-				--MessageBox "Sun and HDRI Map link is broken.\nRelink"
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
-				hdriMap_ro.hdriMapLink_lbl.text = "Not Linked"
-				hdriMap_ro.hdriMapLinkStatus = "Not Linked"
+				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
+				this.hdriMapLinkStatus = "Not Linked"
+				this.hdriMapLink_lbl = "Not Linked"
+				
 			)
 			else
 			(
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
-				hdriMap_ro.hdriMapLink_lbl.text = "Linked"
-				hdriMap_ro.hdriMapLinkStatus = "Linked"
+				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
+				this.hdriMapLinkStatus = "Linked"
+				this.hdriMapLink_lbl = "Linked"
+				
 			)
 		)
 		else
 		(
 			--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-			try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-			hdriMap_ro.hdriMapLink_lbl.text = "Not Used"
-			hdriMap_ro.hdriMapLinkStatus = "Not Used"
+			try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+			this.hdriMapLinkStatus = "Not Used"
+			this.hdriMapLink_lbl = "Not Used"
+			
 		)
 	)
 	
@@ -292,12 +294,12 @@ version:0.909
 			if val == true then
 			(
 				hideLayers_tab = #()
-				layers_ro.hideLayers_lb.items = #()
+				this.layers_ro.hideLayers_lb.items = #()
 				
 				if hideLayers_tab.count == 0 then
 				(
 					hideLayers_tab =  #("-- All Layers Unhidden --")
-					layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
+					this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 				)
 				clearLayers_btn = false
 			)
@@ -309,7 +311,7 @@ version:0.909
 			if val == true then
 			(
 				hideLayers_tab = #()
-				layers_ro.hideLayers_lb.items = #()
+				this.layers_ro.hideLayers_lb.items = #()
 				
 				n = LayerManager.count
 				for i = 0 to n-1 do
@@ -317,14 +319,14 @@ version:0.909
 					if (layermanager.getlayer i).on == false then
 					(
 						appendifunique hideLayers_tab (layermanager.getlayer i).name
-						layers_ro.hideLayers_lb.items = makeUniqueArray (append layers_ro.hideLayers_lb.items (layermanager.getlayer i).name)
+						this.layers_ro.hideLayers_lb.items = makeUniqueArray (append this.layers_ro.hideLayers_lb.items (layermanager.getlayer i).name)
 					)
 				)
 				
-				if hideLayers_tab == 0 then
+				if hideLayers_tab.count == 0 then
 				(
-					hideLayers_tab =  #("-- All Layers Unhidden --")
-					layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
+					hideLayers_tab = #("-- All Layers Unhidden --")
+					this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 				)
 				addLayers_btn = false
 			)
@@ -332,22 +334,22 @@ version:0.909
 
 		on useHideLayers_chb set val do 
 		(
-			layers_ro.hideLayers_lb.enabled = val
-			layers_ro.clearLayers_btn.enabled = val
-			layers_ro.addLayers_btn.enabled = val
-			layers_ro.removeLayers_btn.enabled = val
+			this.layers_ro.hideLayers_lb.enabled = val
+			this.layers_ro.clearLayers_btn.enabled = val
+			this.layers_ro.addLayers_btn.enabled = val
+			this.layers_ro.removeLayers_btn.enabled = val
 			
 			if val == true and hideLayers_tab.count == 0 then
 			(
 				hideLayers_tab = #("-- All Layers Unhidden --")
-				layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
+				this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 			)
 			else if val == false and hideLayers_tab == "-- All Layers Unhidden --" then
 			(
 				-- workaround when adding a modifier through MultiCam Lister
 				try(
 					hideLayers_tab = deleteItem hideLayers_tab 1
-					layers_ro.hideLayers_lb.items = deleteItem layers_ro.hideLayers_lb.items 1
+					this.layers_ro.hideLayers_lb.items = deleteItem this.layers_ro.hideLayers_lb.items 1
 				)catch()
 			)
 		)	
@@ -370,28 +372,27 @@ version:0.909
 
 		on useHDRIMap_chb set state do 
 		(
-			print "use hdri triggered"
-			hdriMap_ro.hdriMap_btn.enabled = state
-			hdriMap_ro.hdriMapLink_lbl.enabled = state
+			this.hdriMap_ro.hdriMap_btn.enabled = state
+			this.hdriMap_ro.hdriMapLink_lbl.enabled = state
 			
 			if state == false then
 			(
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+				try(this.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 				hdriMapLinkStatus = "Not Used"
-				hdriMapLink_lbl = "Not Used"
+				this.hdriMapLink_lbl = "Not Used"
 			)
 			else
 			(
 				this.checkHDRIconnection()				
 			)
 			
-			hdriMap_ro.hdriMapLink_btn.enabled = state
-			hdriMap_ro.hdriMapEdit_btn.enabled = state
-			hdriMap_ro.hdriMapOffset_sp.enabled = state
-			hdriMap_ro.hdriMapGIMult_sp.enabled = state
-			hdriMap_ro.hdriMapReflMult_sp.enabled = state
-			hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+			this.hdriMap_ro.hdriMapLink_btn.enabled = state
+			this.hdriMap_ro.hdriMapEdit_btn.enabled = state
+			this.hdriMap_ro.hdriMapOffset_sp.enabled = state
+			this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
+			this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
+			this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
 		)
 
 		on hdriMap_btn set val do
@@ -400,18 +401,18 @@ version:0.909
 			(
 				hdriMap_btn = val
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
-				hdriMap_ro.hdriMapLinkStatus = "Not Linked"
-				hdriMap_ro.hdriMapLink_lbl.text = "Not Linked"
+				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
+				hdriMapLinkStatus = "Not Linked"
+				hdriMapLink_lbl = "Not Linked"
 				
 			)
 			else
 			(
 				hdriMap_btn = undefined
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-				hdriMap_ro.hdriMapLinkStatus = "Not Linked"
-				hdriMap_ro.hdriMapLink_lbl.text = "Not Linked"
+				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+				hdriMapLinkStatus = "Not Linked"
+				hdriMapLink_lbl = "Not Linked"
 			)
 		)
 		
@@ -461,22 +462,21 @@ version:0.909
 						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#Submitter_Attributes].'hdriMapOffset_sp') 360 )/360.0"
 						m.cropplace_u.controller.script = scriptstring
 						
-						try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
+						try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
 						hdriMapLinkStatus = "Linked"
 						hdriMapLink_lbl = "Linked"
 					)
 					else
 					(
 						MessageBox ("The map is not a VrayHDRI map.")
-						try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+						try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 						hdriMapLinkStatus = "Not Linked"
 						hdriMapLink_lbl = "Not Linked"
 					)
 				)
 				else
 				(
-					Messagebox ("No Suns")
-					try(hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+					try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 					hdriMapLinkStatus = "Not Used"
 					hdriMapLink_lbl = "Not Used"
 				)
@@ -551,34 +551,6 @@ version:0.909
 				unregisterRedrawViewsCallback gwDisplay
 			)
 		)
-		
--- 		on viewFromSun_btn pressed do
--- 		(
--- 			if ((getVraySunInScene()) != undefined) then
--- 			(
--- 				viewport.setCamera (getVraySunInScene())
--- 			)
--- 		)
--- 		
--- 		on readSunPos_btn pressed do
--- 		(
--- 			if ((getVraySunInScene()) != undefined) then
--- 			(
--- 				local sun = getVraySunInScene()
--- 				sP_txt.text = sun.position as string
--- 				sT_txt.text = sun.target.position as string
--- 			)
--- 		)
--- 		
--- 		on moveSunToPos_btn pressed do
--- 		(
--- 			if ((getVraySunInScene()) != undefined) then
--- 			(
--- 				local sun = getVraySunInScene()
--- 				sun.pos = (execute sP_txt.text)
--- 				sun.target.pos = (execute sT_txt.text)
--- 			)
--- 		)
 		
 		on createSunPoint_btn pressed do
 		(
@@ -662,7 +634,7 @@ version:0.909
 		on hdriMap_ro open do
 		(
 			hdriMapLink_lbl.TextAlign = (dotnetclass "System.Drawing.ContentAlignment").MiddleCenter
-			checkHDRIconnection()
+			this.checkHDRIconnection()
 		)
 		
 		on hdriMapOffset_sp changed n do
