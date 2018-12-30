@@ -155,17 +155,25 @@ Icon:#("Lights",7)
 		(
 			result = #()
 			mapkeys obj (fn CollectKeys t k = (append k t; t)) (keys=#()) #allkeys
-			--resultCam =  #(amin keys, amax keys)
-			--print resultCam
+
 			if obj.target != undefined then
 			(
 				mapkeys obj.target (fn CollectKeys t k = (append k t; t)) (keys2=#()) #allkeys
-				--result = join keys keys2
 				result =  #(amin (join keys keys2) , amax (join keys keys2))
 			)
-			else result =  #(amin keys, amax keys)
-			if result[1] == undefined or result[2] == undefined then return undefined
-			else return result
+			else 
+			(
+				result =  #(amin keys, amax keys)
+			)
+			
+			if result[1] == undefined or result[2] == undefined then 
+			(
+				return undefined
+			)
+			else
+			(
+				return result
+			)
 		)
 		else return undefined
 	)
@@ -333,6 +341,7 @@ Icon:#("Lights",7)
 			
 			-- Light Name
 			local isUsingEdittextOffset = 0
+			local dDownOffset = 0
 			
 			--NAME FIELD
 			if vrayMCLister.cameraIndex[vrayMCLister.count].count == 1 then
@@ -343,7 +352,7 @@ Icon:#("Lights",7)
 
 				isUsingEdittextOffset = 4
 			)
-			else
+			else 
 			(
 				theNames = for j in vrayMCLister.cameraIndex[vrayMCLister.count] collect j.name
 				sort theNames
@@ -356,7 +365,8 @@ Icon:#("Lights",7)
 				)
 				append namelist ")"
 				vrayMCLister.maxCamerasRC.addControl #dropDownList (("LightName" + vrayMCLister.count as string) as name) "" filter:on\
-					paramStr:(" items:" + NameList + " width:120 offset:[27,"+ (-21+ vrayMCLister.yOffset) as string + "] ")
+					paramStr:(" items:" + NameList + " width:116 offset:[44,"+ (-26+ vrayMCLister.yOffset) as string + "] height:20")
+				dDownOffset = -1
 			)
 			
 			append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("LightName" + vrayMCLister.count as string) as name)
@@ -373,7 +383,7 @@ Icon:#("Lights",7)
 				local wrappedName = wrapString subAttribute.name
 				
 				-- First Frame
-				vrayMCLister.maxCamerasRC.addControl #spinner (("FirstFrameName" + vrayMCLister.count as string) as name) "" paramStr:(" type:#integer range:[-1000000,1000000," + sA_firstFrame + "] align:#left width:57 offset:["+(framesX) as string+","+ (-24+ vrayMCLister.yOffset) as string + "] height:21")
+				vrayMCLister.maxCamerasRC.addControl #spinner (("FirstFrameName" + vrayMCLister.count as string) as name) "" paramStr:(" type:#integer range:[-1000000,1000000," + sA_firstFrame + "] align:#left width:57 offset:["+(framesX) as string+","+ (-24+ dDownOffset+vrayMCLister.yOffset) as string + "] height:21")
  				vrayMCLister.maxCamerasRC.addHandler (("FirstFrameName" + vrayMCLister.count as string) as name) #'changed n' filter:on 	codeStr:("if (n > vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp) then (n = vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].lastFrame_sp);vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes].firstFrame_sp = n;FirstFrameName" + (vrayMCLister.count as string)+".value = n")
  				
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("FirstFrameName" + vrayMCLister.count as string) as name)
@@ -392,6 +402,7 @@ Icon:#("Lights",7)
 				
 				--Workaround with clearselection(), if the object is selected and another non-selected option is toggled the selected object's properties change, but this is only a dislay isses, the toggled object's property is actually set
 				
+
 				------------------------------
 				--LAYERS--
 				------------------------------
@@ -401,17 +412,17 @@ Icon:#("Lights",7)
 					vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #useHideLayers_chb state;
 					vrayMCLister.CameraInspectorListRollout.clearLayers"+vrayMCLister.count as string+".enabled = state; 
 					vrayMCLister.CameraInspectorListRollout.AddHidden"+vrayMCLister.count as string+".enabled = state; 
-					prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+					try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("useHideLayers" + vrayMCLister.count as string) as name)
 				
 				--clearAll
 				vrayMCLister.maxCamerasRC.addControl #checkbutton (("clearLayers" + vrayMCLister.count as string) as name) "Clear All" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHideLayers_chb) as string + " offset:["+(layersX+45) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:50 height:21 ")
-				vrayMCLister.maxCamerasRC.addHandler (("clearLayers" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #clearLayers_btn state;"+("clearLayers" + vrayMCLister.count as string)+".checked = false;prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+				vrayMCLister.maxCamerasRC.addHandler (("clearLayers" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #clearLayers_btn state;"+("clearLayers" + vrayMCLister.count as string)+".checked = false;try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("clearLayers" + vrayMCLister.count as string) as name)
 				
 				--addHiddenLayers addLayers_btn
 				vrayMCLister.maxCamerasRC.addControl #checkbutton (("AddHidden" + vrayMCLister.count as string) as name) "Add Hidden" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHideLayers_chb) as string + " offset:["+(layersX+105) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:60 height:21 ")
-				vrayMCLister.maxCamerasRC.addHandler (("AddHidden" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #addLayers_btn state;"+("AddHidden" + vrayMCLister.count as string)+".checked = false;prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+				vrayMCLister.maxCamerasRC.addHandler (("AddHidden" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #addLayers_btn state;"+("AddHidden" + vrayMCLister.count as string)+".checked = false;try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("AddHidden" + vrayMCLister.count as string) as name)
 				
 
@@ -425,7 +436,7 @@ Icon:#("Lights",7)
 					vrayMCLister.CameraInspectorListRollout.showSunpoints"+vrayMCLister.count as string+".enabled = state; 
 					vrayMCLister.CameraInspectorListRollout.getSunpoints"+vrayMCLister.count as string+".enabled = state; 
 					vrayMCLister.CameraInspectorListRollout.moveSun"+vrayMCLister.count as string+".enabled = state; 
-					prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+					try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("useSunpoints" + vrayMCLister.count as string) as name)
 				
 				--showSunpoints
@@ -450,7 +461,7 @@ Icon:#("Lights",7)
 					vrayMCLister.CameraInspectorListRollout.WidthName"+vrayMCLister.count as string+".enabled = state;
 					vrayMCLister.CameraInspectorListRollout.HeightName"+vrayMCLister.count as string+".enabled = state;
 					vrayMCLister.CameraInspectorListRollout.getResolution"+vrayMCLister.count as string+".enabled = state;
-					prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+					try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("useResolution" + vrayMCLister.count as string) as name)
 								
@@ -478,7 +489,7 @@ Icon:#("Lights",7)
 					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".enabled = state; 
 					vrayMCLister.CameraInspectorListRollout.linkToSun"+vrayMCLister.count as string+".enabled = state; 
 					vrayMCLister.CameraInspectorListRollout.editMap"+vrayMCLister.count as string+".enabled = state; 
-					prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+					try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				
 				append vrayMCLister.UIControlList[2][vrayMCLister.Count] (("useHDRI" + vrayMCLister.count as string) as name)
 				
@@ -486,7 +497,7 @@ Icon:#("Lights",7)
 				vrayMCLister.maxCamerasRC.addControl #mapbutton (("hdriMap" + vrayMCLister.count as string) as name) (if (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #hdriMap_btn) != undefined then ((classof (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #hdriMap_btn)) as string)else("None")) paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHDRIMap_chb) as string + " offset:["+(hdriX+45) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:60 height:21 ")
 				vrayMCLister.maxCamerasRC.addHandler (("hdriMap" + vrayMCLister.count as string) as name) #'picked val' filter:on codeStr:(" 
 					vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#Submitter_Attributes] #hdriMap_btn val;
-					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".caption = (if (classof val) != VRayHDRI then (\"None\") else ((classof val) as string));prevSel = $;clearselection(); if prevSel != undefined then select prevSel")
+					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".caption = (if (classof val) != VRayHDRI then (\"None\") else ((classof val) as string));try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				
 				--Link to Sun
 				vrayMCLister.maxCamerasRC.addControl #checkbutton (("linkToSun" + vrayMCLister.count as string) as name) "Link" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#Submitter_Attributes] #useHDRIMap_chb) as string + " offset:["+(hdriX + 110) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")

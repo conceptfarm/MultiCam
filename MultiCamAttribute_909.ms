@@ -307,7 +307,6 @@ version:0.909
 		
 		on addLayers_btn set val do
 		(
-			print val
 			if val == true then
 			(
 				hideLayers_tab = #()
@@ -378,9 +377,9 @@ version:0.909
 			if state == false then
 			(
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
+				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
 				hdriMapLinkStatus = "Not Used"
-				this.hdriMapLink_lbl = "Not Used"
+				hdriMapLink_lbl = "Not Used"
 			)
 			else
 			(
@@ -399,11 +398,13 @@ version:0.909
 		(
 			if (classof val == VRayHDRI) then
 			(
+				print ("val is " + val as string)
 				hdriMap_btn = val
 				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
 				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
 				hdriMapLinkStatus = "Not Linked"
 				hdriMapLink_lbl = "Not Linked"
+				print "end hdriMap btn"
 				
 			)
 			else
@@ -883,36 +884,38 @@ version:0.909
 -- 	
  	on attachedToNode this do
  	(
-		result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == SubmitterAttributes) collect i
-		print result.count
-		if (result.count > 1 and multiCamUsable == true) then 
-		(
-			local qb = QueryBox "There are more than one MultiCam Attribute added to this object.\nOverwrite?\nYES - Delete old replace with new\nNO - Do not add the new modifier, leave as is."
-			if qb == true then
+ 		if this != undefined then
+ 		(
+			result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == SubmitterAttributes) collect i
+			if (result.count > 1 and multiCamUsable == true) then 
 			(
-				for i = result.count to 2 by -1 do
+				local qb = QueryBox "There are more than one MultiCam Attribute added to this object.\nOverwrite?\nYES - Delete old replace with new\nNO - Do not add the new modifier, leave as is."
+				if qb == true then
 				(
-					print ("false - deleting " + i as string)
-					deleteModifier this (result[i])
+					for i = result.count to 2 by -1 do
+					(
+						print ("false - deleting " + i as string)
+						deleteModifier this (result[i])
+					)
+				)
+				else 
+				(
+					for i = result.count - 1 to 1 by -1 do
+					(
+						print ("true - deleting " + i as string)
+						deleteModifier this (result[i])
+					)
 				)
 			)
-			else 
+			else if (result.count >= 1 and multiCamUsable == false) then
 			(
-				for i = result.count - 1 to 1 by -1 do
+				MessageBox ("MultiCam script is not loaded properly, MultiCam Attribute cannot be created.\nCheck MAXScript Listener.")
+				for i = result.count to 1 by -1 do
 				(
-					print ("true - deleting " + i as string)
-					deleteModifier this (result[i])
+					print ("no good to go - deleting " + i as string)
+					--deleteModifier this i
+					this.modifiers[result[i]].enabled = false
 				)
-			)
-		)
-		else if (result.count >= 1 and multiCamUsable == false) then
-		(
-			MessageBox ("MultiCam script is not loaded properly, MultiCam Attribute cannot be created.\nCheck MAXScript Listener.")
-			for i = result.count to 1 by -1 do
-			(
-				print ("no good to go - deleting " + i as string)
-				--deleteModifier this i
-				this.modifiers[result[i]].enabled = false
 			)
 		)
  	)	

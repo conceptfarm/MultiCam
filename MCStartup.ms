@@ -42,7 +42,7 @@ fn checkMacro macro =
 						if (c==true) then 
 						(
 							print ("INFO: Update to "+macro+" is successful, loading new macro")
-							try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+							try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 						) 
 						else
 						(
@@ -53,14 +53,14 @@ fn checkMacro macro =
 					else
 					(
 						print ("ERROR: Failed to delete local macro "+macro+". Update failed, loading local.")
-						try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+						try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 					)
 					
 				)
 				else
 				(
 					print ("ERROR: Update to macro "+macro+" failed, scripts directory is not writable. Loading local.")
-					try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+					try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 				)
 			)
 			else
@@ -68,13 +68,13 @@ fn checkMacro macro =
 				print ("INFO: Last update to local script "+macro+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(localScript) ).ticks)) as string)
 				print ("INFO: Last update to remote script "+macro+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(remoteScript) ).ticks)) as string)
 				print ("INFO: No update for macro "+macro+" is available, loading local.")
-				try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+				try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 			)
 		)
 		else
 		(
 			print ("INFO: No remote file for macro "+macro+" found. Loading local.")
-			try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+			try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 		)
 	)
 	else
@@ -90,11 +90,11 @@ fn checkMacro macro =
 				if (c==true) then 
 				(
 					print ("INFO: Copied macro "+macro+" to local location, loading new macro.")
-					try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed for some reason.");false)
+					try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
 				)
 				else
 				( 
-					print ("ERROR: Copy of macro "+macro+" failed for some reason.")
+					print ("ERROR: Copy of macro "+macro+" failed, error in script.")
 					false
 				)
 			)
@@ -128,4 +128,5 @@ else
 	print ("INFO: MultiCamLister usable is: " + MCL as string)
 	print ("INFO: MultiCamAttribute usable is: " + MCA as string)
 	print ("INFO: MultiCamSubmitter usable is: " + MCS as string)
+	MessageBox ("MulticCam is not usable, check MAXScript Listener.")
 )
