@@ -707,7 +707,7 @@ buttontext:"v.902"
 	------------------------------------
 	fn moveSunToPoint = 
 	(
-		allMods = for m in currentCamera.modifiers where (classof m == SubmitterAttributes) collect m
+		allMods = for m in currentCamera.modifiers where (classof m == MultiCamAttribute) collect m
 
 		if (allMods.count > 0)then
 		(
@@ -730,7 +730,7 @@ buttontext:"v.902"
 	(
 		begframe = endframe = undefined
 		
-		allMods = for m in c.modifiers where (classof m == SubmitterAttributes) collect m
+		allMods = for m in c.modifiers where (classof m == MultiCamAttribute) collect m
 		print("allmods count is: " + allmods.count as string)
 		
 		if (allMods.count > 0 and OverrideSingleFrame == false )then
@@ -2645,7 +2645,7 @@ buttontext:"v.902"
 --########################--
 	
 
-	rollout multiCam_floater "Ilya's Submitter v.902" width:570 height:625
+	rollout multiCam_floater "MultiCam Submitter v.902" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
