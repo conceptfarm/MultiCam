@@ -418,7 +418,7 @@ buttontext:"v.902"
 	
 	fn AddCallbackLatest denoise:true =
 	(
-		makedir (rootnode.CA_frameOutput + "Latest")
+		makedir (rootnode.CA_frameOutput + "\\" + "Latest")
 			
 		local outputFile = ""
 		
@@ -432,14 +432,14 @@ buttontext:"v.902"
 		)
 		
 		--outFileRGB = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
-		outFileRGB = rootnode.CA_frameOutput + "Latest" + "\\" + getFilenameFile outputFile + ".jpg"
-		
+		outFileRGB = rootnode.CA_frameOutput + "\\" +"Latest" + "\\" + getFilenameFile outputFile + ".jpg"
+		print ("latest2 callback dir " + outFileRGB)
 		tempFile = (getDir #downloads)+ "\\Temp_.jpg"					
 		
 		local setChannel = ""
 		if not denoise then (setChannel = "vfbControl #setchannel 0;")
 		
-		a = "vfbControl #srgb true;"+setChannel+";vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
+		a = "vfbControl #srgb true;"+setChannel+"vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
 		--a = "vfbControl #srgb true; vfbControl #setchannel 0; vfbControl #rgb true; vfbControl #saveimage \"" + tempFile +"\"; tempb = openBitMap \"" + tempFile +"\"; newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile  \"" + tempFile +"\""
 		callbacks.addscript #postRender a persistent:true id:#copyLatest_callback
 	)
@@ -2649,9 +2649,10 @@ buttontext:"v.902"
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
-	editText jobPrefix_txt "" pos:[88,16] width:100
-	label FileExtension "Extension:" pos:[220,18] 
-	dropDownList extSelection "" pos:[280,14] width:57 height:21 selection: rootnode.CA_extensionType items:extensionsList
+	editText jobPrefix_txt "" pos:[88,16] width:155
+	label FileExtension "Extension:" pos:[280,18] 
+	dropDownList extSelection "" pos:[340,14] width:57 height:21 selection: rootnode.CA_extensionType items:extensionsList
+	button MLCLister_btn "Open MultiCam Lister" pos:[425,14] width:123 height:21
 	
 	local groupWidth = 538
 	local buttonSpace = 8
@@ -2998,6 +2999,11 @@ buttontext:"v.902"
 			rootnode.CA_extensionType = i
 		)
 		print ("Extension is " + rootnode.CA_extension)
+	)
+
+	on MLCLister_btn pressed do
+	(
+		macros.run "ilya_s Scripts" "MultiCamLister"
 	)
 	
 	on camSelection selected i do
