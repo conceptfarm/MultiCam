@@ -112,10 +112,30 @@ fn checkMacro macro =
 	)
 )
 
+fn addMCCallbacks = 
+(
+	result = false
+	preRend = callbacks.addScript #preRender ("enableSceneRedraw(); global hideCatCams = hideByCategory.cameras; hideByCategory.cameras = true;completeRedraw()") id:#MCPrerender
+	postRend = callbacks.addScript #postRender("hideByCategory.cameras = hideCatCams;") id:#MCPostrender
+	
+	print ("--------------- Info for MultiCam Callbacks ---------------")
+	print ("INFO: MultiCam preRender callback is " + preRend as string )
+	print ("INFO: MultiCam postRender callback is " + postRend as string)
+
+	if (preRend == OK and postRend == OK) then
+	(
+		result = true
+	)
+	
+	return result
+)
+
 MCA = checkMacro "MultiCamAttribute"
 MCL = checkMacro "MultiCamLister"
 MCS = checkMacro "MultiCamSubmitter"
-if (MCL == true and MCA == true and MCS == true) then
+MCCB = addMCCallbacks()
+
+if (MCL == true and MCA == true and MCS == true and MCCB == true) then
 (
 	multiCamUsable = true
 	print ("--------------- Info for MultiCam Suite ---------------")
@@ -130,3 +150,5 @@ else
 	print ("INFO: MultiCamSubmitter usable is: " + MCS as string)
 	MessageBox ("MulticCam is not usable, check MAXScript Listener.")
 )
+--callbacks.removeScripts id:#MCPrerender
+--callbacks.show #preRender 

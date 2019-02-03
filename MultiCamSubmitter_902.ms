@@ -1237,9 +1237,9 @@ buttontext:"v.902"
 		vrayRend.output_saveFile = true
 		vrayRend.output_splitRGB = true
 		vrayRend.output_splitAlpha = false
-		vrayRend.output_splitfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
+		vrayRend.output_splitfilename = rootnode.CA_frameOutput + "\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		mybitmap = bitmap 320 240 color:white gamma: 0.454545
-		mybitmap.filename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
+		mybitmap.filename = rootnode.CA_frameOutput + "\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		save mybitmap
 		vrayRend.output_splitbitmap = mybitmap
 		close mybitmap
@@ -2097,6 +2097,9 @@ buttontext:"v.902"
 	fn FA_flythrough_fn = 
 	(	
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2104,11 +2107,14 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-					
+
+			redrawViews()
+		
 			fly_settings begframe endframe i
 
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_flythrough_fn	
@@ -2117,6 +2123,9 @@ buttontext:"v.902"
 	fn FA_single_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2124,11 +2133,14 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-						
+
+			redrawViews()
+		
 			single_settings begframe endframe
 
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_single_fn	
@@ -2137,6 +2149,9 @@ buttontext:"v.902"
 	fn FA_nogi_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2144,10 +2159,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-					
+
+			redrawViews()
+	
 			nogi_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_nogi_fn	
@@ -2156,6 +2174,9 @@ buttontext:"v.902"
 	fn FA_as_is_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2163,10 +2184,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-							
+
+			redrawViews()
+				
 			as_is_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_as_is_fn
@@ -2175,6 +2199,9 @@ buttontext:"v.902"
 	fn FA_VDR_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2182,10 +2209,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-							
+
+			redrawViews()
+			
 			vdr_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_as_is_fn
@@ -2206,6 +2236,7 @@ buttontext:"v.902"
 				currentCameraName = sceneCams[i].name as string
 				currentCamera = sceneCams[i]
 				viewport.setCamera currentCamera
+
 				parseRangeFile currentCamera
 				if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName); preview_jpg())
 				else if (rootnode.CA_previewOutputExt == ".mov") then 
@@ -2251,6 +2282,9 @@ buttontext:"v.902"
 	fn FA_animated_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2258,10 +2292,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-							
+
+			redrawViews()
+			
 			animated_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function FA_as_is_fn
@@ -2269,6 +2306,9 @@ buttontext:"v.902"
 	fn FA_bruteForce_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2276,10 +2316,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-							
+
+			redrawViews()
+				
 			bruteForce_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2287,6 +2330,9 @@ buttontext:"v.902"
 	fn FA_bruteForceSphere_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2294,10 +2340,13 @@ buttontext:"v.902"
 			parseRangeFile currentCamera
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
-							
+
+			redrawViews()
+				
 			bruteForceSphere_settings begframe endframe
 		)--end for
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2309,6 +2358,9 @@ buttontext:"v.902"
 	fn SA_flythrough_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2320,7 +2372,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					fly_settings begframe endframe 1
 				)
 			)
@@ -2333,6 +2387,7 @@ buttontext:"v.902"
 			fly_settings begframe endframe 1
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_flythrough_fn	
@@ -2341,6 +2396,9 @@ buttontext:"v.902"
 	fn SA_single_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2352,7 +2410,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					single_settings begframe endframe
 				)
 			)
@@ -2365,6 +2425,7 @@ buttontext:"v.902"
 			single_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_single_fn	
@@ -2373,6 +2434,9 @@ buttontext:"v.902"
 	fn SA_nogi_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2384,7 +2448,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					nogi_settings begframe endframe		
 				)
 			)
@@ -2397,6 +2463,7 @@ buttontext:"v.902"
 			nogi_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_nogi_fn	
@@ -2405,6 +2472,9 @@ buttontext:"v.902"
 	fn SA_as_is_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2416,7 +2486,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					as_is_settings begframe endframe 
 				)
 			)
@@ -2429,6 +2501,7 @@ buttontext:"v.902"
 			as_is_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2437,6 +2510,9 @@ buttontext:"v.902"
 	fn SA_VDR_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2448,7 +2524,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					vdr_settings begframe endframe			
 				)
 			)
@@ -2461,6 +2539,7 @@ buttontext:"v.902"
 			vdr_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2469,6 +2548,9 @@ buttontext:"v.902"
 	fn SA_animated_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2480,7 +2562,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					animated_settings begframe endframe			
 				)
 			)
@@ -2493,6 +2577,7 @@ buttontext:"v.902"
 			animated_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2518,7 +2603,7 @@ buttontext:"v.902"
 						currentCamera = (getnodebyname currentCameraName)
 						parseRangeFile currentCamera
 						viewport.setCamera currentCamera
-						
+
 						if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) ; preview_jpg())
 						else if (rootnode.CA_previewOutputExt == ".mov") then 
 						(
@@ -2580,6 +2665,9 @@ buttontext:"v.902"
 	fn SA_bruteForce_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2591,7 +2679,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					bruteForce_settings begframe endframe	
 				)
 			)
@@ -2605,6 +2695,7 @@ buttontext:"v.902"
 			bruteForce_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -2612,6 +2703,9 @@ buttontext:"v.902"
 	fn SA_bruteForceSphere_fn = 
 	(
 		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2623,7 +2717,9 @@ buttontext:"v.902"
 					parseRangeFile currentCamera
 					moveSuntoPoint()
 					viewport.setCamera currentCamera
-					
+
+					redrawViews()
+
 					bruteForceSphere_settings begframe endframe			
 				)
 			)
@@ -2636,6 +2732,7 @@ buttontext:"v.902"
 			bruteForceSphere_settings begframe endframe
 		)
 		setOldRPS()
+		hideByCategory.cameras = hideCatCams
 		destroydialog multiCam_floater
 		setSaveRequired true
 	)--end function SA_as_is_fn
@@ -3037,6 +3134,7 @@ buttontext:"v.902"
 		(
 			currentCamera = getnodebyname sceneCamsNames_array[i]
 			viewport.setCamera currentCamera
+
 			currentCameraName = sceneCamsNames_array[i] as string
 			print ("Current camera is " + currentCameraName)
 			parseRangeFile currentCamera
