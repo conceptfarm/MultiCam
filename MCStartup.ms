@@ -5,9 +5,31 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
-multiCamRepo = @"C:\temp\Repo\"
---multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+--multiCamRepo = @"C:\temp\Repo\"
+multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 multiCamUsable = false
+
+fn checkMacroLocalDir = 
+(
+	local result = false
+	local localDir = (getDir #scripts + "\\MultiCam\\")
+	if doesFileExist localDir != true then
+	(
+		local md = makeDir localDir
+		if md == true then
+		(
+			print ("INFO: Created MultiCam directory in " + localDir)
+			result = true
+		)
+		else (result = false)
+	)
+	else
+	(
+		print ("INFO: Directory MultiCam is already existing.")
+		result = true
+	)
+	return result
+)
 
 fn checkMacro macro =
 (
@@ -87,7 +109,7 @@ fn checkMacro macro =
 			(
 				print ("INFO: Local scripts directory is writable.")
 				c = copyFile remoteScript localScript
-				if (c==true) then 
+				if (c == true) then 
 				(
 					print ("INFO: Copied macro "+macro+" to local location, loading new macro.")
 					try(execute (openfile localScript);print("INFO: Loaded macro "+macro+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
@@ -129,13 +151,13 @@ fn addMCCallbacks =
 	
 	return result
 )
-
+MD = checkMacroLocalDir()
 MCA = checkMacro "MultiCamAttribute"
 MCL = checkMacro "MultiCamLister"
 MCS = checkMacro "MultiCamSubmitter"
 MCCB = addMCCallbacks()
 
-if (MCL == true and MCA == true and MCS == true and MCCB == true) then
+if (MCL == true and MCA == true and MCS == true and MCCB == true and MD == true) then
 (
 	multiCamUsable = true
 	print ("--------------- Info for MultiCam Suite ---------------")
