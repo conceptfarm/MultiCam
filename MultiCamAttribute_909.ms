@@ -1,5 +1,12 @@
-plugin modifier SubmitterAttributes
-name:"Submitter Attributes"
+-------------------------------------------------------------------------------
+-- MultiCamAttribute_909.ms
+-- By Ilya Floussov (ilya@conceptfarm.ca)
+-- Dec 16th 2018
+-- A modifier that is added to the camera, and specifies various setting for the
+-- render job submission.
+-------------------------------------------------------------------------------
+plugin modifier MultiCamAttribute
+name:"MultiCam Attribute"
 category:"ilya_s Scripts"
 classID:#(685321,452281)
 extends:EmptyModifier
@@ -191,10 +198,10 @@ version:0.909
 		customPass_txt type:#string animatable:false ui:customPass_txt default:""
 		on main reload do 
 		(
-			--allMods = for m in $.modifiers where (classof m == SubmitterAttributes) collect m
+			--allMods = for m in $.modifiers where (classof m == MultiCamAttribute) collect m
 			passNames = #("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z")
 			allMods = #()
-			for m in $.modifiers where (classof m == SubmitterAttributes) do
+			for m in $.modifiers where (classof m == MultiCamAttribute) do
 			(
 				append allMods m
 			)
@@ -460,7 +467,7 @@ version:0.909
 						m.cropplace_u.controller.addNode "offset" (refs.dependentNodes saModifier)[1]
 						
 						--issue: when copy and pasted the link will be broken
-						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#Submitter_Attributes].'hdriMapOffset_sp') 360 )/360.0"
+						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#MultiCam_Attribute].'hdriMapOffset_sp') 360 )/360.0"
 						m.cropplace_u.controller.script = scriptstring
 						
 						try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
@@ -852,7 +859,7 @@ version:0.909
 							m.cropplace_u.controller.addNode "offset" (refs.dependentNodes this)[1] --$
 							
 							--issue: when copy and pasted the link will be broken
-							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#Submitter_Attributes].'hdriMapOffset_sp') 360 )/360.0"
+							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#MultiCam_Attribute].'hdriMapOffset_sp') 360 )/360.0"
 							m.cropplace_u.controller.script = scriptstring
 						)
 						else if (allSuns.count > 1) then (MessageBox ("RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!"))
@@ -886,7 +893,7 @@ version:0.909
  	(
  		if this != undefined then
  		(
-			result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == SubmitterAttributes) collect i
+			result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == MultiCamAttribute) collect i
 			if (result.count > 1 and multiCamUsable == true) then 
 			(
 				local qb = QueryBox "There are more than one MultiCam Attribute added to this object.\nOverwrite?\nYES - Delete old replace with new\nNO - Do not add the new modifier, leave as is."
