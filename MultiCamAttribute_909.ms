@@ -101,12 +101,9 @@ version:0.909
 		(
 			result = #()
 			mapkeys obj (fn CollectKeys t k = (append k t; t)) (keys=#()) #allkeys
-			--resultCam =  #(amin keys, amax keys)
-			--print resultCam
 			if obj.target != undefined then
 			(
 				mapkeys obj.target (fn CollectKeys t k = (append k t; t)) (keys2=#()) #allkeys
-				--result = join keys keys2
 				result =  #(amin (join keys keys2) , amax (join keys keys2))
 			)
 			else result =  #(amin keys, amax keys)
@@ -148,8 +145,7 @@ version:0.909
 	(
 		this.hdriMap_ro.useHDRIMap_chb.checked = state
 		this.hdriMap_ro.hdriMap_btn.enabled = state
-		this.hdriMap_ro.hdriMapLink_lbl.enabled = state
-		this.hdriMap_ro.hdriMapLink_btn.enabled = state
+		this.hdriMap_ro.hdriMapLink_chb.enabled = state
 		this.hdriMap_ro.hdriMapEdit_btn.enabled = state
 		this.hdriMap_ro.hdriMapOffset_sp.enabled = state
 		this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
@@ -160,32 +156,20 @@ version:0.909
 	
 	fn checkHDRIconnection =
 	(
-		if (this.hdriMap_btn != undefined and this.hdriMap_btn.cropplace_u.controller != undefined and this.hdriMap_ro.hdriMap_btn.enabled == true) then
+		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script and this.hdriMap_ro.hdriMap_btn.enabled == true) then
 		(
 			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
 			(
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
-				this.hdriMapLinkStatus = "Not Linked"
-				this.hdriMapLink_lbl = "Not Linked"
-				
+				this.hdriMapLink_chb = false
 			)
 			else
 			(
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
-				this.hdriMapLinkStatus = "Linked"
-				this.hdriMapLink_lbl = "Linked"
-				
+				this.hdriMapLink_chb = true
 			)
 		)
 		else
 		(
-			--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-			try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-			this.hdriMapLinkStatus = "Not Used"
-			this.hdriMapLink_lbl = "Not Used"
-			
+			this.hdriMapLink_chb = false	
 		)
 	)
 	
@@ -195,7 +179,7 @@ version:0.909
 	
 	parameters main rollout:params
 	(
-		customPass_txt type:#string animatable:false ui:customPass_txt default:""
+		--customPass_txt type:#string animatable:false ui:customPass_txt default:""
 		on main reload do 
 		(
 			--allMods = for m in $.modifiers where (classof m == MultiCamAttribute) collect m
@@ -208,7 +192,7 @@ version:0.909
 			
 			for i = 1 to allMods.count do
 			(
-				allMods[i].customPass_txt.text = passNames[i]
+				--allMods[i].customPass_txt.text = passNames[i]
 			)
 		)
 	)
@@ -367,9 +351,7 @@ version:0.909
 		--HDRI MAP
 		useHDRIMap_chb type:#boolean animatable:false ui:useHDRIMap_chb default:false
 		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn
-		hdriMapLinkStatus type:#string animatable:false default:"Not Linked" --ui:hdriMapLink_lbl
-		hdriMapLink_lbl type:#string animatable:false ui:hdriMapLink_lbl
-		hdriMapLink_btn type:#boolean animatable:false ui:hdriMapLink_btn default:false
+		hdriMapLink_chb type:#boolean animatable:false ui:hdriMapLink_chb default:false
 		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
 		hdriMapOffset_sp type:#float animatable:true ui:hdriMapOffset_sp default:0.0
 		hdriMapGIMult_sp type:#float animatable:false ui:hdriMapGIMult_sp default:1.0
@@ -379,21 +361,8 @@ version:0.909
 		on useHDRIMap_chb set state do 
 		(
 			this.hdriMap_ro.hdriMap_btn.enabled = state
-			this.hdriMap_ro.hdriMapLink_lbl.enabled = state
-			
-			if state == false then
-			(
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-				hdriMapLinkStatus = "Not Used"
-				hdriMapLink_lbl = "Not Used"
-			)
-			else
-			(
-				this.checkHDRIconnection()				
-			)
-			
-			this.hdriMap_ro.hdriMapLink_btn.enabled = state
+			this.checkHDRIconnection()				
+			this.hdriMap_ro.hdriMapLink_chb.enabled = state
 			this.hdriMap_ro.hdriMapEdit_btn.enabled = state
 			this.hdriMap_ro.hdriMapOffset_sp.enabled = state
 			this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
@@ -406,21 +375,11 @@ version:0.909
 			if (classof val == VRayHDRI) then
 			(
 				print ("val is " + val as string)
-				hdriMap_btn = val
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Red)catch()
-				hdriMapLinkStatus = "Not Linked"
-				hdriMapLink_lbl = "Not Linked"
-				print "end hdriMap btn"
-				
+				hdriMap_btn = val				
 			)
 			else
 			(
 				hdriMap_btn = undefined
-				--workaround: maxscript doesnt know that this variable is a dotnetobject on initial run
-				try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-				hdriMapLinkStatus = "Not Linked"
-				hdriMapLink_lbl = "Not Linked"
 			)
 		)
 		
@@ -442,7 +401,7 @@ version:0.909
 		)
 
 
-		on hdriMapLink_btn set val do
+		on hdriMapLink_chb set val do
 		(
 			if val == true then
 			(	
@@ -470,26 +429,28 @@ version:0.909
 						scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#MultiCam_Attribute].'hdriMapOffset_sp') 360 )/360.0"
 						m.cropplace_u.controller.script = scriptstring
 						
-						try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Green)catch()
-						hdriMapLinkStatus = "Linked"
-						hdriMapLink_lbl = "Linked"
+						hdriMapLink_chb = true
 					)
 					else
 					(
 						MessageBox ("The map is not a VrayHDRI map.")
-						try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-						hdriMapLinkStatus = "Not Linked"
-						hdriMapLink_lbl = "Not Linked"
+						hdriMapLink_chb = false
 					)
 				)
 				else
 				(
-					try(this.hdriMap_ro.hdriMapLink_lbl.Backcolor = (dotnetclass "System.Drawing.Color").Gray)catch()
-					hdriMapLinkStatus = "Not Used"
-					hdriMapLink_lbl = "Not Used"
+					hdriMapLink_chb = false
+
+				)
+			)
+			else
+			(
+				if (hdriMap_btn != undefined) then
+				(
+					hdriMap_btn.cropplace_u.controller = Bezier_Float()
 				)
 
-				hdriMapLink_btn = false
+				hdriMapLink_chb = false
 			)
 		)
 	)
@@ -513,7 +474,7 @@ version:0.909
 	(
 		button openSubmitter_btn "Open Submitter" width:buttonWidth
 		button openLister_btn "Open Cam Lister" width:buttonWidth
-		editText customPass_txt "Custom Pass" text:""
+		--editText customPass_txt "Custom Pass" text:""
 		
 		on openSubmitter_btn pressed do
 		(
@@ -630,18 +591,19 @@ version:0.909
 	(
 		checkbox useHDRIMap_chb "Use HDRI Map"
 		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth
-		dotnetcontrol hdriMapLink_lbl "Label" text:hdriMapLinkStatus height:20 align:#center  width:buttonWidth
-		checkbutton hdriMapLink_btn "Link Map to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
-		checkbutton hdriMapEdit_btn "Edit in MEdit" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
-		spinner hdriMapOffset_sp "U Offsets:"  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state
-		spinner hdriMapGIMult_sp   "    GI mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
-		spinner hdriMapReflMult_sp "Ref_L mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
-		spinner hdriMapRefrMult_sp "Ref_R mult:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
+		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		spinner hdriMapOffset_sp "Map Rotation:"  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state
+		checkbox hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		group "HDRI Multipliers"
+		(	
+			spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
+			spinner hdriMapReflMult_sp "Reflection:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
+			spinner hdriMapRefrMult_sp "Refraction:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
+		)
 		
 		
 		on hdriMap_ro open do
 		(
-			hdriMapLink_lbl.TextAlign = (dotnetclass "System.Drawing.ContentAlignment").MiddleCenter
 			this.checkHDRIconnection()
 		)
 		
@@ -831,7 +793,7 @@ version:0.909
 	(
 		if (multiCamUsable == true) then
 		(
-			if (hdriMap_btn != undefined and hdriMap_btn.cropplace_u.controller != undefined) then
+			if (hdriMap_btn != undefined and (classof hdriMap_btn.cropplace_u.controller) == float_script) then
 			(
 				m = hdriMap_btn
 				if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then

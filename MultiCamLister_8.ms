@@ -500,8 +500,12 @@ Icon:#("Lights",7)
 					vrayMCLister.CameraInspectorListRollout.hdriMap"+vrayMCLister.count as string+".caption = (if (classof val) != VRayHDRI then (\"None\") else ((classof val) as string));try(modpanel.setcurrentobject(modPanel.getCurrentObject()))catch()")
 				
 				--Link to Sun
-				vrayMCLister.maxCamerasRC.addControl #checkbutton (("linkToSun" + vrayMCLister.count as string) as name) "Link" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#MultiCam_Attribute] #useHDRIMap_chb) as string + " offset:["+(hdriX + 110) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
-				vrayMCLister.maxCamerasRC.addHandler (("linkToSun" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#MultiCam_Attribute] #hdriMapLink_btn state;prevSel = $;clearselection();if prevSel != undefined then select prevSel;linkToSun"+vrayMCLister.count as string+".checked = false;")
+				vrayMCLister.maxCamerasRC.addControl #checkbutton (("linkToSun" + vrayMCLister.count as string) as name) "Link" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#MultiCam_Attribute] #useHDRIMap_chb) as string + 
+					" checked:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#MultiCam_Attribute] #hdriMapLink_chb) as string +
+					" offset:["+(hdriX + 110) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
+				vrayMCLister.maxCamerasRC.addHandler (("linkToSun" + vrayMCLister.count as string) as name) #'changed state' filter:on codeStr:("
+					vrayMCLister.setModifierProp vrayMCLister.cameraIndex[" + vrayMCLister.count as string + "][1].modifiers[#MultiCam_Attribute] #hdriMapLink_chb state;
+					prevSel = $;clearselection();if prevSel != undefined then select prevSel;")
 				
 				--Edit in MEdit
 				vrayMCLister.maxCamerasRC.addControl #checkbutton (("editMap" + vrayMCLister.count as string) as name) "Edit" paramStr:(" enabled:" + (vrayMCLister.getModifierProp vrayMCLister.cameraIndex[vrayMCLister.count][1].modifiers[#MultiCam_Attribute] #useHDRIMap_chb) as string + " offset:["+(hdriX + 155) as string+","+ (-26+ vrayMCLister.yOffset) as string + "] align:#left" + " width:40 height:21 ")
