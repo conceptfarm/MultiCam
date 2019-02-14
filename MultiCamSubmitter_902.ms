@@ -1,3 +1,10 @@
+-------------------------------------------------------------------------------
+-- MultiCamSubmitter_902.ms
+-- By Ilya Floussov (ilya@conceptfarm.ca)
+-- Dec 16th 2018
+-- Submits jobs to Deadline; requires: Deadline functions and Attribute
+-------------------------------------------------------------------------------
+
 --to do:
 --	split camera option
 --	Esc. to cancel
@@ -2228,7 +2235,8 @@ buttontext:"v.902"
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
 		cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
-
+		viewport.SetRenderLevel #smoothhighlights
+		
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
 			for i = 1 to  sceneCams.count do
@@ -2590,6 +2598,7 @@ buttontext:"v.902"
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
 		cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
+		viewport.SetRenderLevel #smoothhighlights
 		
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(

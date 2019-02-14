@@ -156,20 +156,23 @@ version:0.909
 	
 	fn checkHDRIconnection =
 	(
-		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script and this.hdriMap_ro.hdriMap_btn.enabled == true) then
+		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
 		(
 			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
 			(
 				this.hdriMapLink_chb = false
+				this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 			)
 			else
 			(
 				this.hdriMapLink_chb = true
+				this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
 			)
 		)
 		else
 		(
-			this.hdriMapLink_chb = false	
+			this.hdriMapLink_chb = false
+			this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 		)
 	)
 	
@@ -361,7 +364,7 @@ version:0.909
 		on useHDRIMap_chb set state do 
 		(
 			this.hdriMap_ro.hdriMap_btn.enabled = state
-			this.checkHDRIconnection()				
+			--this.checkHDRIconnection()				
 			this.hdriMap_ro.hdriMapLink_chb.enabled = state
 			this.hdriMap_ro.hdriMapEdit_btn.enabled = state
 			this.hdriMap_ro.hdriMapOffset_sp.enabled = state
@@ -430,17 +433,19 @@ version:0.909
 						m.cropplace_u.controller.script = scriptstring
 						
 						hdriMapLink_chb = true
+						this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
 					)
 					else
 					(
 						MessageBox ("The map is not a VrayHDRI map.")
 						hdriMapLink_chb = false
+						this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 					)
 				)
 				else
 				(
 					hdriMapLink_chb = false
-
+					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 				)
 			)
 			else
@@ -451,6 +456,7 @@ version:0.909
 				)
 
 				hdriMapLink_chb = false
+				this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 			)
 		)
 	)
@@ -592,8 +598,9 @@ version:0.909
 		checkbox useHDRIMap_chb "Use HDRI Map"
 		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth
 		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
 		spinner hdriMapOffset_sp "Map Rotation:"  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state
-		checkbox hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
+		
 		group "HDRI Multipliers"
 		(	
 			spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
