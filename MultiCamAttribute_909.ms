@@ -270,8 +270,27 @@ version:0.909
 	parameters frameRange_params rollout:frameRange_ro
 	(
 		--FRAME RANGE
+		getFrameRange_btn type:#boolean animatable:false ui:getFrameRange_btn default:false
 		firstFrame_sp type:#integer animatable:false ui:firstFrame_sp default:0
 		lastFrame_sp type:#integer animatable:false ui:lastFrame_sp default:0
+
+		on getFrameRange_btn set val do
+		(
+			if val == true then
+			(
+				local cam = (refs.dependentNodes this)[1]
+				
+				if aniCheck_fn cam != undefined then
+				(
+					local camAnimation = AniCheck_fn cam
+					firstFrame_sp = camAnimation[1]
+					lastFrame_sp = camAnimation[camAnimation.count]
+				)
+				else (MessageBox ("No Animation"))
+
+				getFrameRange_btn = false
+			)
+		)
 	)
 	
 	parameters layers_params rollout:layers_ro
@@ -467,6 +486,42 @@ version:0.909
 		useHeightWidth_chb type:#boolean animatable:false ui:useHeightWidth_chb default:false
 		imgWidth_sp type:#integer animatable:false ui:imgWidth_sp default:1920
 		imgHeight_sp type:#integer animatable:false ui:imgHeight_sp default:1080
+		getImgFrame_btn type:#boolean animatable:false ui:getImgFrame_btn default:false
+		
+
+		on useHeightWidth_chb set val do 
+		(
+			this.resolution_ro.imgWidth_sp.enabled = val
+			this.resolution_ro.imgHeight_sp.enabled = val
+			this.resolution_ro.getImgFrame_btn.enabled = val
+		)
+
+		on getImgFrame_btn set val do
+		(
+			if val == true then
+			(	
+				local vrayRend = checkRenderer()
+				if vrayRend != undefined then
+				(
+					if (vrayRend.output_getsetsfrommax == false) then
+					(
+						imgWidth_sp.value = vrayRend.output_width
+						imgHeight_sp.value = vrayRend.output_height
+					)
+					else
+					(
+						imgWidth_sp.value = renderWidth
+						imgHeight_sp.value = renderHeight
+					)
+				)
+				else 
+				(
+					MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
+				)
+				
+				getImgFrame_btn = false
+			)
+		)
 	)
 	
 
@@ -545,7 +600,7 @@ version:0.909
 	(
 		spinner firstFrame_sp "First Frame: " type:#integer range:[-1000000,1000000,0]
 		spinner lastFrame_sp "Last Frame: " type:#integer range:[-1000000,1000000,0]
-		button getFrameRange_btn "Get Frame Range" width:buttonWidth
+		checkbutton getFrameRange_btn "Get Frame Range" width:buttonWidth
 		
 		on firstFrame_sp changed n do
 		(
@@ -555,17 +610,6 @@ version:0.909
 		on lastFrame_sp changed n do
 		(
 			if (n < firstFrame_sp.value) then (lastFrame_sp.value = firstFrame_sp.value)
-		)
-		
-		on getFrameRange_btn pressed do
-		(
-			if aniCheck_fn $ != undefined then
-			(
-				camAnimation = AniCheck_fn $
-				firstFrame_sp.value = camAnimation[1]
-				lastFrame_sp.value = camAnimation[camAnimation.count]
-			)
-			else (MessageBox ("No Animation"))
 		)
 	)
 	
@@ -633,36 +677,7 @@ version:0.909
 		checkbox useHeightWidth_chb "Use Custom Size"
 		spinner imgWidth_sp "  Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state 
 		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state 
-		button getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
-		
-		on useHeightWidth_chb changed state do 
-		(
-			imgWidth_sp.enabled = state
-			imgHeight_sp.enabled = state
-			getImgFrame_btn.enabled = state
-		)
-		
- 		on getImgFrame_btn pressed do
-		(
-			local vrayRend = checkRenderer()
-			if vrayRend != undefined then
-			(
-				if (vrayRend.output_getsetsfrommax == false) then
-				(
-					imgWidth_sp.value = vrayRend.output_width
-					imgHeight_sp.value = vrayRend.output_height
-				)
-				else
-				(
-					imgWidth_sp.value = renderWidth
-					imgHeight_sp.value = renderHeight
-				)
-			)
-			else 
-			(
-				MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
-			)
-		) 
+		checkbutton getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
 	)
 		
 	rollout import_ro "Import from Old"
