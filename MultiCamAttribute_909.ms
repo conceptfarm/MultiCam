@@ -505,13 +505,13 @@ version:0.909
 				(
 					if (vrayRend.output_getsetsfrommax == false) then
 					(
-						imgWidth_sp.value = vrayRend.output_width
-						imgHeight_sp.value = vrayRend.output_height
+						this.resolution_ro.imgWidth_sp.value = vrayRend.output_width
+						this.resolution_ro.imgHeight_sp.value = vrayRend.output_height
 					)
 					else
 					(
-						imgWidth_sp.value = renderWidth
-						imgHeight_sp.value = renderHeight
+						this.resolution_ro.imgWidth_sp.value = renderWidth
+						this.resolution_ro.imgHeight_sp.value = renderHeight
 					)
 				)
 				else 
@@ -552,10 +552,10 @@ version:0.909
 	rollout sunpoints_ro "Sunpoints"
 	(
 		checkbox useSunpoints_chb "Use Sunpoints"
+		checkbutton readSunPos_btn "Get Point from Sun" checked:false  enabled:useSunpoints_chb.state width:buttonWidth
 		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state
 		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state
 		checkbutton  showSunPoint_btn " Display Sun Points "	checked:false enabled:useSunpoints_chb.state width:buttonWidth
-		checkbutton readSunPos_btn "Get Point from Sun" checked:false  enabled:useSunpoints_chb.state width:buttonWidth
 		checkbutton moveSunToPos_btn " Move Sun to Point " checked:false  enabled:useSunpoints_chb.state width:buttonWidth
 		checkbutton viewFromSun_btn "Sun POV"  checked:false  enabled:useSunpoints_chb.state width:buttonWidth
 		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth

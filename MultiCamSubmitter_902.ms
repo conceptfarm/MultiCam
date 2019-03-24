@@ -286,7 +286,7 @@ buttontext:"v.902"
 	global SMTDPaths
 	global DeadlineSlaves
 	
-	global multiCam_floater
+	global multiCamSubmitter
 	global camChecklistRO
 
 	global sceneCams
@@ -2122,7 +2122,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_flythrough_fn	
 	
@@ -2148,7 +2148,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_single_fn	
 
@@ -2173,7 +2173,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_nogi_fn	
 	
@@ -2198,7 +2198,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_as_is_fn
 	
@@ -2223,7 +2223,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_as_is_fn
 		
@@ -2273,7 +2273,7 @@ buttontext:"v.902"
 				if queryBox "Exported mov files are on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))	
 			)
 			
-			destroydialog multiCam_floater
+			destroydialog multiCamSubmitter
 		)
 		else 
 		( 
@@ -2307,7 +2307,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_as_is_fn
 	
@@ -2331,7 +2331,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 	
@@ -2355,7 +2355,7 @@ buttontext:"v.902"
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 
@@ -2396,7 +2396,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_flythrough_fn	
 
@@ -2434,7 +2434,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_single_fn	
 		
@@ -2472,7 +2472,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_nogi_fn	
 	
@@ -2510,7 +2510,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 	
@@ -2548,7 +2548,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 		
@@ -2586,7 +2586,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 
@@ -2659,7 +2659,7 @@ buttontext:"v.902"
 				close anim_bmp
 			)
 			gc()
-			destroydialog multiCam_floater
+			destroydialog multiCamSubmitter
 		)
 		else 
 		( 
@@ -2705,7 +2705,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 	
@@ -2742,7 +2742,7 @@ buttontext:"v.902"
 		)
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog multiCam_floater
+		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_as_is_fn
 	
@@ -2751,7 +2751,7 @@ buttontext:"v.902"
 --########################--
 	
 
-	rollout multiCam_floater "MultiCam Submitter v.902" width:570 height:625
+	rollout multiCamSubmitter "MultiCam Submitter v.902" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
@@ -3058,7 +3058,7 @@ buttontext:"v.902"
 		print ("Preview Extension is " + rootnode.CA_previewOutputExt)
 	)
 	
-	on multiCam_floater open do 
+	on multiCamSubmitter open do 
 	( 
 		jobPrefix_txt.text = rootnode.CA_jobPrefix
 		updateFrameOut()
@@ -3074,16 +3074,22 @@ buttontext:"v.902"
 				if rs == true then renderSceneDialog.open()
 			)
 		)
+		
+		callBacks.AddScript #systemPreReset "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
+		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
+		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
+		callbacks.addScript #renderParamsChanged ("MessageBox ("+"\"" + "Changing render parameters with Submitter open will screw things up - closing Submitter window." + "\")"+";destroydialog multiCamSubmitter") id:#MultiCamSubmitterDialog
 	)--end on buttons open
 	
 	
-	on multiCam_floater close do
+	on multiCamSubmitter close do
 	(
 		rendSetRes rendOldRes
 		layersSetHiddenArray hideLayersOld
 		setEnvSettings oldEnvSettings
 		setAnimation oldAnimationSettings
 		try(destroydialog camChecklistRO )catch()
+		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
 	)
 	
 	on extSelection selected i do
@@ -3264,7 +3270,7 @@ buttontext:"v.902"
 			FA_BFS_btn.enabled = false
 			FA_VDR_btn.enabled = false	
 			
-			createdialog camChecklistRO style:#(#style_sysmenn) pos:[((GetDialogPos multiCam_floater).x) + 580,(GetDialogPos multiCam_floater).y + 0]
+			createdialog camChecklistRO style:#(#style_sysmenn) pos:[((GetDialogPos multiCamSubmitter).x) + 580,(GetDialogPos multiCamSubmitter).y + 0]
 		)
 		else
 		(
@@ -3406,10 +3412,10 @@ buttontext:"v.902"
 		batch_gen_fn ()
 	)
 	
-	on multiCam_floater moved pos do
+	on multiCamSubmitter moved pos do
 	(
-		--print (GetDialogPos multiCam_floater)
-		try(SetDialogPos camChecklistRO [((GetDialogPos multiCam_floater).x) + 580,((GetDialogPos multiCam_floater).y) + 0])catch()
+		--print (GetDialogPos multiCamSubmitter)
+		try(SetDialogPos camChecklistRO [((GetDialogPos multiCamSubmitter).x) + 580,((GetDialogPos multiCamSubmitter).y) + 0])catch()
 	)
 
 	
@@ -3676,8 +3682,8 @@ buttontext:"v.902"
 			
 			
 			
-			try(destroydialog multiCam_floater;destroydialog camChecklistRO )catch()
-			createDialog multiCam_floater
+			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+			createDialog multiCamSubmitter
 			errorCheck = true
 		)
 	) --end execute
