@@ -422,6 +422,15 @@ buttontext:"v.902"
 		vfbControl #curve false
 		vfbControl #bkgr false		
 	)
+
+
+	global renderParamsFN
+	fn renderParamsFN = 
+	(
+		print ("Dialog is open = " + renderSceneDialog.isOpen() as string )
+		MessageBox ("Changing render parameters with Submitter open will screw things up - closing Submitter window.")
+		destroydialog multiCamSubmitter
+	)
 	
 	fn AddCallbackLatest denoise:true =
 	(
@@ -3078,7 +3087,7 @@ buttontext:"v.902"
 		callBacks.AddScript #systemPreReset "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
-		callbacks.addScript #renderParamsChanged ("MessageBox ("+"\"" + "Changing render parameters with Submitter open will screw things up - closing Submitter window." + "\")"+";destroydialog multiCamSubmitter") id:#MultiCamSubmitterDialog
+		callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
 	)--end on buttons open
 	
 	
@@ -3524,7 +3533,7 @@ buttontext:"v.902"
 			
 			if sceneCamsNames_array.count != sceneCams.count then 
 			(
-				MessageBox ("There are " + (sceneCams.count - sceneCamsNames_array.count) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
+				MessageBox ("There are " + (sceneCams.count - sceneCamsNames_array.count + 1) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
 				exit
 			)
 			
@@ -3649,7 +3658,7 @@ buttontext:"v.902"
 						CA_IRNthFrame type:#integer default:5
 						CA_FRNthFrame type:#integer default:1
 						CA_previewOutputExtType type:#integer default:1
-						CA_previewOutputExt type:#string default:".jpg"
+						CA_previewOutputExt type:#string default:".avi"
 						CA_Priority type:#integer default:50
 						CA_LatestDir type:#boolean default:false
 						CA_SubmitMOV type:#boolean default:false
