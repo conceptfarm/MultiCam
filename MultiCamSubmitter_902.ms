@@ -288,18 +288,16 @@ buttontext:"v.902"
 	
 	global multiCamSubmitter
 	global camChecklistRO
-
-	global sceneCams
-	global vraySuns
-	global sceneCamsNames_array 
-
 	global vrayRend
-	global begframe
-	global endframe
-	global anim_bmp
-	global theNetworkRoot
-	
-	
+	global SubmitterNodeEventCallback
+
+	local begframe = 0
+	local endframe = 1
+	local sceneCams = #()
+	local vraySuns = #()
+	local sceneCamsNames_array = #()
+	--global anim_bmp
+	--global DeadlineRoot
 	--global re = maxOps.GetCurRenderElementMgr()
 	
 	local currentCameraName = undefined
@@ -325,14 +323,15 @@ buttontext:"v.902"
 	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
 	
 	
-	local FFmpegExe = @"\\cicada-hvh1\d\DeadlineRepository10\submission\FFmpeg\bin\ffmpeg.exe"
+	local FFmpegExe = @"\\fs-01\DeadlineRepository10\submission\FFmpeg\bin\ffmpeg.exe"
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
-	local theNetworkRoot = @"C:\DeadlineRepository10"
-	--local theNetworkRoot = @"\\cicada-hvh1\d\DeadlineRepository10"
+	local DeadlineRoot = @"C:\DeadlineRepository10"
+	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 	local multiCamRepo = @"C:\temp\Repo\"
 	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
-		
+	local UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
+
 --########################--	
 --GENERAL FUNCTIONS
 --########################--		
@@ -342,7 +341,7 @@ buttontext:"v.902"
 	fn getDrServers = 
 	(
 		drServers = ""
-		drSettings = #("restart_slaves",	"list_in_scene","max_servers",	"use_local_machine","transfer_missing_assets","use_cached_assets","cache_limit_type","cache_limit","render_region_warning")
+		drSettings = #("restart_slaves","list_in_scene","max_servers","use_local_machine","transfer_missing_assets","use_cached_assets","cache_limit_type","cache_limit","render_region_warning")
 		drFile = openFile (getdir (#plugcfg) + "\\vray_dr.cfg")
 
 		if drFile != undefined then
@@ -424,6 +423,8 @@ buttontext:"v.902"
 	)
 
 
+	-- Doesn't really work well
+	/*
 	global renderParamsFN
 	fn renderParamsFN = 
 	(
@@ -431,6 +432,7 @@ buttontext:"v.902"
 		MessageBox ("Changing render parameters with Submitter open will screw things up - closing Submitter window.")
 		destroydialog multiCamSubmitter
 	)
+	*/
 	
 	fn AddCallbackLatest denoise:true =
 	(
@@ -484,6 +486,11 @@ buttontext:"v.902"
 		a = "vfbControl #srgb true;"+setChannel+"vfbControl #rgb true; vfbControl #saveimage ((sysInfo.tempdir) + \"" + "Temp_.jpg" +"\"); tempb = openBitMap ((sysInfo.tempdir ) + \"" + "Temp_.jpg" +"\"); newtemp = copy tempb; newtemp.filename = \"" + outFileRGB +"\"; save newtemp  frame:slidertime quiet:true; close tempb; close newtemp; free tempb; free newtemp; deleteFile ((sysInfo.tempdir ) +  \"" + "Temp_.jpg" +"\")"
 		callbacks.addscript #postRenderFrame a persistent:true id:#copyJPG_callback
 	)
+
+	fn SubmitterNodeEventFN ev nd = 
+	(
+		try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+	)
 	
 	------------------------------------
 	--Layer Fuctions
@@ -495,8 +502,8 @@ buttontext:"v.902"
 		
 	fn layersGetHiddenArray =
 	(
-		result = #()
-		n = LayerManager.count
+		local result = #()
+		local n = LayerManager.count
 		for i = 0 to n-1  do
 		(
 			if (layermanager.getlayer i).on == false then
@@ -511,7 +518,7 @@ buttontext:"v.902"
 	(
 		for i = 0 to (LayerManager.count - 1 ) do 
 		(
-			thisLayerName = (layermanager.getlayer i).name
+			local thisLayerName = (layermanager.getlayer i).name
 			if ((findItem arr thisLayerName) != 0) then
 			(
 				layer = layerManager.getLayer i
@@ -696,6 +703,15 @@ buttontext:"v.902"
 		
 		return arr
 	)
+
+	fn getOldEnvLayers = 
+	(
+		rendOldRes = rendGetRes()
+		hideLayersOld = layersGetHiddenArray()
+		oldEnvSettings = getEnvSettings()
+		print ("Old resolution is " + rendOldRes as string)
+		print ("Old environmet is " + oldEnvSettings as string)
+	)
 	
 	------------------------------------
 	--Deadline Functions
@@ -723,11 +739,11 @@ buttontext:"v.902"
 	------------------------------------
 	fn moveSunToPoint = 
 	(
-		allMods = for m in currentCamera.modifiers where (classof m == MultiCamAttribute) collect m
+		local allMods = for m in currentCamera.modifiers where (classof m == MultiCamAttribute) collect m
 
 		if (allMods.count > 0)then
 		(
-			m = allMods[1]
+			local m = allMods[1]
 			
 			if (m.useSunpoints_chb == true and vraySuns.count == 1) then
 			(
@@ -746,7 +762,7 @@ buttontext:"v.902"
 	(
 		begframe = endframe = undefined
 		
-		allMods = for m in c.modifiers where (classof m == MultiCamAttribute) collect m
+		local allMods = for m in c.modifiers where (classof m == MultiCamAttribute) collect m
 		print("allmods count is: " + allmods.count as string)
 		
 		if (allMods.count > 0 and OverrideSingleFrame == false )then
@@ -1037,14 +1053,18 @@ buttontext:"v.902"
 		local oldEscapeEnable = escapeEnable
 		escapeEnable = true
 		if SingleFrame == true then (endframe = begframe)
-		
+				
 		local x = y = 0, v
 		local s = getViewSize()
 		local k = getRendImageAspect()
 		
-		temp_dib = (gw.getViewportDib())
-		windowScaleWidth = temp_dib.width / s.x
-		windowScaleHeight = temp_dib.height / s.y
+		local anim_bmp = undefined
+		local temp_dib = (gw.getViewportDib())
+		local windowScaleWidth = temp_dib.width / s.x
+		local windowScaleHeight = temp_dib.height / s.y
+
+		free temp_dib
+		close temp_dib
 
 		s = [s.x*windowScaleWidth,s.y*windowScaleHeight]
 
@@ -1059,28 +1079,28 @@ buttontext:"v.902"
 			y = (s.y-v.y)/2 + 1
 		)	
 			
-			
 		for t = begframe to endframe do
 		(	
 			
 			sliderTime = t
-			frame_num = slidertime as string
-			frame_num = replace frame_num (frame_num.count) 1 ("") as integer
+			local frame_num = (slidertime as integer) / TicksPerFrame
 			frame_num = (padNumber frame_num 4 ) as string
-			preview_name = rootnode.CA_frameOutput + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
+			local preview_name = rootnode.CA_frameOutput + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 
 			anim_bmp = bitmap v.x v.y filename:preview_name
 				
-			dib = (gw.getViewportDib())			
+			local dib = (gw.getViewportDib())
 			pasteBitmap dib anim_bmp (box2 x y v.x v.y) [0,0]
-			--copy dib anim_bmp
 			save anim_bmp
 			free dib
 			free anim_bmp
 		)
+
+		close anim_bmp
 		escapeEnable = oldEscapeEnable
 	)
 	
+	-- Outdated function probably needs to be deleted
 	fn preview_mov =
 	(
 		local oldEscapeEnable = escapeEnable
@@ -1091,10 +1111,9 @@ buttontext:"v.902"
 		for t = begframe to endframe do
 		(	
 			sliderTime = t
-			frame_num = slidertime as string
-			frame_num = replace frame_num (frame_num.count) 1 ("") as integer
-			frame_num = (padNumber frame_num padLength ) as string
-			preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
+			local frame_num = (slidertime as integer) / TicksPerFrame
+			frame_num = (padNumber frame_num 4 ) as string
+			local preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 			if t == begframe then firstFrameFile = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ "%0" + padLength as string +"d.jpg"
 			local x = y = 0, v
 			local s = getViewSize()
@@ -1141,9 +1160,13 @@ buttontext:"v.902"
 		local s = getViewSize()
 		local k = getRendImageAspect()
 		
-		temp_dib = (gw.getViewportDib())
-		windowScaleWidth = temp_dib.width / s.x
-		windowScaleHeight = temp_dib.height / s.y
+		local anim_bmp = undefined
+		local temp_dib = (gw.getViewportDib())
+		local windowScaleWidth = temp_dib.width / s.x
+		local windowScaleHeight = temp_dib.height / s.y
+
+		free temp_dib
+		close temp_dib
 
 		s = [s.x*windowScaleWidth,s.y*windowScaleHeight]
 
@@ -1162,21 +1185,22 @@ buttontext:"v.902"
 		for t = begframe to endframe do
 		(	
 			sliderTime = t
-			frame_num = slidertime as string
-			frame_num = replace frame_num (frame_num.count) 1 ("") as integer
-			frame_num = (padNumber frame_num padLength ) as string
-			preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
+			local frame_num = (slidertime as integer) / TicksPerFrame
+			frame_num = (padNumber frame_num 4 ) as string
+			local preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 			if t == begframe then firstFrameFile = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ "%0" + padLength as string +"d.jpg"
 						
 			anim_bmp = bitmap v.x v.y filename:preview_name
 				
-			dib = (gw.getViewportDib())			
+			local dib = (gw.getViewportDib())			
 			pasteBitmap dib anim_bmp (box2 x y v.x v.y) [0,0]
 			--copy dib anim_bmp
 			save anim_bmp
 			free dib
 			free anim_bmp
 		)
+
+		close anim_bmp
 		
 		if ((doesfileexist "c:\\PreviewMOVs") == false) then (makedir "c:\\PreviewMOVs")
 		MOVDest = "C:\\PreviewMOVs\\" + currentCameraName + ".avi"
@@ -1635,7 +1659,7 @@ buttontext:"v.902"
 						
 						SMTDSettings.JobName = "02.DR___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						--piggy back off the comment to get the dependency settings in 
-						SMTDSettings.Comment = "Scripted VDR Job\nResumeOnCompleteDependencies=False\nJobDependencyPercentage=0\nScriptDependency0=//cicada-hvh1/DeadlineRepository10/custom/scripts/Jobs/script_pre.py"
+						SMTDSettings.Comment = ("Scripted VDR Job\nResumeOnCompleteDependencies=False\nJobDependencyPercentage=0\nScriptDependency0="+UnixDeadlineRoot+"/custom/scripts/Jobs/script_pre.py")
 						--Encode max version into ExtraInfo0
 						SMTDSettings.ExtraInfo0 = getMaxVer()
 						--copyFile <existing_filename_string> <target_filename_string> 
@@ -1645,7 +1669,7 @@ buttontext:"v.902"
 						copyfile vrayFile destination
 						
 						SMTDSettings.RunPostJobScript = true
-						SMTDSettings.PostJobScriptFile = "//cd-prod/DeadlineRepository10/custom/scripts/Jobs/script_post.py"
+						SMTDSettings.PostJobScriptFile = (UnixDeadlineRoot + "/custom/scripts/Jobs/script_post.py")
 						SMTDSettings.Group = "workstations"
 							
 						SMTDSettings.Priority = rootnode.CA_Priority
@@ -2115,7 +2139,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2141,7 +2166,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2167,7 +2193,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2192,7 +2219,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2217,7 +2245,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2271,8 +2300,8 @@ buttontext:"v.902"
 					DOSCommand (removeCommand)
 				)
 			
-				close anim_bmp
-				gc()
+				--close anim_bmp
+				--gc()
 			
 			)--end for
 			
@@ -2301,7 +2330,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2325,7 +2355,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2349,7 +2380,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		for i = 1 to  sceneCams.count do
 		(
 			currentCameraName = sceneCams[i].name as string
@@ -2377,7 +2409,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2415,7 +2448,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2453,7 +2487,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2491,7 +2526,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2529,7 +2565,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2567,7 +2604,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2637,7 +2675,7 @@ buttontext:"v.902"
 							removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 							DOSCommand (removeCommand)
 						)
-						close anim_bmp		
+						--close anim_bmp		
 					)
 				)
 				CamCheck_btnState = false
@@ -2665,9 +2703,9 @@ buttontext:"v.902"
 					removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 					DOSCommand (removeCommand)
 				)
-				close anim_bmp
+				--close anim_bmp
 			)
-			gc()
+			--gc()
 			destroydialog multiCamSubmitter
 		)
 		else 
@@ -2685,7 +2723,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -2723,7 +2762,8 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		
+		getOldEnvLayers()
+
 		if CamCheck_btnState == true then 
 		(
 			for i in LV_ITEMS do
@@ -3087,7 +3127,8 @@ buttontext:"v.902"
 		callBacks.AddScript #systemPreReset "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
-		callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
+		--callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
+		SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:2000  added:SubmitterNodeEventFN nameChanged:SubmitterNodeEventFN deleted:SubmitterNodeEventFN
 	)--end on buttons open
 	
 	
@@ -3099,6 +3140,8 @@ buttontext:"v.902"
 		setAnimation oldAnimationSettings
 		try(destroydialog camChecklistRO )catch()
 		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
+		SubmitterNodeEventCallback = undefined
+		gc light:true
 	)
 	
 	on extSelection selected i do
@@ -3538,7 +3581,7 @@ buttontext:"v.902"
 			)
 			
 			print ("Found " + sceneCams.count as string + " cameras in the scene.")
-			spacer = #("Select Camera to Render")
+			local spacer = #("Select Camera to Render")
 			sceneCamsNames_array = join spacer sceneCamsNames_array
 			
 			vraySuns = for o in lights where (classof o == VRaySun) collect o
@@ -3548,14 +3591,11 @@ buttontext:"v.902"
 				MessageBox ("There are " + (vraySuns.count) as string + " VRayvraySuns in the scene. There can only be one.") title:"Duplicate vraySuns"
 				exit
 			)
-			
-			rendOldRes = rendGetRes()
-			print ("Old resolution is " + rendOldRes as string)
-			hideLayersOld = layersGetHiddenArray()
-			oldEnvSettings = getEnvSettings()
-			print ("Old environmet is " + oldEnvSettings as string)
+
+			getOldEnvLayers()
 			oldAnimationSettings = getAnimation()
 			print ("Old animation settings are " + oldAnimationSettings as string)
+			
 			projectName = getProjectName()
 			if projectName != "Project Noname" then 
 			(
@@ -3571,7 +3611,7 @@ buttontext:"v.902"
 			---Deadline Load Submitter script	
 			--------------------------------------		
 			
-			local remoteScript = theNetworkRoot + @"\submission\3dsmax\main\SubmitMaxToDeadline_Functions.ms"  
+			local remoteScript = DeadlineRoot + @"\submission\3dsmax\main\SubmitMaxToDeadline_Functions.ms"  
 			local localScript = getDir #scripts + "\\SubmitMaxToDeadline_Functions.ms"
 			
 			if (doesFileExist remoteScript) then

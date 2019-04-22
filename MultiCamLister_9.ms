@@ -22,7 +22,7 @@ Icon:#("Lights",7)
 	global MultiCamListerOpen = false
 	global listerNodeEventCallback = undefined
 	
-	local MultiCamLister
+	local MultiCamLister = undefined
 	local cameraObjIDs = #()
 	local cameraObjIDsNoMod = #()
 	local prevSelectedRows = #()
@@ -670,7 +670,7 @@ Icon:#("Lights",7)
 		on dgv LostFocus val do
 		(
 			--print "clearing selection lost focus dgv 1"
-			--dgv.ClearSelection()
+			dgv.ClearSelection()
 		)
 
 		on dgvNoMod LostFocus val do
@@ -700,6 +700,7 @@ Icon:#("Lights",7)
 			
 			--print ("prevSelectedRows" + prevSelectedRows as string)
 			--print ("prevSelectedRowsLessSelf" + prevSelectedRowsLessSelf as string)
+			--print ("prevSelectedRowsPlusSelf" + prevSelectedRowsPlusSelf as string)
 		)
 		
 		on dgv CellMouseClick val do
@@ -980,7 +981,7 @@ Icon:#("Lights",7)
 
 		on dgvNoMod cellMouseDown val do
 		(
-			prevSelectedRows = getRowsFromSelection dgv
+			prevSelectedRows = getRowsFromSelection dgvNoMod
 			prevSelectedRowsLessSelf = subtractCellFromSelection prevSelectedRows val.RowIndex
 			prevSelectedRowsPlusSelf = addCellToSelection prevSelectedRows val.RowIndex
 						
@@ -993,6 +994,7 @@ Icon:#("Lights",7)
 			
 			--print ("prevSelectedRows" + prevSelectedRows as string)
 			--print ("prevSelectedRowsLessSelf" + prevSelectedRowsLessSelf as string)
+			--print ("prevSelectedRowsPlusSelf" + prevSelectedRowsPlusSelf as string)
 		)
 
 		on dgvNoMod CellValueChanged val do

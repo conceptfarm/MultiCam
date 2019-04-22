@@ -533,8 +533,8 @@ version:0.909
 
 	rollout params "Submitter Properties"
 	(
-		button openSubmitter_btn "Open Submitter" width:buttonWidth
-		button openLister_btn "Open Cam Lister" width:buttonWidth
+		button openSubmitter_btn "Open Submitter" width:buttonWidth pos:[14,7] align:#center
+		button openLister_btn "Open Cam Lister" width:buttonWidth pos:[14,33] align:#center
 		--editText customPass_txt "Custom Pass" text:""
 		
 		on openSubmitter_btn pressed do
@@ -551,14 +551,14 @@ version:0.909
 
 	rollout sunpoints_ro "Sunpoints"
 	(
-		checkbox useSunpoints_chb "Use Sunpoints"
-		checkbutton readSunPos_btn "Get Point from Sun" checked:false  enabled:useSunpoints_chb.state width:buttonWidth
-		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state
-		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state
-		checkbutton  showSunPoint_btn " Display Sun Points "	checked:false enabled:useSunpoints_chb.state width:buttonWidth
-		checkbutton moveSunToPos_btn " Move Sun to Point " checked:false  enabled:useSunpoints_chb.state width:buttonWidth
-		checkbutton viewFromSun_btn "Sun POV"  checked:false  enabled:useSunpoints_chb.state width:buttonWidth
-		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth
+		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center
+		checkbutton readSunPos_btn "Get Point from Sun" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,27] align:#center
+		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
+		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
+		checkbutton  showSunPoint_btn " Display Sun Points "	checked:false enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
+		checkbutton moveSunToPos_btn " Move Sun to Point " checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
+		checkbutton viewFromSun_btn "Sun POV"  checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,149] align:#center
+		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth pos:[14,175] align:#center
 		
 		on sunpoints_ro open do
 		(
@@ -598,9 +598,9 @@ version:0.909
 
 	rollout frameRange_ro "Frame Range"
 	(
-		spinner firstFrame_sp "First Frame: " type:#integer range:[-1000000,1000000,0]
-		spinner lastFrame_sp "Last Frame: " type:#integer range:[-1000000,1000000,0]
-		checkbutton getFrameRange_btn "Get Frame Range" width:buttonWidth
+		spinner firstFrame_sp "First Frame: " type:#integer range:[-1000000,1000000,0] pos:[38,7] fieldWidth:60 width:(buttonWidth - 24)
+		spinner lastFrame_sp "Last Frame: " type:#integer range:[-1000000,1000000,0] pos:[38,28] fieldWidth:60 width:(buttonWidth - 24)
+		checkbutton getFrameRange_btn "Get Frame Range" width:buttonWidth pos:[14,49]
 		
 		on firstFrame_sp changed n do
 		(
@@ -615,11 +615,11 @@ version:0.909
 	
 	rollout layers_ro "Layers"
 	(			
-		checkbox useHideLayers_chb "Use Hide Layers" 
-		listbox hideLayers_lb "Hide Layers:" items:(hideLayers_tab as array) enabled:useHideLayers_chb.state width:buttonWidth
-		checkbutton addLayers_btn "Add Hidden"  enabled:useHideLayers_chb.state width:buttonWidth
-		button removeLayers_btn "Remove Selected" enabled:useHideLayers_chb.state width:buttonWidth
-		checkbutton clearLayers_btn "Clear All" enabled:useHideLayers_chb.state width:buttonWidth
+		checkbox useHideLayers_chb "Use Hide Layers" pos:[13,7] align:#center
+		listbox hideLayers_lb "Hide Layers:" items:(hideLayers_tab as array) enabled:useHideLayers_chb.state width:buttonWidth pos:[13,27] align:#center -- y position is desired position (pos:[13,43]) minus 16
+		checkbutton addLayers_btn "Add Hidden"  enabled:useHideLayers_chb.state width:buttonWidth pos:[14,185] align:#center
+		button removeLayers_btn "Remove Selected" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,211] align:#center
+		checkbutton clearLayers_btn "Clear All" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,237] align:#center
 		
 		on removeLayers_btn pressed do
 		(
@@ -639,18 +639,18 @@ version:0.909
 	
 	rollout hdriMap_ro "HDRI Map"
 	(
-		checkbox useHDRIMap_chb "Use HDRI Map"
-		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth
-		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
-		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth
-		spinner hdriMapOffset_sp "Map Rotation:"  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state
+		checkbox useHDRIMap_chb "Use HDRI Map" pos:[13,7] align:#center
+		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center
+		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,53] align:#center
+		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,79] align:#center
+		spinner hdriMapOffset_sp "Map Rotation: "  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state pos:[21,105] align:#center fieldWidth:54 width:(buttonWidth - 7)
 		
-		group "HDRI Multipliers"
-		(	
-			spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
-			spinner hdriMapReflMult_sp "Reflection:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
-			spinner hdriMapRefrMult_sp "Refraction:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state
-		)
+		groupBox hdriMults_gpb "HDRI Multipliers" pos:[4,126] width:154 height:83
+			
+		spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[38,145] fieldWidth:60 width:(buttonWidth - 24)
+		spinner hdriMapReflMult_sp "Reflection:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[25,166] fieldWidth:60 width:(buttonWidth - 11)
+		spinner hdriMapRefrMult_sp "Refraction:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[23,187] fieldWidth:60 width:(buttonWidth - 9)
+		
 		
 		
 		on hdriMap_ro open do
@@ -674,15 +674,15 @@ version:0.909
 	
 	rollout resolution_ro "Resolution"
 	(	
-		checkbox useHeightWidth_chb "Use Custom Size"
-		spinner imgWidth_sp "  Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state 
-		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state 
-		checkbutton getImgFrame_btn "Get Resolution" enabled:useHeightWidth_chb.state width:buttonWidth
+		checkbox useHeightWidth_chb "Use Custom Size" pos:[13,7] align:#center
+		spinner imgWidth_sp  " Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state pos:[41,27] width:(buttonWidth - 27)
+		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state pos:[41,48] width:(buttonWidth - 27)
+		checkbutton getImgFrame_btn "Get Resolution"                         enabled:useHeightWidth_chb.state pos:[14,69] width:buttonWidth align:#center
 	)
 		
 	rollout import_ro "Import from Old"
 	(
-		button importFromOld_bn "Import from Old" width:buttonWidth
+		button importFromOld_bn "Import from Old" width:buttonWidth pos:[13,7] align:#center
 		
 		on importfromOld_bn pressed do
 		(			
@@ -793,7 +793,7 @@ version:0.909
 	
 	rollout about_ro "About" 
 	(
-		label version_lbl "v 0.909"
+		label version_lbl "v 0.909" pos:[63,7] align:#center
 	)
 		
 -- 	on params reload do
