@@ -317,17 +317,17 @@ buttontext:"v.902"
 	local oldEnvSettings = #()
 	local view_size = [1920,1080] 
 	local LV_ITEMS = #()
-	local CamCheck_btnState = false
 	local oldHideCats = #()
 	local projectName = "Project Noname"
 	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
 	
 	
-	local FFmpegExe = @"\\fs-01\DeadlineRepository10\submission\FFmpeg\bin\ffmpeg.exe"
+	
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
 	local DeadlineRoot = @"C:\DeadlineRepository10"
 	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg\\bin\\ffmpeg.exe"
 	local multiCamRepo = @"C:\temp\Repo\"
 	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 	local UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
@@ -340,9 +340,9 @@ buttontext:"v.902"
 	--List is a string of comma separated entries
 	fn getDrServers = 
 	(
-		drServers = ""
-		drSettings = #("restart_slaves","list_in_scene","max_servers","use_local_machine","transfer_missing_assets","use_cached_assets","cache_limit_type","cache_limit","render_region_warning")
-		drFile = openFile (getdir (#plugcfg) + "\\vray_dr.cfg")
+		local drServers = ""
+		local drSettings = #("restart_slaves","list_in_scene","max_servers","use_local_machine","transfer_missing_assets","use_cached_assets","cache_limit_type","cache_limit","render_region_warning")
+		local drFile = openFile (getdir (#plugcfg) + "\\vray_dr.cfg")
 
 		if drFile != undefined then
 		(
@@ -380,15 +380,15 @@ buttontext:"v.902"
 		
 	fn useToday =
 	(	
-		todayDate = ""
-		timenow = getlocaltime()
+		local todayDate = ""
+		local timenow = getlocaltime()
 		todayDate = timenow[1] as string + "_" + (padnumber timenow[2] 2) as string + "_" + (padnumber timenow[4] 2) as string
 		return todayDate
 	)
 	
 	fn getProjectName = 
 	(
-		result = "Project Noname"
+		local result = "Project Noname"
 		if (maxfilepath != "" and  (filterstring maxfilepath "\\")[1] == "X:") then
 		(
 			result = (filterstring maxfilepath "\\")[2]
@@ -496,9 +496,9 @@ buttontext:"v.902"
 	--Layer Fuctions
 	------------------------------------
 	
-	fn layersHideAll = ( for i = 0 to (LayerManager.count - 1) do (b = LayerManager.getLayer i;  b.on = false ))
+	fn layersHideAll = ( for i = 0 to (LayerManager.count - 1) do (b = LayerManager.getLayer i; b.on = false ))
 
-	fn layersShowAll = ( for i = 0 to (LayerManager.count - 1) do (a = LayerManager.getLayer i; a.on = true ))
+	fn layersShowAll = ( for i = 0 to (LayerManager.count - 1) do (b = LayerManager.getLayer i; b.on = true ))
 		
 	fn layersGetHiddenArray =
 	(
@@ -1048,6 +1048,7 @@ buttontext:"v.902"
 --PREVIEW FUNCTIONS
 --########################--		
 
+
 	fn preview_jpg =
 	(
 		local oldEscapeEnable = escapeEnable
@@ -1112,7 +1113,7 @@ buttontext:"v.902"
 		(	
 			sliderTime = t
 			local frame_num = (slidertime as integer) / TicksPerFrame
-			frame_num = (padNumber frame_num 4 ) as string
+			frame_num = (padNumber frame_num padLength ) as string
 			local preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 			if t == begframe then firstFrameFile = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ "%0" + padLength as string +"d.jpg"
 			local x = y = 0, v
@@ -1181,12 +1182,11 @@ buttontext:"v.902"
 			y = (s.y-v.y)/2 + 1
 		)
 		
-		
 		for t = begframe to endframe do
 		(	
 			sliderTime = t
 			local frame_num = (slidertime as integer) / TicksPerFrame
-			frame_num = (padNumber frame_num 4 ) as string
+			frame_num = (padNumber frame_num padLength ) as string
 			local preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 			if t == begframe then firstFrameFile = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ "%0" + padLength as string +"d.jpg"
 						
@@ -1220,7 +1220,7 @@ buttontext:"v.902"
 		)
 		else (prevHeight = renderHeight as string)
 
-		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + "\"" + " -vcodec utvideo -pred left -pix_fmt rgb24 -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
+		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/arial.ttf: text='%{frame_num}': start_number=" + (begframe as string) + ": x=(w-tw)/2: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt rgb24 -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
 		print command
 		DOSCommand (command)
 		escapeEnable = oldEscapeEnable
@@ -2307,7 +2307,7 @@ buttontext:"v.902"
 			
 			if (rootnode.CA_previewOutputExt == ".mov" or rootnode.CA_previewOutputExt == ".avi") then 
 			(
-				makedir "c:\\PreviewMOVs"
+				--makedir "c:\\PreviewMOVs"
 				if queryBox "Exported mov files are on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))	
 			)
 			
@@ -2411,7 +2411,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2428,7 +2428,6 @@ buttontext:"v.902"
 					fly_settings begframe endframe 1
 				)
 			)
-			CamCheck_btnState = false
 		)
 		else 
 		(
@@ -2450,7 +2449,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2467,7 +2466,6 @@ buttontext:"v.902"
 					single_settings begframe endframe
 				)
 			)
-			CamCheck_btnState = false
 		)
 		else
 		(
@@ -2489,7 +2487,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2506,7 +2504,6 @@ buttontext:"v.902"
 					nogi_settings begframe endframe		
 				)
 			)
-			CamCheck_btnState = false
 		)
 		else
 		(
@@ -2528,7 +2525,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2545,7 +2542,6 @@ buttontext:"v.902"
 					as_is_settings begframe endframe 
 				)
 			)
-			CamCheck_btnState = false
 		)	
 		else
 		(
@@ -2567,7 +2563,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2584,7 +2580,6 @@ buttontext:"v.902"
 					vdr_settings begframe endframe			
 				)
 			)
-			CamCheck_btnState = false
 		)	
 		else
 		(
@@ -2606,7 +2601,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2623,7 +2618,6 @@ buttontext:"v.902"
 					animated_settings begframe endframe			
 				)
 			)
-			CamCheck_btnState = false
 		)	
 		else
 		(
@@ -2647,39 +2641,48 @@ buttontext:"v.902"
 		clearSelection()
 		viewport.SetRenderLevel #smoothhighlights
 		
+		local NotCanceled = true
+
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
-			if CamCheck_btnState == true then 
+			if camChecklistRO.open == true then 
 			(
-				for i in LV_ITEMS do
-				(
-					if i.checked then
-					(	
-						currentCameraName = i.text
-						currentCamera = (getnodebyname currentCameraName)
-						parseRangeFile currentCamera
-						viewport.setCamera currentCamera
+				local checkedCams = for i in LV_ITEMS where i.checked == true collect i
+				
+				progressStart "Generating Preview"
+				
+				for i = 1 checkedCams.count while notCancelled do
+				(	
+					local percentage = 100.0 * (i as float / checkedCams.count as float)
+					NotCancelled = progressUpdate Percentage
+			
+					currentCameraName = checkedCams[i].text
+					currentCamera = (getnodebyname currentCameraName)
+					parseRangeFile currentCamera
+					viewport.setCamera currentCamera
 
-						if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) ; preview_jpg())
-						else if (rootnode.CA_previewOutputExt == ".mov") then 
-						(
-							makedir ("C:\\tempPreview\\" + currentCameraName) 
-							preview_mov()
-							removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
-							DOSCommand (removeCommand)
-						)
-						else if (rootnode.CA_previewOutputExt == ".avi") then 
-						(
-							makedir ("C:\\tempPreview\\" + currentCameraName) 
-							preview_avi()
-							removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
-							DOSCommand (removeCommand)
-						)
-						--close anim_bmp		
+					if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) ; preview_jpg())
+					else if (rootnode.CA_previewOutputExt == ".mov") then 
+					(
+						makedir ("C:\\tempPreview\\" + currentCameraName) 
+						preview_mov()
+						removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
+						DOSCommand (removeCommand)
+					)
+					else if (rootnode.CA_previewOutputExt == ".avi") then 
+					(
+						makedir ("C:\\tempPreview\\" + currentCameraName) 
+						preview_avi()
+						removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
+						DOSCommand (removeCommand)
 					)
 				)
-				CamCheck_btnState = false
-				if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+				progressEnd()
+
+				if notCancelled then
+				(
+					if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+				)
 			)	
 			else
 			(
@@ -2725,7 +2728,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2742,9 +2745,7 @@ buttontext:"v.902"
 					bruteForce_settings begframe endframe	
 				)
 			)
-			CamCheck_btnState = false
 		)	
-		
 		else 
 		(
 			parseRangeFile currentCamera
@@ -2764,7 +2765,7 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		if CamCheck_btnState == true then 
+		if camChecklistRO.open == true then 
 		(
 			for i in LV_ITEMS do
 			(
@@ -2781,7 +2782,6 @@ buttontext:"v.902"
 					bruteForceSphere_settings begframe endframe			
 				)
 			)
-			CamCheck_btnState = false
 		)	
 		else
 		(
@@ -3302,7 +3302,6 @@ buttontext:"v.902"
 		if state == true then
 		(
 			camSelection.enabled = false	
-			CamCheck_btnState = true
 			SA_fly_btn.enabled = true 
 			SA_single_btn.enabled = true 
 			SA_nogi_btn.enabled = true 
@@ -3328,9 +3327,8 @@ buttontext:"v.902"
 		(
 				destroydialog camChecklistRO
 				camSelection.enabled = true
-				
 				camSelection.selection = 1
-				CamCheck_btnState = false
+				
 				FA_fly_btn.enabled = true 
 				FA_single_btn.enabled = true 
 				FA_nogi_btn.enabled = true 
@@ -3477,7 +3475,7 @@ buttontext:"v.902"
 	-- CAMERA SELECTION CHECKLIST ROLLOUT --
 	---------------------------------------------------------
 		
-	rollout camChecklistRO "VRaySpawner Manager v.2012" width: 220
+	rollout camChecklistRO "Canera Selector" width: 220
 	(
 		dotNetControl lv_objects "System.Windows.Forms.ListView" height:400
 		button check_all "Check All" width:85 across: 2
@@ -3523,6 +3521,7 @@ buttontext:"v.902"
 			lv_objects.AutoResizeColumns (dotNetClass "System.Windows.Forms.ColumnHeaderAutoResizeStyle").HeaderSize
 			lv_objects.Refresh()
 			
+			--collect listview dotNet item objects into an array, array of dotNet objects
 			LV_ITEMS = #()
 			for i=0 to (lv_objects.Items.Count - 1) do
 				append LV_ITEMS (lv_objects.Items.Item i)
@@ -3532,10 +3531,16 @@ buttontext:"v.902"
 		(
 			for i in LV_ITEMS do
 				i.checked = false
+			free LV_ITEMS
 		)
 	)
 	
+	rollout cancelPreviewRO "Cancel Preview" width: 220
+	(
+		button cancelPreview_bn "Cancel"
 
+
+	)
 	
 	on execute do 
 	(
