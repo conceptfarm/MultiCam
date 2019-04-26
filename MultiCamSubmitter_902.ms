@@ -1181,9 +1181,16 @@ buttontext:"v.902"
 			v = [s.x, s.x/k]
 			y = (s.y-v.y)/2 + 1
 		)
-		
-		for t = begframe to endframe do
+		local progCancelled = false
+		--local NotCancelled = true
+		--progressStart "Generating Preview"
+		--local aniRange = (((animationrange.end - animationrange.start) as integer) / TicksPerFrame) as float
+		--print anirange 
+		for t = begframe to endframe while progCancelled == false do --while NotCancelled do
 		(	
+			--local percentage = 100.0 * (t/aniRange)
+			--print percentage as string
+			progCancelled = getProgressCancel() 
 			sliderTime = t
 			local frame_num = (slidertime as integer) / TicksPerFrame
 			frame_num = (padNumber frame_num padLength ) as string
@@ -1199,7 +1206,7 @@ buttontext:"v.902"
 			free dib
 			free anim_bmp
 		)
-
+		
 		close anim_bmp
 		
 		if ((doesfileexist "c:\\PreviewMOVs") == false) then (makedir "c:\\PreviewMOVs")
@@ -1220,10 +1227,11 @@ buttontext:"v.902"
 		)
 		else (prevHeight = renderHeight as string)
 
-		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/arial.ttf: text='%{frame_num}': start_number=" + (begframe as string) + ": x=(w-tw)/2: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt rgb24 -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
+		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/arial.ttf: text='camera\: " + currentCameraName + "    frame\:  %{frame_num}    fov\: 55mm': start_number=" + (begframe as string) + ": x=(w-tw)/10: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt rgb24 -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
 		print command
 		DOSCommand (command)
 		escapeEnable = oldEscapeEnable
+		--progressEnd()
 	)
 	
 	
@@ -2271,7 +2279,7 @@ buttontext:"v.902"
 		getOldHideCats()
 		displaySafeFrames = true
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
-		cui.expertModeOn()  -- Views: Expert Mode Toggle
+		--cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
 		viewport.SetRenderLevel #smoothhighlights
 		
@@ -2637,11 +2645,11 @@ buttontext:"v.902"
 		getOldHideCats()
 		displaySafeFrames = true
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
-		cui.expertModeOn()  -- Views: Expert Mode Toggle
+		--cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
 		viewport.SetRenderLevel #smoothhighlights
 		
-		local NotCanceled = true
+		local notCancelled = true
 
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
@@ -2651,10 +2659,10 @@ buttontext:"v.902"
 				
 				progressStart "Generating Preview"
 				
-				for i = 1 checkedCams.count while notCancelled do
+				for i = 1 to checkedCams.count while notCancelled do
 				(	
 					local percentage = 100.0 * (i as float / checkedCams.count as float)
-					NotCancelled = progressUpdate Percentage
+					notCancelled = progressUpdate percentage
 			
 					currentCameraName = checkedCams[i].text
 					currentCamera = (getnodebyname currentCameraName)
