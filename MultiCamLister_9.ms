@@ -950,6 +950,43 @@ Icon:#("Lights",7)
 						local obj = getObjectByRow dgv val.RowIndex
 						setProperty obj.modifiers[#MultiCam_Attribute] #useHeightWidth_chb thisValue
 					)--end 15
+
+					16:(-- Width
+						local thisValue = (dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) as integer
+						local obj = getObjectByRow dgv val.RowIndex
+						
+						if thisValue != undefined then
+						(	
+
+							dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
+							obj.modifiers[#MultiCam_Attribute].imgWidth_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
+
+						)
+						else
+						(
+							Messagebox ("Image width must be an number.")
+							dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value = obj.modifiers[#MultiCam_Attribute].imgWidth_sp
+						)
+
+					)
+
+					17:(-- Height
+						local thisValue = (dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) as integer
+						local obj = getObjectByRow dgv val.RowIndex
+						
+						if thisValue != undefined then
+						(	
+
+							dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
+							obj.modifiers[#MultiCam_Attribute].imgHeight_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
+
+						)
+						else
+						(
+							Messagebox ("Image height must be an number.")
+							dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value = obj.modifiers[#MultiCam_Attribute].imgHeight_sp
+						)
+					)
 						
 					20:(--Use HDRI
 						checkSelectedCells dgv val

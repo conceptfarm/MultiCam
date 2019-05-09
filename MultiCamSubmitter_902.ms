@@ -7,7 +7,15 @@
 
 --to do:
 --	split camera option
---	Esc. to cancel
+--	Esc. to cancel for submission
+--  check if ffmpeg exists before preview
+--  check if ffmpeg exists in deadline, somehow access plugin paths and check those?
+
+--ver.901
+----------------------------------------------------
+-- Esc. to cancel preview 
+-- ffmpeg camera parameters and frame numbers
+
 
 --ver.901
 ----------------------------------------------------
@@ -395,6 +403,19 @@ buttontext:"v.902"
 		)
 		
 		return result
+	)
+
+	fn getCamFocalLength cam =
+	(
+		local result = 
+		case (classof cam) of 
+		(
+			VRayPhysicalCamera: (cam.focal_length) as integer
+			Targetcamera: (cameraFOV.FOVtoMM cam.curFOV) as integer
+			Freecamera: (cameraFOV.FOVtoMM cam.curFOV) as integer
+			Physical: (cam.focal_length_mm) as integer
+		)
+		result
 	)
 	
 	fn IFLwriter f =
@@ -1051,21 +1072,19 @@ buttontext:"v.902"
 
 	fn preview_jpg =
 	(
-		local oldEscapeEnable = escapeEnable
-		escapeEnable = true
 		if SingleFrame == true then (endframe = begframe)
-				
+		
+		local padLength = 4		
 		local x = y = 0, v
 		local s = getViewSize()
 		local k = getRendImageAspect()
 		
 		local anim_bmp = undefined
-		local temp_dib = (gw.getViewportDib())
-		local windowScaleWidth = temp_dib.width / s.x
-		local windowScaleHeight = temp_dib.height / s.y
+		local dib = (gw.getViewportDib())
+		local windowScaleWidth = dib.width / s.x
+		local windowScaleHeight = dib.height / s.y
 
-		free temp_dib
-		close temp_dib
+		free dib
 
 		s = [s.x*windowScaleWidth,s.y*windowScaleHeight]
 
@@ -1079,26 +1098,42 @@ buttontext:"v.902"
 			v = [s.x, s.x/k]
 			y = (s.y-v.y)/2 + 1
 		)	
-			
-		for t = begframe to endframe do
+	
+		local progressPercent = true
+		local aniRange = (((animationrange.end - animationrange.start) as integer) / TicksPerFrame) as float
+		progressStart "Generating Preview"
+		
+		for t = begframe to endframe while progressPercent do
 		(	
-			
+			local percentage = 100.0 * (t/aniRange)
+			progressPercent = progressUpdate percentage
 			sliderTime = t
-			local frame_num = (slidertime as integer) / TicksPerFrame
-			frame_num = (padNumber frame_num 4 ) as string
+			--local frame_num = (slidertime as integer) / TicksPerFrame
+			local frame_num = (padNumber t padLength ) as string
 			local preview_name = rootnode.CA_frameOutput + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 
 			anim_bmp = bitmap v.x v.y filename:preview_name
 				
-			local dib = (gw.getViewportDib())
+			dib = (gw.getViewportDib())
 			pasteBitmap dib anim_bmp (box2 x y v.x v.y) [0,0]
 			save anim_bmp
 			free dib
 			free anim_bmp
+
+			if keyboard.escPressed or progressPercent == false do 
+			(
+				progressEnd()
+				close dib
+				close anim_bmp
+				destroyDialog multiCamSubmitter
+				return false
+			)
 		)
 
 		close anim_bmp
-		escapeEnable = oldEscapeEnable
+		close dib
+		progressEnd()
+		return true
 	)
 	
 	-- Outdated function probably needs to be deleted
@@ -1152,8 +1187,6 @@ buttontext:"v.902"
 	
 	fn preview_avi =
 	(
-		local oldEscapeEnable = escapeEnable
-		escapeEnable = true
 		local firstFrameFile = ""
 		local padLength = 4
 		
@@ -1162,13 +1195,12 @@ buttontext:"v.902"
 		local k = getRendImageAspect()
 		
 		local anim_bmp = undefined
-		local temp_dib = (gw.getViewportDib())
-		local windowScaleWidth = temp_dib.width / s.x
-		local windowScaleHeight = temp_dib.height / s.y
+		local dib = (gw.getViewportDib())
+		local windowScaleWidth = dib.width / s.x
+		local windowScaleHeight = dib.height / s.y
 
-		free temp_dib
-		close temp_dib
-
+		free dib
+		
 		s = [s.x*windowScaleWidth,s.y*windowScaleHeight]
 
 		if k < (s.x/s.y) then -- if portrait
@@ -1181,32 +1213,40 @@ buttontext:"v.902"
 			v = [s.x, s.x/k]
 			y = (s.y-v.y)/2 + 1
 		)
-		local progCancelled = false
-		--local NotCancelled = true
-		--progressStart "Generating Preview"
-		--local aniRange = (((animationrange.end - animationrange.start) as integer) / TicksPerFrame) as float
-		--print anirange 
-		for t = begframe to endframe while progCancelled == false do --while NotCancelled do
+
+		local progressPercent = true
+		local aniRange = (((animationrange.end - animationrange.start) as integer) / TicksPerFrame) as float
+		
+		progressStart "Generating Preview"
+
+		for t = begframe to endframe while progressPercent do
 		(	
-			--local percentage = 100.0 * (t/aniRange)
-			--print percentage as string
-			progCancelled = getProgressCancel() 
+			local percentage = 100.0 * (t/aniRange)
+			progressPercent = progressUpdate percentage
 			sliderTime = t
-			local frame_num = (slidertime as integer) / TicksPerFrame
-			frame_num = (padNumber frame_num padLength ) as string
+			--local frame_num = (slidertime as integer) / TicksPerFrame
+			local frame_num = (padNumber t padLength ) as string
 			local preview_name = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 			if t == begframe then firstFrameFile = "C:\\tempPreview" + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ "%0" + padLength as string +"d.jpg"
 						
 			anim_bmp = bitmap v.x v.y filename:preview_name
 				
-			local dib = (gw.getViewportDib())			
+			dib = (gw.getViewportDib())			
 			pasteBitmap dib anim_bmp (box2 x y v.x v.y) [0,0]
-			--copy dib anim_bmp
 			save anim_bmp
 			free dib
 			free anim_bmp
+
+			if keyboard.escPressed or progressPercent == false do 
+			(
+				progressEnd()
+				close dib
+				close anim_bmp
+				destroyDialog multiCamSubmitter
+				return false
+			)
 		)
-		
+		close dib
 		close anim_bmp
 		
 		if ((doesfileexist "c:\\PreviewMOVs") == false) then (makedir "c:\\PreviewMOVs")
@@ -1214,6 +1254,7 @@ buttontext:"v.902"
 
 		local prevWidth = ""
 		local prevHeight = ""
+		local camLens = (getCamFocalLength currentCamera) as string
 
 		if (vrayRend.output_getsetsfrommax == false) then
 		(
@@ -1227,11 +1268,12 @@ buttontext:"v.902"
 		)
 		else (prevHeight = renderHeight as string)
 
-		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/arial.ttf: text='camera\: " + currentCameraName + "    frame\:  %{frame_num}    fov\: 55mm': start_number=" + (begframe as string) + ": x=(w-tw)/10: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt rgb24 -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
+		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/calibri.ttf: text='camera\: " + currentCameraName + "    frame\: %{frame_num}    lens\: "+camLens+"mm': start_number=" + (begframe as string) + ": x=(w-tw)/10: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt gbrp -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
 		print command
 		DOSCommand (command)
-		escapeEnable = oldEscapeEnable
-		--progressEnd()
+		
+		progressEnd()
+		return true
 	)
 	
 	
@@ -2281,8 +2323,10 @@ buttontext:"v.902"
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
 		--cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
-		viewport.SetRenderLevel #smoothhighlights
-		
+		--viewport.SetRenderLevel #smoothhighlights
+		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+
+		local notCancelled = true
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
 			for i = 1 to  sceneCams.count do
@@ -2292,31 +2336,38 @@ buttontext:"v.902"
 				viewport.setCamera currentCamera
 
 				parseRangeFile currentCamera
-				if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName); preview_jpg())
+				
+				if (rootnode.CA_previewOutputExt == ".jpg") then 
+				(
+					makedir (rootnode.CA_frameOutput +"\\" + currentCameraName)
+					notCancelled = preview_jpg()
+				)
 				else if (rootnode.CA_previewOutputExt == ".mov") then 
 				(
 					makedir ("C:\\tempPreview\\" + currentCameraName) 
-					preview_mov()
+					notCancelled = preview_mov()
 					removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 					DOSCommand (removeCommand)
 				)
 				else 
 				(
 					makedir ("C:\\tempPreview\\" + currentCameraName) 
-					preview_avi()
+					notCancelled = preview_avi()
 					removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 					DOSCommand (removeCommand)
 				)
-			
-				--close anim_bmp
-				--gc()
-			
 			)--end for
 			
-			if (rootnode.CA_previewOutputExt == ".mov" or rootnode.CA_previewOutputExt == ".avi") then 
+			if notCancelled then
 			(
-				--makedir "c:\\PreviewMOVs"
-				if queryBox "Exported mov files are on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))	
+				if (rootnode.CA_previewOutputExt == ".mov" or rootnode.CA_previewOutputExt == ".avi") then
+				(
+					if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+				)
+				else if (rootnode.CA_previewOutputExt == ".jpg") then
+				(
+					if queryBox ("Exported .jpg file sequence is on " + rootnode.CA_frameOutput + " - Show in Explorer?") beep:false then (DOSCommand ("explorer.exe " + rootnode.CA_frameOutput))
+				)
 			)
 			
 			destroydialog multiCamSubmitter
@@ -2327,7 +2378,7 @@ buttontext:"v.902"
 			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
 		
-		cui.expertModeOff()  -- Views: Expert Mode Toggle
+		--cui.expertModeOff()  -- Views: Expert Mode Toggle
 		setOldHideCats()
 		
 	)--end function FA_preview_fn
@@ -2656,51 +2707,59 @@ buttontext:"v.902"
 			if camChecklistRO.open == true then 
 			(
 				local checkedCams = for i in LV_ITEMS where i.checked == true collect i
-				
-				progressStart "Generating Preview"
-				
+					
 				for i = 1 to checkedCams.count while notCancelled do
-				(	
-					local percentage = 100.0 * (i as float / checkedCams.count as float)
-					notCancelled = progressUpdate percentage
-			
+				(				
 					currentCameraName = checkedCams[i].text
 					currentCamera = (getnodebyname currentCameraName)
 					parseRangeFile currentCamera
 					viewport.setCamera currentCamera
 
-					if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) ; preview_jpg())
+					if (rootnode.CA_previewOutputExt == ".jpg") then 
+					(
+						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) 
+						notCancelled = preview_jpg()
+					)
 					else if (rootnode.CA_previewOutputExt == ".mov") then 
 					(
 						makedir ("C:\\tempPreview\\" + currentCameraName) 
-						preview_mov()
+						notCancelled = preview_mov()
 						removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 						DOSCommand (removeCommand)
 					)
 					else if (rootnode.CA_previewOutputExt == ".avi") then 
 					(
 						makedir ("C:\\tempPreview\\" + currentCameraName) 
-						preview_avi()
+						notCancelled = preview_avi()
 						removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 						DOSCommand (removeCommand)
 					)
 				)
-				progressEnd()
-
+				
 				if notCancelled then
 				(
-					if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+					if (rootnode.CA_previewOutputExt == ".mov" or rootnode.CA_previewOutputExt == ".avi") then
+					(
+						if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+					)
+					else if (rootnode.CA_previewOutputExt == ".jpg") then
+					(
+						if queryBox ("Exported .jpg file sequence is on " + rootnode.CA_frameOutput + " - Show in Explorer?") beep:false then (DOSCommand ("explorer.exe " + rootnode.CA_frameOutput))
+					)
 				)
 			)	
 			else
 			(
 				parseRangeFile currentCamera
-				if (rootnode.CA_previewOutputExt == ".jpg") then (makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) ; preview_jpg())
+				if (rootnode.CA_previewOutputExt == ".jpg") then 
+				(
+					makedir (rootnode.CA_frameOutput +"\\" + currentCameraName)
+					notCancelled = preview_jpg()
+				)
 				else if (rootnode.CA_previewOutputExt == ".mov") then 
 				(
 					makedir ("C:\\tempPreview\\" + currentCameraName) 
-					preview_mov()
-					if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+					notCancelled = preview_mov()
 
 					removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 					DOSCommand (removeCommand)
@@ -2708,15 +2767,24 @@ buttontext:"v.902"
 				else if (rootnode.CA_previewOutputExt == ".avi") then 
 				(
 					makedir ("C:\\tempPreview\\" + currentCameraName) 
-					preview_avi()
-					if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+					notCancelled =  preview_avi()
 
 					removeCommand = "RD " + "\"" + "C:\\tempPreview"  + "\"" + " /S /Q"
 					DOSCommand (removeCommand)
 				)
-				--close anim_bmp
+
+				if notCancelled then
+				(
+					if (rootnode.CA_previewOutputExt == ".mov" or rootnode.CA_previewOutputExt == ".avi") then
+					(
+						if queryBox "Exported mov file is on C:\\PreviewMOVs - Show in Explorer?" beep:false then (DOSCommand ("explorer.exe C:\\PreviewMOVs\\"))
+					)
+					else if (rootnode.CA_previewOutputExt == ".jpg") then
+					(
+						if queryBox ("Exported .jpg file sequence is on " + rootnode.CA_frameOutput + " - Show in Explorer?") beep:false then (DOSCommand ("explorer.exe " + rootnode.CA_frameOutput + currentCameraName + "\\"))
+					)
+				)
 			)
-			--gc()
 			destroydialog multiCamSubmitter
 		)
 		else 
@@ -2724,7 +2792,7 @@ buttontext:"v.902"
 			if (rootnode.CA_previewOutputExt == ".mov") then ( if queryBox ("Avid codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://avid.force.com/pkb/articles/en_US/download/Avid-QuickTime-Codecs-LE" + "\""))))
 			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
-		cui.expertModeOff()  -- Views: Expert Mode Toggle
+		--cui.expertModeOff()  -- Views: Expert Mode Toggle
 		setOldHideCats()
 	)--end function FA_nogi_fn	
 	
