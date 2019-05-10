@@ -10,10 +10,12 @@
 --	Esc. to cancel for submission
 --  check if ffmpeg exists before preview
 --  check if ffmpeg exists in deadline, somehow access plugin paths and check those?
+--  consolidate all submission functions into one FA and SA functions with case for types
 
---ver.901
+--ver.902
 ----------------------------------------------------
 -- Esc. to cancel preview 
+-- Esc. to cancel submission (needs testing)
 -- ffmpeg camera parameters and frame numbers
 
 
@@ -304,9 +306,6 @@ buttontext:"v.902"
 	local sceneCams = #()
 	local vraySuns = #()
 	local sceneCamsNames_array = #()
-	--global anim_bmp
-	--global DeadlineRoot
-	--global re = maxOps.GetCurRenderElementMgr()
 	
 	local currentCameraName = undefined
 	local currentCamera = undefined
@@ -1105,7 +1104,7 @@ buttontext:"v.902"
 		
 		for t = begframe to endframe while progressPercent do
 		(	
-			local percentage = 100.0 * (t/aniRange)
+			local percentage = 100.0 * ((t-begframe)/(aniRange-begframe))
 			progressPercent = progressUpdate percentage
 			sliderTime = t
 			--local frame_num = (slidertime as integer) / TicksPerFrame
@@ -1221,7 +1220,7 @@ buttontext:"v.902"
 
 		for t = begframe to endframe while progressPercent do
 		(	
-			local percentage = 100.0 * (t/aniRange)
+			local percentage = 100.0 * ((t-begframe)/(aniRange-begframe))
 			progressPercent = progressUpdate percentage
 			sliderTime = t
 			--local frame_num = (slidertime as integer) / TicksPerFrame
@@ -2184,6 +2183,41 @@ buttontext:"v.902"
 	--FULLY AUTOMATED
 -------------------------------------------------------------------------	
 	
+	fn FA_submission_fn submissionType = 
+	(	
+		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		getOldEnvLayers()
+
+		for i = 1 to sceneCams.count do
+		(
+			currentCameraName = sceneCams[i].name as string
+			currentCamera = sceneCams[i]
+			parseRangeFile currentCamera
+			moveSuntoPoint()
+			viewport.setCamera currentCamera
+
+			redrawViews()
+			
+			case submissionType of
+			(
+				#flyThrough: fly_settings begframe endframe i
+				#singleFrame: single_settings begframe endframe
+				#noGI:nogi_settings begframe endframe
+				#asIs:as_is_settings begframe endframe
+				#vrayDR:vdr_settings begframe endframe
+				#animated:animated_settings begframe endframe
+				#bruteForce:bruteForce_settings begframe endframe
+				#bruteForceSphere:bruteForceSphere_settings begframe endframe
+			)
+		)--end for
+		setOldRPS()
+		hideByCategory.cameras = hideCatCams
+		destroydialog multiCamSubmitter
+		setSaveRequired true
+	)--end function FA_flythrough_fn
+
 	fn FA_flythrough_fn = 
 	(	
 		getOldRPS()
@@ -2209,7 +2243,6 @@ buttontext:"v.902"
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_flythrough_fn	
-	
 	
 	fn FA_single_fn = 
 	(
@@ -2237,7 +2270,6 @@ buttontext:"v.902"
 		setSaveRequired true
 	)--end function FA_single_fn	
 
-	
 	fn FA_nogi_fn = 
 	(
 		getOldRPS()
@@ -2262,7 +2294,6 @@ buttontext:"v.902"
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_nogi_fn	
-	
 	
 	fn FA_as_is_fn = 
 	(
@@ -2289,7 +2320,6 @@ buttontext:"v.902"
 		setSaveRequired true
 	)--end function FA_as_is_fn
 	
-	
 	fn FA_VDR_fn = 
 	(
 		getOldRPS()
@@ -2315,7 +2345,6 @@ buttontext:"v.902"
 		setSaveRequired true
 	)--end function FA_as_is_fn
 		
-
 	fn FA_preview_fn = 
 	(
 		getOldHideCats()
@@ -2379,11 +2408,9 @@ buttontext:"v.902"
 		)
 		
 		--cui.expertModeOff()  -- Views: Expert Mode Toggle
-		setOldHideCats()
-		
+		setOldHideCats()	
 	)--end function FA_preview_fn
-	
-	
+		
 	fn FA_animated_fn = 
 	(
 		getOldRPS()
@@ -2462,6 +2489,64 @@ buttontext:"v.902"
 -------------------------------------------------------------------------	
 	--SEMI AUTOMATED
 -------------------------------------------------------------------------	
+
+	fn SA_submission_fn submissionType = 
+	(
+		getOldRPS()
+		local hideCatCams = hideByCategory.cameras
+		hideByCategory.cameras = true
+		getOldEnvLayers()
+
+		if camChecklistRO.open == true then 
+		(
+			for i in LV_ITEMS where i.checked == true do
+			(
+				--if i.checked then
+				--(	
+				currentCameraName = i.text
+				currentCamera = (getnodebyname currentCameraName)
+				parseRangeFile currentCamera
+				moveSuntoPoint()
+				viewport.setCamera currentCamera
+
+				redrawViews()
+
+				case submissionType of
+				(
+					#flyThrough: fly_settings begframe endframe i
+					#singleFrame: single_settings begframe endframe
+					#noGI:nogi_settings begframe endframe
+					#asIs:as_is_settings begframe endframe
+					#vrayDR:vdr_settings begframe endframe
+					#animated:animated_settings begframe endframe
+					#bruteForce:bruteForce_settings begframe endframe
+					#bruteForceSphere:bruteForceSphere_settings begframe endframe
+				)
+				--)
+			)
+		)
+		else 
+		(
+			parseRangeFile currentCamera
+			moveSuntoPoint()
+			case submissionType of
+			(
+				#flyThrough: fly_settings begframe endframe i
+				#singleFrame: single_settings begframe endframe
+				#noGI:nogi_settings begframe endframe
+				#asIs:as_is_settings begframe endframe
+				#vrayDR:vdr_settings begframe endframe
+				#animated:animated_settings begframe endframe
+				#bruteForce:bruteForce_settings begframe endframe
+				#bruteForceSphere:bruteForceSphere_settings begframe endframe
+			)
+		)
+		setOldRPS()
+		hideByCategory.cameras = hideCatCams
+		destroydialog multiCamSubmitter
+		setSaveRequired true
+	)--end function SA_flythrough_fn	
+
 	
 	fn SA_flythrough_fn = 
 	(
