@@ -298,6 +298,7 @@ buttontext:"v.902"
 	
 	global multiCamSubmitter
 	global camChecklistRO
+	global cancelPreviewRO
 	global vrayRend
 	global SubmitterNodeEventCallback
 
@@ -507,9 +508,11 @@ buttontext:"v.902"
 		callbacks.addscript #postRenderFrame a persistent:true id:#copyJPG_callback
 	)
 
+	-- this should be a rollout update function, update dropdown and updata LV_ITEMS
 	fn SubmitterNodeEventFN ev nd = 
 	(
 		try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+		createdialog multiCamSubmitter
 	)
 	
 	------------------------------------
@@ -2190,7 +2193,10 @@ buttontext:"v.902"
 		hideByCategory.cameras = true
 		getOldEnvLayers()
 
-		for i = 1 to sceneCams.count do
+		try(destroydialog cancelPreviewRO)catch()
+		createDialog cancelPreviewRO
+
+		for i = 1 to sceneCams.count while not keyboard.escPressed do
 		(
 			currentCameraName = sceneCams[i].name as string
 			currentCamera = sceneCams[i]
@@ -2209,11 +2215,12 @@ buttontext:"v.902"
 				#vrayDR:vdr_settings begframe endframe
 				#animated:animated_settings begframe endframe
 				#bruteForce:bruteForce_settings begframe endframe
-				#bruteForceSphere:bruteForceSphere_settings begframe endframe
+				#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 			)
 		)--end for
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
+		destroydialog cancelPreviewRO
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_flythrough_fn
@@ -2520,7 +2527,7 @@ buttontext:"v.902"
 					#vrayDR:vdr_settings begframe endframe
 					#animated:animated_settings begframe endframe
 					#bruteForce:bruteForce_settings begframe endframe
-					#bruteForceSphere:bruteForceSphere_settings begframe endframe
+					#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 				)
 				--)
 			)
@@ -2538,7 +2545,7 @@ buttontext:"v.902"
 				#vrayDR:vdr_settings begframe endframe
 				#animated:animated_settings begframe endframe
 				#bruteForce:bruteForce_settings begframe endframe
-				#bruteForceSphere:bruteForceSphere_settings begframe endframe
+				#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 			)
 		)
 		setOldRPS()
@@ -3512,34 +3519,40 @@ buttontext:"v.902"
 		)
 	)
 
+
 	on FA_fly_btn pressed do 
 	(
 		clear_render_paths()
-		FA_flythrough_fn()
+		FA_submission_fn #flyThrough
+		--FA_flythrough_fn()
 	)
 		
 	on FA_single_btn pressed do
 	(
 		clear_render_paths()
-		FA_single_fn()
+		FA_submission_fn #singleFrame
+		--FA_single_fn()
 	)
 	
 	on FA_as_is_btn pressed do 
 	(
 		clear_render_paths()
-		FA_as_is_fn()
+		FA_submission_fn #asIS
+		--FA_as_is_fn()
 	)
 	
 	on FA_VDR_btn pressed do 
 	(
 		clear_render_paths()
-		FA_VDR_fn()
+		FA_submission_fn #vrayDR
+		--FA_VDR_fn()
 	)
 	
 	on FA_nogi_btn pressed do
 	(
 		clear_render_paths()
-		FA_nogi_fn()
+		FA_submission_fn #noGI
+		--FA_nogi_fn()
 	)
 	on FA_pv_btn pressed do
 	(
@@ -3549,50 +3562,58 @@ buttontext:"v.902"
 	on FA_an_btn pressed do
 	(
 		clear_render_paths()
-		FA_animated_fn()
+		FA_submission_fn #animated
+		--FA_animated_fn()
 	)
 	
 	on FA_bf_btn pressed do
 	(
 		clear_render_paths()
-		FA_bruteForce_fn()
+		FA_submission_fn #bruteForce
+		--FA_bruteForce_fn()
 	)
 	
 	on FA_bfs_btn pressed do
 	(
 		clear_render_paths()
-		FA_bruteForceSphere_fn()
+		FA_submission_fn #bruteForceSpheres
+		--FA_bruteForceSphere_fn()
 	)
 	
 	on SA_fly_btn pressed do 
 	(
 		clear_render_paths()
-		SA_flythrough_fn()
+		SA_submission_fn #flyThrough
+		--SA_flythrough_fn()
 	)
 		
 	on SA_single_btn pressed do
 	(
 		clear_render_paths()
-		SA_single_fn()
+		SA_submission_fn #singelFrame
+		--SA_single_fn()
 	)
 	
 	on SA_as_is_btn pressed do 
 	(
 		clear_render_paths()
-		SA_as_is_fn()
+		SA_submission_fn #asIs
+		--SA_as_is_fn()
 	)
 	
 	on SA_VDR_btn pressed do 
 	(
 		clear_render_paths()
-		SA_VDR_fn()
+		SA_submission_fn #vrayDR
+		--SA_VDR_fn()
 	)
 	
 	
 	on SA_nogi_btn pressed do
 	(
 		clear_render_paths()
-		SA_nogi_fn()
+		SA_submission_fn #noGI
+		--SA_nogi_fn()
 	)
 	
 	on SA_pv_btn pressed do
@@ -3603,19 +3624,22 @@ buttontext:"v.902"
 	on SA_an_btn pressed do
 	(
 		clear_render_paths()
-		SA_animated_fn()
+		SA_submission_fn #animated
+		--SA_animated_fn()
 	)
 	
 	on SA_bf_btn pressed do
 	(
 		clear_render_paths()
-		SA_bruteForce_fn()
+		SA_submission_fn #bruteForce
+		--SA_bruteForce_fn()
 	)
 	
 	on SA_BFS_btn pressed do
 	(
 		clear_render_paths()
-		SA_bruteForceSphere_fn()
+		SA_submission_fn #bruteForceSpheres
+		--SA_bruteForceSphere_fn()
 	)
 	
 	on genBatchButton pressed do
@@ -3699,8 +3723,6 @@ buttontext:"v.902"
 	rollout cancelPreviewRO "Cancel Preview" width: 220
 	(
 		button cancelPreview_bn "Cancel"
-
-
 	)
 	
 	on execute do 
