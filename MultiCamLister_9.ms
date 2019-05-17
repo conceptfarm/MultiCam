@@ -4,6 +4,11 @@
 -- Dec 16th 2018
 -- Lists all Vray Cameras and their porperties MultiCam Attribute properties
 ---------------------------------------------------------------------------------------
+-- Bug: clicking off, does not commit change, checkbox issues, probably other issues as well. 
+-- checking in the modifier, checks in the lister but doesnot un-gray
+-- Text feilds when edited lose focus
+-- When lost focus dgv needs to comit changes and finalize edits
+
 macroScript MultiCamLister
 category:"ilya_s Scripts"
 tooltip:"MCL"
@@ -279,6 +284,11 @@ Icon:#("Lights",7)
 			dgvObject.rows.item[rowIndex].cells.item[7].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[8].style = disabledStyle
 		)
+		else
+		(
+			dgvObject.rows.item[rowIndex].cells.item[7].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[8].style = enabledStyle
+		)
 		
 		dgvObject.rows.item[rowIndex].cells.item[9].ReadOnly = true
 		
@@ -298,6 +308,12 @@ Icon:#("Lights",7)
 			dgvObject.rows.item[rowIndex].cells.item[12].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[13].style = disabledStyle
 		)
+		else
+		(
+			dgvObject.rows.item[rowIndex].cells.item[11].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[12].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[13].style = enabledStyle
+		)
 		
 		dgvObject.rows.item[rowIndex].cells.item[14].ReadOnly = true
 		
@@ -314,6 +330,12 @@ Icon:#("Lights",7)
 			dgvObject.rows.item[rowIndex].cells.item[16].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[17].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[18].style = disabledStyle
+		)
+		else 
+		(
+			dgvObject.rows.item[rowIndex].cells.item[16].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[17].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[18].style = enabledStyle
 		)
 		
 		dgvObject.rows.item[rowIndex].cells.item[19].ReadOnly = true
@@ -332,6 +354,12 @@ Icon:#("Lights",7)
 			dgvObject.rows.item[rowIndex].cells.item[21].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[22].style = disabledStyle
 			dgvObject.rows.item[rowIndex].cells.item[23].style = disabledStyle
+		)
+		else
+		(
+			dgvObject.rows.item[rowIndex].cells.item[21].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[22].style = enabledStyle
+			dgvObject.rows.item[rowIndex].cells.item[23].style = enabledStyle
 		)
 
 		dgvObject.rows.item[rowIndex].cells.item[24].value = (GetHandleByAnim obj) as string
@@ -548,6 +576,7 @@ Icon:#("Lights",7)
 						local rowToInvalidate = row - 1
 						dgv.InvalidateRow rowToInvalidate
 						dgvRefreshing = true
+						--dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 						populateRow dgv rowToInvalidate obj
 						dgvRefreshing = false
 					)
@@ -661,27 +690,78 @@ Icon:#("Lights",7)
 
 		on MultiCamLister close do
 		(
+			dgv.EndEdit()
+			dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			dgv.ClearSelection()
+			
 			callBacks.RemoveScripts id:#MultiCamListerDialog
 			listerNodeEventCallback = undefined
-			gc light:true
+			gc light:true 
 			MultiCamListerOpen =  false	
 		)
+
+		on dgv EditingControlShowing val do
+		(
+
+			show val
+
+		)
+
+		on dgv EditModeChanged val do
+		(
+			print "EditMode Changed"
+		)
+
+		--on dgv CellMouseLeave val do
+		--(
+		--	print "CellMouse Leave"
+		--)
 
 		on dgv LostFocus val do
 		(
 			--print "clearing selection lost focus dgv 1"
-			dgv.ClearSelection()
+			--dgv.EndEdit()
+			--dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			--if dgv.IsCurrentCellInEditMode == false then
+			--(
+			--	dgv.currentCell = undefined
+			--) 
+			print "Lost Focus"
+			if dgv.editingControl != undefined then
+			(
+
+			)
+			else
+			(
+				dgv.EndEdit()
+				dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+				dgv.ClearSelection()
+			)
+
+			--print (dgv.IsCurrentCellInEditMode as string)
+			--dgv.ClearSelection()
+		)
+
+		on dgv Leave val do
+		(
+
+			print "Left"
 		)
 
 		on dgvNoMod LostFocus val do
 		(
 			--print "clearing selection lost focus dgv 2"
+			--dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			if dgvNoMod.IsCurrentCellInEditMode == false then
+			(
+				dgvNoMod.currentCell = undefined
+			)
 			dgvNoMod.ClearSelection()
 		)
 		
 		on dgv CellLeave val do
 		(
-			--show val
+			print "Cell Left"
 		)
 		
 		on dgv cellMouseDown val do
@@ -1049,7 +1129,6 @@ Icon:#("Lights",7)
 				)
 			)
 		)
-
 
 		on dgvNoMod CellMouseUp val do
 		(
