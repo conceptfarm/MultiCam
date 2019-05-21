@@ -10,14 +10,13 @@
 --	Esc. to cancel for submission
 --  check if ffmpeg exists before preview
 --  check if ffmpeg exists in deadline, somehow access plugin paths and check those?
---  consolidate all submission functions into one FA and SA functions with case for types
 
 --ver.902
 ----------------------------------------------------
 -- Esc. to cancel preview 
 -- Esc. to cancel submission (needs testing)
 -- ffmpeg camera parameters and frame numbers
-
+-- consolidate all submission functions into one FA and SA functions with case for types
 
 --ver.901
 ----------------------------------------------------
@@ -327,7 +326,7 @@ buttontext:"v.902"
 	local LV_ITEMS = #()
 	local oldHideCats = #()
 	local projectName = "Project Noname"
-	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
+	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender\\", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
 	
 	
 	
@@ -457,7 +456,7 @@ buttontext:"v.902"
 	
 	fn AddCallbackLatest denoise:true =
 	(
-		makedir (rootnode.CA_frameOutput + "\\" + "Latest")
+		makedir (rootnode.CA_frameOutput + "Latest")
 			
 		local outputFile = ""
 		
@@ -471,7 +470,7 @@ buttontext:"v.902"
 		)
 		
 		--outFileRGB = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
-		outFileRGB = rootnode.CA_frameOutput + "\\" +"Latest" + "\\" + getFilenameFile outputFile + ".jpg"
+		outFileRGB = rootnode.CA_frameOutput +"Latest" + "\\" + getFilenameFile outputFile + ".jpg"
 		print ("latest2 callback dir " + outFileRGB)
 		tempFile = (getDir #downloads)+ "\\Temp_.jpg"					
 		
@@ -1112,7 +1111,7 @@ buttontext:"v.902"
 			sliderTime = t
 			--local frame_num = (slidertime as integer) / TicksPerFrame
 			local frame_num = (padNumber t padLength ) as string
-			local preview_name = rootnode.CA_frameOutput + "\\"+ currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
+			local preview_name = rootnode.CA_frameOutput + currentCameraName + "\\"+ currentCameraName +"__"+ frame_num +".jpg"
 
 			anim_bmp = bitmap v.x v.y filename:preview_name
 				
@@ -1312,7 +1311,7 @@ buttontext:"v.902"
 		vrayRend.output_splitfilename = ""		
 		vrayRend.output_force32bit_3dsmax_vfb = true
 		vrayRend.fileName_addDot = true
-		vrayRend.output_rawfilename = rootnode.CA_frameOutput +"\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + rootnode.CA_extension
+		vrayRend.output_rawfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + rootnode.CA_extension
 		
 	)
 		
@@ -1329,9 +1328,9 @@ buttontext:"v.902"
 		vrayRend.output_saveFile = true
 		vrayRend.output_splitRGB = true
 		vrayRend.output_splitAlpha = false
-		vrayRend.output_splitfilename = rootnode.CA_frameOutput + "\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
+		vrayRend.output_splitfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		mybitmap = bitmap 320 240 color:white gamma: 0.454545
-		mybitmap.filename = rootnode.CA_frameOutput + "\\" + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
+		mybitmap.filename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + overrideExt
 		save mybitmap
 		vrayRend.output_splitbitmap = mybitmap
 		close mybitmap
@@ -1571,7 +1570,7 @@ buttontext:"v.902"
 						rendShowVFB = false
 						rendSaveFile = false
 						
-						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory)
+						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory)
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 		
@@ -1631,7 +1630,7 @@ buttontext:"v.902"
 						rendSaveFile = false
 						rendShowVFB = false
 						
-						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
+						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 						
@@ -1699,7 +1698,7 @@ buttontext:"v.902"
 						rendSaveFile = false
 						rendShowVFB = false
 						
-						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
+						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 						
@@ -2224,134 +2223,7 @@ buttontext:"v.902"
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function FA_flythrough_fn
-
-	fn FA_flythrough_fn = 
-	(	
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-		
-			fly_settings begframe endframe i
-
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_flythrough_fn	
 	
-	fn FA_single_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-		
-			single_settings begframe endframe
-
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_single_fn	
-
-	fn FA_nogi_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-	
-			nogi_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_nogi_fn	
-	
-	fn FA_as_is_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-				
-			as_is_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_as_is_fn
-	
-	fn FA_VDR_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-			
-			vdr_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_as_is_fn
-		
 	fn FA_preview_fn = 
 	(
 		getOldHideCats()
@@ -2375,7 +2247,7 @@ buttontext:"v.902"
 				
 				if (rootnode.CA_previewOutputExt == ".jpg") then 
 				(
-					makedir (rootnode.CA_frameOutput +"\\" + currentCameraName)
+					makedir (rootnode.CA_frameOutput + currentCameraName)
 					notCancelled = preview_jpg()
 				)
 				else if (rootnode.CA_previewOutputExt == ".mov") then 
@@ -2418,80 +2290,6 @@ buttontext:"v.902"
 		setOldHideCats()	
 	)--end function FA_preview_fn
 		
-	fn FA_animated_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-			
-			animated_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function FA_as_is_fn
-	
-	fn FA_bruteForce_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-				
-			bruteForce_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-	
-	fn FA_bruteForceSphere_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		for i = 1 to  sceneCams.count do
-		(
-			currentCameraName = sceneCams[i].name as string
-			currentCamera = sceneCams[i]
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			viewport.setCamera currentCamera
-
-			redrawViews()
-				
-			bruteForceSphere_settings begframe endframe
-		)--end for
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
 
 -------------------------------------------------------------------------	
 	--SEMI AUTOMATED
@@ -2553,235 +2351,6 @@ buttontext:"v.902"
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_flythrough_fn	
-
-	
-	fn SA_flythrough_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					fly_settings begframe endframe 1
-				)
-			)
-		)
-		else 
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			fly_settings begframe endframe 1
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_flythrough_fn	
-
-	
-	fn SA_single_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					single_settings begframe endframe
-				)
-			)
-		)
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			single_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_single_fn	
-		
-	
-	fn SA_nogi_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					nogi_settings begframe endframe		
-				)
-			)
-		)
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			nogi_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_nogi_fn	
-	
-	
-	fn SA_as_is_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					as_is_settings begframe endframe 
-				)
-			)
-		)	
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			as_is_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-	
-	
-	fn SA_VDR_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					vdr_settings begframe endframe			
-				)
-			)
-		)	
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			vdr_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-		
-	
-	fn SA_animated_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					animated_settings begframe endframe			
-				)
-			)
-		)	
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			animated_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-
 	
 	fn SA_preview_fn = 
 	(
@@ -2809,7 +2378,7 @@ buttontext:"v.902"
 
 					if (rootnode.CA_previewOutputExt == ".jpg") then 
 					(
-						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName) 
+						makedir (rootnode.CA_frameOutput + currentCameraName) 
 						notCancelled = preview_jpg()
 					)
 					else if (rootnode.CA_previewOutputExt == ".mov") then 
@@ -2845,7 +2414,7 @@ buttontext:"v.902"
 				parseRangeFile currentCamera
 				if (rootnode.CA_previewOutputExt == ".jpg") then 
 				(
-					makedir (rootnode.CA_frameOutput +"\\" + currentCameraName)
+					makedir (rootnode.CA_frameOutput + currentCameraName)
 					notCancelled = preview_jpg()
 				)
 				else if (rootnode.CA_previewOutputExt == ".mov") then 
@@ -2887,82 +2456,7 @@ buttontext:"v.902"
 		--cui.expertModeOff()  -- Views: Expert Mode Toggle
 		setOldHideCats()
 	)--end function FA_nogi_fn	
-	
-	
-	fn SA_bruteForce_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					bruteForce_settings begframe endframe	
-				)
-			)
-		)	
-		else 
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			bruteForce_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-	
-	fn SA_bruteForceSphere_fn = 
-	(
-		getOldRPS()
-		local hideCatCams = hideByCategory.cameras
-		hideByCategory.cameras = true
-		getOldEnvLayers()
-
-		if camChecklistRO.open == true then 
-		(
-			for i in LV_ITEMS do
-			(
-				if i.checked then
-				(	
-					currentCameraName = i.text
-					currentCamera = (getnodebyname currentCameraName)
-					parseRangeFile currentCamera
-					moveSuntoPoint()
-					viewport.setCamera currentCamera
-
-					redrawViews()
-
-					bruteForceSphere_settings begframe endframe			
-				)
-			)
-		)	
-		else
-		(
-			parseRangeFile currentCamera
-			moveSuntoPoint()
-			bruteForceSphere_settings begframe endframe
-		)
-		setOldRPS()
-		hideByCategory.cameras = hideCatCams
-		destroydialog multiCamSubmitter
-		setSaveRequired true
-	)--end function SA_as_is_fn
-	
+		
 --########################--
 --ROLLOUT--
 --########################--
@@ -3087,7 +2581,7 @@ buttontext:"v.902"
 			
 			rootnode.CA_frameOutput = case pathRootChoice.state of 
 			(
-				1: (pathLable.text = ""; "X:\\" + projectName + "\\07_Production\\02_RawImageRender")
+				1: (pathLable.text = ""; "X:\\" + projectName + "\\07_Production\\02_RawImageRender\\")
 				2: (pathLable.text = ""; "Z:\\" + projectName+ "\\01_Frames\\" )
 				3: (pathLable.text = ""; "Z:\\" + projectName + "\\03_Previews\\")
 				4: (	pathButton.enabled = true
@@ -3122,7 +2616,7 @@ buttontext:"v.902"
 					)
 			)
 			
-			outputPaths = #("X:\\"+ projectName + "\\07_Production\\02_RawImageRender", "Z:\\" + ProjectName + "\\01_Frames\\", "Z:\\" + ProjectName + "\\03_Previews\\", "Custom")
+			outputPaths = #("X:\\"+ projectName + "\\07_Production\\02_RawImageRender\\", "Z:\\" + ProjectName + "\\01_Frames\\", "Z:\\" + ProjectName + "\\03_Previews\\", "Custom")
 			
 			rootnode.CA_frameOutputType = pathRootChoice.state
 			if (pathRootChoice.state != 4) then (pathButton.enabled = false)
@@ -3787,11 +3281,11 @@ buttontext:"v.902"
 			projectName = getProjectName()
 			if projectName != "Project Noname" then 
 			(
-				outputPaths = #("X:\\"+ projectName + "\\07_Production\\02_RawImageRender", "Z:\\" + ProjectName + "\\01_Frames\\", "Z:\\" + ProjectName + "\\03_Previews\\", "Custom")
+				outputPaths = #("X:\\"+ projectName + "\\07_Production\\02_RawImageRender\\", "Z:\\" + ProjectName + "\\01_Frames\\", "Z:\\" + ProjectName + "\\03_Previews\\", "Custom")
 			)
 			else 
 			(
-				outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender", "Z:\\ProjectName\\01_Frames\\", "Z:\\ProjectName\\03_Previews\\", "Custom")
+				outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender\\", "Z:\\ProjectName\\01_Frames\\", "Z:\\ProjectName\\03_Previews\\", "Custom")
 			)
 			
 			print ("Project name is " + projectName)

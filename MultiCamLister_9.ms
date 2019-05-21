@@ -27,6 +27,8 @@ Icon:#("Lights",7)
 	global MultiCamListerOpen = false
 	global listerNodeEventCallback = undefined
 	
+	local floaterHWND = undefined
+	local windowDotNetObj = undefined
 	local MultiCamLister = undefined
 	local cameraObjIDs = #()
 	local cameraObjIDsNoMod = #()
@@ -87,6 +89,31 @@ Icon:#("Lights",7)
 
 	local dgvWidth = (local c = 0; for i=1 to defList.count - 2 do c= c+defList[i][3];c) + 3 --1196
 	local dgvWidthWithBar = dgvWidth + 17 --1212
+	
+	fn getWindowClass =
+	(
+		local source  = "using System;
+"
+		source += "using System.Runtime.InteropServices;
+"
+		source += "public class Window
+"
+		source += "{
+"
+		source += "	[DllImport(\"user32.dll\")]
+"
+		source += "	public static extern IntPtr GetForegroundWindow();
+"
+		source += "}
+"
+
+		local csharpProvider = dotNetObject "Microsoft.CSharp.CSharpCodeProvider"
+		local compilerParams = dotNetObject "System.CodeDom.Compiler.CompilerParameters"
+			compilerParams.GenerateInMemory = true
+			compilerParams.ReferencedAssemblies.Add "System.dll"
+		local compilerResults = csharpProvider.CompileAssemblyFromSource compilerParams #(source)
+			compilerResults.CompiledAssembly.CreateInstance "Window"
+	)
 
 	fn getVraySunInScene = 
 	(
@@ -643,9 +670,32 @@ Icon:#("Lights",7)
 	
 	rollout MultiCamLister "MultiCam Lister" --width:1196 height:800
 	(  		 
-		button Refresh_btn "Refresh"
+		button Refresh_btn "Refresh" across:2
+		label lblFocus "IN FOCUS" 
+		timer clock interval:500
 		dotnetcontrol dgv "DataGridView"  align:#center width:1196 height:600 offset:[0,20]
 		dotnetcontrol dgvNoMod "DataGridView"  align:#center width:1196 height:600 offset:[0,gapBetweenDGVs]
+		
+
+		local prevFocus = true, currFocus = true
+		
+		on clock tick do
+		(
+			currFocus = floaterHWND == (windowDotNetObj.getForegroundWindow())
+			if prevFocus != currFocus do 
+			(
+				lblFocus.text = if currFocus then "IN FOCUS" else "OUT OF FOCUS"
+				
+				dgv.EndEdit()
+				dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			
+
+				dgvNoMod.EndEdit()
+				dgvNoMod.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			)
+
+			prevFocus = currFocus
+		)
 
 		on Refresh_btn pressed do
 		(
@@ -656,6 +706,10 @@ Icon:#("Lights",7)
 		on MultiCamLister open do
 		(
 			 
+  			if NOT isKindOf windowDotNetObj dotNetObject do windowDotNetObj = getWindowClass()
+  			floaterHWND = windowDotNetObj.getForegroundWindow()
+
+
   			dgv.Dock = dgv.Dock.Fill
   			dgv.RowHeadersVisible = false
 			
@@ -693,6 +747,10 @@ Icon:#("Lights",7)
 			dgv.EndEdit()
 			dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 			dgv.ClearSelection()
+
+			dgvNoMod.EndEdit()
+			dgvNoMod.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+			dgvNoMod.ClearSelection()
 			
 			callBacks.RemoveScripts id:#MultiCamListerDialog
 			listerNodeEventCallback = undefined
@@ -700,21 +758,61 @@ Icon:#("Lights",7)
 			MultiCamListerOpen =  false	
 		)
 
-		on dgv EditingControlShowing val do
-		(
 
-			show val
 
-		)
-
-		on dgv EditModeChanged val do
-		(
-			print "EditMode Changed"
-		)
+		--on dgv EditModeChanged val do
+		--(
+		--	print "EditMode Changed"
+		--)
 
 		--on dgv CellMouseLeave val do
 		--(
 		--	print "CellMouse Leave"
+		--)
+
+		--on dgv CellLeave val do
+		--(
+		--	print "Cell Left"
+		--)
+		global txtEdit
+		on dgv EditingControlShowing val do
+		(
+   			txtEdit = val.Control
+    		print txtedit
+    		--dotNetObject:System.Windows.Forms.DataGridViewTextBoxEditingControl
+            --v= dotnetobject "System.Windows.Forms.DataGridViewTextBoxEditingControl"
+
+
+    		--on txtEdit keypress e do
+    		--(
+    		--	print e
+    		--)
+    		--txtEdit.KeyPress += EditKeyPress --where EditKeyPress is your keypress event
+		)
+
+		on txtEdit keypress e do
+		(
+
+			print e
+		)
+
+		on txtEdit keydown e do
+		(
+
+			print e
+		)
+
+		on txtEdit keyup e do
+		(
+
+			print e
+		)
+
+		
+		--on dgv Leave val do
+		--(
+
+		--	print "Left"
 		--)
 
 		on dgv LostFocus val do
@@ -726,10 +824,13 @@ Icon:#("Lights",7)
 			--(
 			--	dgv.currentCell = undefined
 			--) 
-			print "Lost Focus"
+			--print "Lost Focus"
+
+			-- editing control loses focus when text field is in edit mode, control returns that field, all other controls return undefined
 			if dgv.editingControl != undefined then
 			(
-
+				
+				--print (dgv.currentcell.selected)
 			)
 			else
 			(
@@ -737,33 +838,31 @@ Icon:#("Lights",7)
 				dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 				dgv.ClearSelection()
 			)
-
 			--print (dgv.IsCurrentCellInEditMode as string)
 			--dgv.ClearSelection()
 		)
 
-		on dgv Leave val do
-		(
+		--on dgv KeyDown val do 
+		--(
 
-			print "Left"
-		)
+		--	print val
 
+		--)
+		
 		on dgvNoMod LostFocus val do
 		(
-			--print "clearing selection lost focus dgv 2"
-			--dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
-			if dgvNoMod.IsCurrentCellInEditMode == false then
+			if dgvNoMod.editingControl != undefined then
 			(
-				dgvNoMod.currentCell = undefined
+
 			)
-			dgvNoMod.ClearSelection()
+			else
+			(
+				dgvNoMod.EndEdit()
+				dgvNoMod.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
+				dgvNoMod.ClearSelection()
+			)
 		)
-		
-		on dgv CellLeave val do
-		(
-			print "Cell Left"
-		)
-		
+				
 		on dgv cellMouseDown val do
 		(
 			prevSelectedRows = getRowsFromSelection dgv
