@@ -26,7 +26,10 @@ Icon:#("Lights",7)
 	global MultiCamListerFloater
 	global MultiCamListerOpen = false
 	global listerNodeEventCallback = undefined
-	
+	local textEditBox = dotnetobject "DataGridViewTextBoxEditingControl"
+	local prevtextEditBoxText = ""		
+
+
 	local floaterHWND = undefined
 	local windowDotNetObj = undefined
 	local MultiCamLister = undefined
@@ -167,6 +170,22 @@ Icon:#("Lights",7)
 			)
 		)*/
 		result
+	)
+
+	fn enterEscapeFN sender args = 
+	(
+		if args.keyCode == ((dotnetclass "System.Windows.Forms.Keys").Enter) then 
+		(
+			--print "pressed Enter"
+			sender.EditingControlDataGridView.endEdit()
+		)
+
+		else if args.keyCode == ((dotnetclass "System.Windows.Forms.Keys").Escape) then
+		(
+			--print  "pressed Esc"
+			sender.text = prevtextEditBoxText
+			sender.EditingControlDataGridView.endEdit()
+		)
 	)
 
 	fn subtractCellFromSelection arr cell = 
@@ -757,64 +776,31 @@ Icon:#("Lights",7)
 			gc light:true 
 			MultiCamListerOpen =  false	
 		)
-
-
-
-		--on dgv EditModeChanged val do
-		--(
-		--	print "EditMode Changed"
-		--)
-
-		--on dgv CellMouseLeave val do
-		--(
-		--	print "CellMouse Leave"
-		--)
-
-		--on dgv CellLeave val do
-		--(
-		--	print "Cell Left"
-		--)
-		global txtEdit
+				
 		on dgv EditingControlShowing val do
 		(
-   			txtEdit = val.Control
-    		print txtedit
-    		--dotNetObject:System.Windows.Forms.DataGridViewTextBoxEditingControl
-            --v= dotnetobject "System.Windows.Forms.DataGridViewTextBoxEditingControl"
-
-
-    		--on txtEdit keypress e do
-    		--(
-    		--	print e
-    		--)
-    		--txtEdit.KeyPress += EditKeyPress --where EditKeyPress is your keypress event
+   			textEditBox = val.Control
+   			prevtextEditBoxText = textEditBox.text
+   			dotNet.addEventHandler textEditBox "keyup" enterEscapeFN
 		)
 
-		on txtEdit keypress e do
+		on dgv cellendedit val do 
 		(
-
-			print e
+			dotNet.removeAllEventHandlers textEditBox
 		)
 
-		on txtEdit keydown e do
+		on dgvNoMod EditingControlShowing val do
 		(
-
-			print e
+   			textEditBox = val.Control
+   			prevtextEditBoxText = textEditBox.text
+   			dotNet.addEventHandler textEditBox "keyup" enterEscapeFN
 		)
-
-		on txtEdit keyup e do
-		(
-
-			print e
-		)
-
 		
-		--on dgv Leave val do
-		--(
-
-		--	print "Left"
-		--)
-
+		on dgvNoMod cellendedit val do 
+		(
+			dotNet.removeAllEventHandlers textEditBox
+		)
+		
 		on dgv LostFocus val do
 		(
 			--print "clearing selection lost focus dgv 1"
@@ -1057,7 +1043,7 @@ Icon:#("Lights",7)
 						else
 						(
 							Messagebox ("Frame number must be an number.")
-							(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = 0
+							(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = prevtextEditBoxText
 							obj.modifiers[#MultiCam_Attribute].firstFrame_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
 						)
 					)--end 2
@@ -1084,7 +1070,7 @@ Icon:#("Lights",7)
 						else
 						(
 							Messagebox ("Frame number must be an number.")
-							(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = 0
+							(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = prevtextEditBoxText
 							obj.modifiers[#MultiCam_Attribute].lastFrame_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
 						)
 					)--end 3

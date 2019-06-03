@@ -17,6 +17,7 @@ version:0.909
 	local objectName = ""
 	local buttonWidth = 135
 	local gwDisplaySunpoints
+	local gwShowActiveSettings
 	--local layers_ro
 	--local sunpoints_ro
 	--local resolution_ro
@@ -92,6 +93,51 @@ version:0.909
 		if ((refs.dependentNodes this).count  == 0) then
 		(
 			unregisterRedrawViewsCallback gwDisplay
+		)
+	)
+
+	/*
+unregisterRedrawViewsCallback GW_displayObjectNames
+fn GW_displayObjectNames =
+(
+	rect = (box2 13 47 96 97)
+	--gw.wrect rect red
+	gw.wmarker [rect.left,rect.top,0] #point color:green
+	gw.wmarker [rect.left,rect.bottom,0] #point color:green
+	gw.wmarker [rect.right,rect.top,0] #point color:green
+	gw.wmarker [rect.right,rect.bottom,0] #point color:green
+	eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
+	eRect.right += 1
+	eRect.bottom += 1
+	local displayText = ("Settings active for camera: " +"camera Name"+"\nNo changes to environment, frame range or resolution will affect default settings")
+	gw.wtext [rect.left + 15 ,rect.top+20,0] displayText color:white
+	local ext = gw.getTextExtent displayText
+	gw.wrect (box2 (rect.left + 15 ) (rect.top+25+ ext.y/2) ext.x 5) red
+	gw.enlargeUpdateRect eRect
+	gw.updateScreen()
+)
+
+registerRedrawViewsCallback GW_displayObjectNames
+	*/
+
+	fn gwActiveSettings = gwShowActiveSettings()
+
+	fn gwShowActiveSettings =
+	(
+		rect = (box2 13 47 96 97)
+		eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
+		eRect.right += 1
+		eRect.bottom += 1
+		local displayText = ("Settings active for camera: " + objectName + "\nChanges made to Environment, Frame Range or Resolution will not effect default settings")
+		local ext = gw.getTextExtent displayText
+		gw.wtext [rect.left + 15 ,rect.top+20,0] displayText color:white
+		gw.wrect (box2 (rect.left + 15 ) (rect.top+25+ ext.y/2) ext.x 5) red
+		gw.enlargeUpdateRect eRect
+		gw.updateScreen()
+
+		if ((refs.dependentNodes this).count  == 0) then
+		(
+			unregisterRedrawViewsCallback gwActiveSettings
 		)
 	)
 	
@@ -183,6 +229,22 @@ version:0.909
 	parameters main rollout:params
 	(
 		--customPass_txt type:#string animatable:false ui:customPass_txt default:""
+		activateSettings_btn type:#boolean animatable:false ui:activateSettings_btn default:false
+
+		on activateSettings_btn set state do
+		(
+			if state == true then
+			(
+				registerRedrawViewsCallback gwActiveSettings
+			)
+			else
+			(
+				unregisterRedrawViewsCallback gwActiveSettings
+			)
+		)
+
+
+
 		on main reload do 
 		(
 			--allMods = for m in $.modifiers where (classof m == MultiCamAttribute) collect m
@@ -535,6 +597,7 @@ version:0.909
 	(
 		button openSubmitter_btn "Open Submitter" width:buttonWidth pos:[14,7] align:#center
 		button openLister_btn "Open Cam Lister" width:buttonWidth pos:[14,33] align:#center
+		checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
 		--editText customPass_txt "Custom Pass" text:""
 		
 		on openSubmitter_btn pressed do
@@ -914,6 +977,7 @@ version:0.909
 	on deleted  do
 	(
 		unregisterRedrawViewsCallback gwDisplay
+		unregisterRedrawViewsCallback gwActiveSettings
 	)
 
 	on detachedFromNode this do
@@ -925,7 +989,7 @@ version:0.909
 				setmeditmaterial i (standard())
 			)
 		)
-		
 		unregisterRedrawViewsCallback gwDisplay
+		unregisterRedrawViewsCallback gwActiveSettings
 	)
 )

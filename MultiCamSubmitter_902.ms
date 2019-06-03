@@ -507,12 +507,32 @@ buttontext:"v.902"
 		callbacks.addscript #postRenderFrame a persistent:true id:#copyJPG_callback
 	)
 
-	-- this should be a rollout update function, update dropdown and updata LV_ITEMS
+	-- this should be a rollout update function, update dropdown and updata LV_ITEMS, triggers when the submitter is open and user changes the name of the camera or adds or subtracts one.
 	fn SubmitterNodeEventFN ev nd = 
 	(
 		try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
 		createdialog multiCamSubmitter
 	)
+
+	fn gwActiveSettings =
+	(
+		rect = (box2 13 47 96 97)
+		eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
+		eRect.right += 1
+		eRect.bottom += 1
+		local displayText = ("Submitter is OPEN!\nChanges made to Environment, Frame Range or Resolution will not be stored.")
+		local ext = gw.getTextExtent displayText
+		gw.wtext [rect.left + 15 ,rect.top+20,0] displayText color:white
+		gw.wrect (box2 (rect.left + 15 ) (rect.top+25+ ext.y/2) ext.x 5) red
+		gw.enlargeUpdateRect eRect
+		gw.updateScreen()
+
+		--if ((refs.dependentNodes this).count  == 0) then
+		--(
+		--	unregisterRedrawViewsCallback gwActiveSettings
+		--)
+	)
+	
 	
 	------------------------------------
 	--Layer Fuctions
@@ -2193,7 +2213,7 @@ buttontext:"v.902"
 		getOldEnvLayers()
 
 		try(destroydialog cancelPreviewRO)catch()
-		createDialog cancelPreviewRO
+		createDialog cancelPreviewRO modal:true escapeEnable:true
 
 		for i = 1 to sceneCams.count while not keyboard.escPressed do
 		(
@@ -2233,6 +2253,7 @@ buttontext:"v.902"
 		clearSelection()
 		--viewport.SetRenderLevel #smoothhighlights
 		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+		unregisterRedrawViewsCallback gwActiveSettings
 
 		local notCancelled = true
 		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
@@ -2359,7 +2380,9 @@ buttontext:"v.902"
 		if (viewport.getLayout() != #layout_1) then ( max tool maximize) --maximize the viewport
 		--cui.expertModeOn()  -- Views: Expert Mode Toggle
 		clearSelection()
-		viewport.SetRenderLevel #smoothhighlights
+		--viewport.SetRenderLevel #smoothhighlights
+		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+		unregisterRedrawViewsCallback gwActiveSettings
 		
 		local notCancelled = true
 
@@ -2785,10 +2808,13 @@ buttontext:"v.902"
 				if rs == true then renderSceneDialog.open()
 			)
 		)
-		
-		callBacks.AddScript #systemPreReset "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
-		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
-		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter" id:#MultiCamSubmitterDialog
+
+		unregisterRedrawViewsCallback gwActiveSettings
+		registerRedrawViewsCallback gwActiveSettings
+
+		callBacks.AddScript #systemPreReset "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
+		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
+		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		--callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
 		SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:2000  added:SubmitterNodeEventFN nameChanged:SubmitterNodeEventFN deleted:SubmitterNodeEventFN
 	)--end on buttons open
@@ -2803,6 +2829,7 @@ buttontext:"v.902"
 		try(destroydialog camChecklistRO )catch()
 		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
 		SubmitterNodeEventCallback = undefined
+		unregisterRedrawViewsCallback gwActiveSettings
 		gc light:true
 	)
 	
@@ -3214,7 +3241,7 @@ buttontext:"v.902"
 		)
 	)
 	
-	rollout cancelPreviewRO "Cancel Preview" width: 220
+	rollout cancelPreviewRO "Cancel Process" width: 220 --modal:true
 	(
 		button cancelPreview_bn "Cancel"
 	)
