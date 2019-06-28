@@ -5,9 +5,40 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
---multiCamRepo = @"C:\temp\Repo\"
-multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+multiCamRepo = @"C:\temp\Repo\"
+--multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 multiCamUsable = false
+
+global drCreateNewCam,drDeleteNewCam
+fn drCreateNewCam = 
+(
+	
+	local vr = renderers.current
+			
+	if(vr != undefined) then 
+	(
+		if ((vr.classid[1] == 1941615238) and (vr.classid[2] == 2012806412)) == true then
+		(
+			if vr.system_distributedRender == true then
+			(
+				if viewport.getCamera() != undefined then 
+				(
+					global newTempCamera = copy (viewport.getCamera())
+					for i = newTempCamera.modifiers.count to 1 by -1 do
+					(
+						deleteModifier newTempCamera i
+					)
+					viewport.setCamera newTempCamera
+				)
+			)
+		)
+	) 
+)
+
+fn drDeleteNewCam = 
+(
+	try(delete newTempCamera)catch()
+)
 
 fn checkMacroLocalDir = 
 (
@@ -137,8 +168,8 @@ fn checkMacro macro =
 fn addMCCallbacks = 
 (
 	result = false
-	preRend = callbacks.addScript #preRender ("enableSceneRedraw(); global hideCatCams = hideByCategory.cameras; hideByCategory.cameras = true;completeRedraw()") id:#MCPrerender
-	postRend = callbacks.addScript #postRender("hideByCategory.cameras = hideCatCams;") id:#MCPostrender
+	preRend = callbacks.addScript #preRender ("enableSceneRedraw(); global hideCatCams = hideByCategory.cameras; hideByCategory.cameras = true;completeRedraw(); drCreateNewCam()") id:#MCPrerender
+	postRend = callbacks.addScript #postRender("hideByCategory.cameras = hideCatCams; drDeleteNewCam()") id:#MCPostrender
 	
 	print ("--------------- Info for MultiCam Callbacks ---------------")
 	print ("INFO: MultiCam preRender callback is " + preRend as string )

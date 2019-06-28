@@ -2,14 +2,14 @@
 -- MultiCamSubmitter_902.ms
 -- By Ilya Floussov (ilya@conceptfarm.ca)
 -- Dec 16th 2018
--- Submits jobs to Deadline; requires: Deadline functions and Attribute
+-- Submits jobs to Deadline
+-- Requires: Deadline functions and Attribute
 -------------------------------------------------------------------------------
 
 --to do:
 --	split camera option
---	Esc. to cancel for submission
---  check if ffmpeg exists before preview
---  check if ffmpeg exists in deadline, somehow access plugin paths and check those?
+
+
 
 --ver.902
 ----------------------------------------------------
@@ -17,6 +17,35 @@
 -- Esc. to cancel submission (needs testing)
 -- ffmpeg camera parameters and frame numbers
 -- consolidate all submission functions into one FA and SA functions with case for types
+-- Submission resolution is now 1/10th for max resolution and vray resolution is always used
+-- Parent cancel dialog to the submitter window so that it always stays on top of it
+
+--  Bugs:
+--	Esc. to cancel for submission
+--  check if ffmpeg exists before preview
+--  check if ffmpeg exists in deadline, somehow access plugin paths and check those?
+--  escape/cancel dialog doesn't work
+--  on open reset vp layout and convert to #layout_1, enable safe frame view
+--  Cancel window doesn't disappear after submission when using checkboxes
+
+--  Post submission bug:
+--  After submission - max resolution doesn't return to previous - seems to work on close but not after submission
+--  Error on selected camera submission
+--  Error old animation doesn't set back when using single camera submission from drop down, works on checkbox and fully automatic
+--  ^ Error appears after using the camera chooser dropdown
+--  SetOldRPS function is the issue, vrayRend variable gets lost and no settings can be set after that function runs
+--  getoldprs grabs settings before submission and restores them that why vfb gets the correct settings but since no changes can be made after setoldrps those settings stay
+
+--  Test at work:
+--  Find out about shaded camera view for all video graphics options
+--  check paths with special characters, works in 2016 , check in 2018
+
+--  DR Issues:
+--  when using DR need to create a new identical camera and delete attribute holder modifier 
+--  need to find out if prerender callback fires before DR assets are transfered - can only test with a dr machine at work
+
+
+
 
 --ver.901
 ----------------------------------------------------
@@ -297,7 +326,7 @@ buttontext:"v.902"
 	
 	global multiCamSubmitter
 	global camChecklistRO
-	global cancelPreviewRO
+	global cancelProcessRO
 	global vrayRend
 	global SubmitterNodeEventCallback
 
@@ -320,11 +349,11 @@ buttontext:"v.902"
 	local oldAnimationSettings = #()
 	local rendTimeTypeOld = rendTimeType
 	local rendNThFrameOld = rendNThFrame
-	local oldAnimationRange = animationRange
 	local oldEnvSettings = #()
 	local view_size = [1920,1080] 
 	local LV_ITEMS = #()
 	local oldHideCats = #()
+	local oldViewportLayout = undefined
 	local projectName = "Project Noname"
 	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender\\", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
 	
@@ -542,7 +571,7 @@ buttontext:"v.902"
 
 	fn layersShowAll = ( for i = 0 to (LayerManager.count - 1) do (b = LayerManager.getLayer i; b.on = true ))
 		
-	fn layersGetHiddenArray =
+	fn getHiddenLayers =
 	(
 		local result = #()
 		local n = LayerManager.count
@@ -556,7 +585,7 @@ buttontext:"v.902"
 		return result
 	)
 	
-	fn layersSetHiddenArray arr =
+	fn setHiddenLayers arr =
 	(
 		for i = 0 to (LayerManager.count - 1 ) do 
 		(
@@ -583,14 +612,17 @@ buttontext:"v.902"
 	
 	fn getAnimation = 
 	(
+		print ("getting animation " + #(rendTimeType,rendNThFrame,animationRange) as string)
 		return #(rendTimeType,rendNThFrame,animationRange)
 	)
 	
 	fn setAnimation arr = 
 	(
+		print ("setting animation " + arr as string)
 		rendTimeType = arr[1]
 		rendNThFrame = arr[2]
 		animationRange = arr[3]
+		print animationRange
 	)
 	
 	fn getOldRPS = 
@@ -599,17 +631,11 @@ buttontext:"v.902"
 		local rpsIndexArray = (renderpresets.SaveCategories 0) as array
 		
 		for i in rpsIndexArray do (if ((findString (renderpresets.MapSceneIndexToCategory 0 i) "V-Ray") != undefined) then ( rpsIndex = i))
-		/*
-		for i = 1 to vrayversions.count do
-		(
-			if ((renderpresets.MapSceneCategoryToIndex 0 vrayversions[i]) != 0) then (rpsIndex = renderpresets.MapSceneCategoryToIndex 0 vrayversions[i])
-		)
-		*/
+
 		renderpresets.Save 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}	
 		
 		rendTimeTypeOld = rendTimeType
 		rendNThFrameOld = rendNThFrame
-		oldAnimationRange = animationRange
 	)
 	
 	fn setOldRPS = 
@@ -618,18 +644,13 @@ buttontext:"v.902"
 		local rpsIndexArray = (renderpresets.SaveCategories 0) as array
 		
 		for i in rpsIndexArray do (if ((findString (renderpresets.MapSceneIndexToCategory 0 i) "V-Ray") != undefined) then ( rpsIndex = i))
-		/*
-		for i = 1 to vrayversions.count do
-		(
-			if ((renderpresets.MapSceneCategoryToIndex 0 vrayversions[i]) != 0) then (rpsIndex = renderpresets.MapSceneCategoryToIndex 0 vrayversions[i])
-		)
-		*/
+
 		renderpresets.Load 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}
 		deletefile ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps")
 		
 		rendTimeType = rendTimeTypeOld
 		rendNThFrame = rendNThFrameOld
-		animationRange = oldAnimationRange
+		renderers.current = vrayRend
  	)
 	
 	fn hideCatsForPrev = 
@@ -670,33 +691,105 @@ buttontext:"v.902"
 		hideByCategory.bones = oldHideCats[8]
 	)
 	
-	fn rendGetRes = 
+	fn getRenderResolution = 
 	(
+		-- max w, max h, vrayRes bol, vray w, vray h
 		result = #()
-		if (vrayRend.output_getsetsfrommax == false) then
-		(
-			result[1] = vrayRend.output_width
-			result[2] = vrayRend.output_height
-		)
-		else
-		(
-			result[1] = renderWidth
-			result[2] = renderHeight
-		)
+		
+		result[1] = renderWidth
+		result[2] = renderHeight
+		result[3] = vrayRend.output_getsetsfrommax
+		result[4] = vrayRend.output_width
+		result[5] = vrayRend.output_height
+
 		return result
 	)
 	
-	fn rendSetRes arr = 
+
+	fn setRenderResolution arr submission:false= 
 	(
-		if (vrayRend.output_getsetsfrommax == false) then
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
+		-- strange this doesn't work, 
+		-- try renderers.current = vrayrend
+		--vrayRend = renderers.current
+		--renderers.current = vrayRend
+		--local tempArr = copy arr #nomap
+
+		-- resolution issues here probably submission true in the parceRangeFile, either pass false from the camerachooser and true on actual submission or rethink this function
+		if arr.count < 3 then
 		(
-			vrayRend.output_width = arr[1]
-			vrayRend.output_height = arr[2]
+			arr[3] = false
+			arr[4] = arr[1]
+			arr[5] = arr[2]
 		)
-		else
+		
+		renderWidth = arr[1]
+		renderHeight = arr[2]
+		vrayRend.output_getsetsfrommax = arr[3]
+		vrayRend.output_width = arr[4]
+		vrayRend.output_height = arr[5]
+		
+		if submission == true then
 		(
-			renderWidth = arr[1]
-			renderHeight = arr[2]
+			print "submission true"
+			if arr[3] == true then 
+			(
+				vrayRend.output_getsetsfrommax = false
+				vrayRend.output_width = arr[1]
+				vrayRend.output_height = arr[2]
+				renderWidth = arr[1]/10
+				renderHeight = arr[2]/10
+			)
+			else
+			(
+				vrayRend.output_getsetsfrommax = false
+				vrayRend.output_width = arr[4]
+				vrayRend.output_height = arr[5]
+				renderWidth = arr[4]/10
+				renderHeight = arr[5]/10
+			)
+		)
+	)
+
+
+	fn setRenderResolutionOld arr submission:false= 
+	(
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
+		local tempArr = copy arr #nomap
+
+		-- resolution issues here probably submission true in the parceRangeFile, either pass false from the camerachooser and true on actual submission or rethink this function
+		if tempArr.count < 3 then
+		(
+			tempArr[3] = false
+			tempArr[4] = tempArr[1]
+			tempArr[5] = tempArr[2]
+		)
+		
+		renderWidth = tempArr[1]
+		renderHeight = tempArr[2]
+		vrayRend.output_getsetsfrommax = tempArr[3]
+		vrayRend.output_width = tempArr[4]
+		vrayRend.output_height = tempArr[5]
+		
+		if submission == true then
+		(
+			print "submission true"
+			if tempArr[3] == true then 
+			(
+				vrayRend.output_getsetsfrommax = false
+				vrayRend.output_width = tempArr[1]
+				vrayRend.output_height = tempArr[2]
+				renderWidth = tempArr[1]/10
+				renderHeight = tempArr[2]/10
+			)
+			else
+			(
+				vrayRend.output_getsetsfrommax = false
+				vrayRend.output_width = tempArr[4]
+				vrayRend.output_height = tempArr[5]
+				renderWidth = tempArr[4]/10
+				renderHeight = tempArr[5]/10
+			)
 		)
 	)
 	
@@ -748,18 +841,167 @@ buttontext:"v.902"
 
 	fn getOldEnvLayers = 
 	(
-		rendOldRes = rendGetRes()
-		hideLayersOld = layersGetHiddenArray()
+		rendOldRes = getRenderResolution()
+		hideLayersOld = getHiddenLayers()
 		oldEnvSettings = getEnvSettings()
 		print ("Old resolution is " + rendOldRes as string)
 		print ("Old environmet is " + oldEnvSettings as string)
 	)
+
+	fn setOldEnvLayers = 
+	(
+
+	)
 	
+
+	fn resetViewports = 
+	(
+		disableSceneRedraw()
+		local layout = viewport.getLayout()
+		local activeViewportType = undefined
+		local activeViewportCamera = undefined
+		local activeViewportTm = undefined 
+		local activeViewportRegion = undefined 
+		
+		if layout == #layout_1 then
+		(
+			activeViewportType = viewport.getType()
+			activeViewportCamera = getActiveCamera()
+			activeViewportTm = viewport.getTM()
+			activeViewportRegion = viewport.getRegionRect viewport.activeViewport
+			
+			viewport.ResetAllViews()
+			viewport.activeViewport = 4
+			max tool maximize
+			
+			if activeViewportType == #view_camera then viewport.setCamera activeViewportCamera
+			else if activeViewportType == #view_persp_user then viewport.setTM activeViewportTm
+			
+			viewport.setRegionRect viewport.activeViewport activeViewportRegion
+			
+		)
+		else
+		(
+			if viewport.getType() != #view_camera then
+			(
+				local viewportIndex = 0
+				for i = 1 to viewport.numViews do
+				(
+					case (viewport.getType index:i) of
+					(
+						#view_camera: (
+							print "found cam"
+							viewportIndex = i
+							activeViewportType = viewport.getType index:i
+							activeViewportCamera = viewport.getCamera index:i
+							activeViewportRegion = viewport.getRegionRect i
+							exit
+							)
+						#view_persp_user: (
+							viewportIndex = i
+							activeViewportType = viewport.getType index:i
+							viewport.activeViewport = i
+							activeViewportTm = viewport.getTM()
+							activeViewportRegion = viewport.getRegionRect i
+							)
+					)			
+				)
+				
+				viewport.ResetAllViews()
+				viewport.activeViewport = 4
+				max tool maximize
+
+				if viewportIndex > 0 then 
+				(
+						if (activeViewportType == #view_camera) then (viewport.setCamera activeViewportCamera)
+						else if (activeViewportType == #view_persp_user) then (viewport.setTM activeViewportTm)
+				)
+				
+				viewport.setRegionRect viewport.activeViewport activeViewportRegion
+			)
+			else
+			(
+				activeViewportCamera = getActiveCamera()
+				activeViewportRegion = viewport.getRegionRect viewport.activeViewport
+				viewport.ResetAllViews()
+				viewport.activeViewport = 4
+				max tool maximize
+				viewport.setCamera activeViewportCamera
+				
+				viewport.setRegionRect viewport.activeViewport activeViewportRegion
+			)
+			
+		)
+		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+		enableSceneRedraw() 
+	)
+
+
+
 	------------------------------------
 	--Deadline Functions
 	------------------------------------
-	
-	fn deadlineRegionRenderTest = ( SMTDSettings.RegionRenderingMode = #none; if getRenderType() == #region then (SMTDSettings.regionrendering = true; SMTDSettings.RegionRenderingMode = #maxRegion ; SMTDSettings.RegionUseMaxValues = true))
+	-- Issues with region rendering
+	-- Each viewport can have its own region coordinates 
+	-- Not sure which deadline will pick up, probably best to convert to vray coordinates
+	-- General issue with 3dsmax - sometimes decides to render non-active viewport
+	-- Further issues max resolution can be different from vray resolution - that effects the coordinates of the region since they are absolute values of the final image resolution.
+	-- Even bigger issue: setting vray region on  a window smaller than region clips the region, need to resize the window before setting the region 
+
+	--vrayVFBGetRegion()
+	--vrayVFBSetRegion 134 241 1920 617 --x1 y1 x2 y2
+
+
+	--x,y,w,h
+	--viewport.setRegionRect viewport.activeViewport (Box2 1000 638 910 333)
+	--viewport.getRegionRect viewport.activeViewport --removeUIScaling: false
+
+	-- test conflict in aspect ratios of max resolution and vray resolution
+	-- test conflict in regions from max to vray 
+
+
+
+
+	fn deadlineRegionRenderTest = 
+	(
+		SMTDSettings.RegionRenderingMode = #none
+		
+		if (getRenderType() == #region or vrayVFBGetRegionEnabled == true) then 
+		(
+			SMTDSettings.RegionRendering = true
+			SMTDSettings.RegionRenderingMode = #maxRegion 
+			SMTDSettings.RegionType = 1
+			SMTDSettings.RegionUseMaxValues = true
+		)
+	)
+
+	fn convertMaxRegionToVray =
+	(
+		--x,y,w,h
+		local regionCoords = viewport.getRegionRect viewport.activeViewport
+		--vrayVFBSetRegion 134 241 1920 617 --x1 y1 x2 y2
+		local widthScale = 1
+		local heightScale = 1
+		if vrayRend.output_getsetsfrommax == false then
+		(
+			widthScale = vrayRend.output_width/renderWidth
+			heightScale = vrayRend.output_height/renderHeight
+		)
+		vrayVFBSetRegion (regionCoords.x*widthScale) (regionCoords.y*heightScale) ((regionCoords.x+regionCoords.w)*widthScale) ((regionCoords.y+regionCoords.h)*heightScale)
+		
+	)
+
+	fn convertVrayRegionToMax =
+	(
+		if vrayVFBGetRegionEnabled == true then
+		(
+			local regionCoords = vrayVFBGetRegion()
+			setRenderType #region
+			vrayVFBSetRegionEnabled false
+
+
+		)
+	)
 	
 	fn CollectDeadlineSlaves=
 	(
@@ -829,29 +1071,31 @@ buttontext:"v.902"
 			
 			if (m.useHeightWidth_chb == true) then
 			(
-				rendSetRes #(m.imgWidth_sp, m.imgHeight_sp)
+				print ("Setting old res in parse with found " + rendOldRes as string)
+				setRenderResolution #(m.imgWidth_sp, m.imgHeight_sp) submission:true
 			)
 			else
 			(
-				rendSetRes rendOldRes
+				print ("Setting old res in parse " + rendOldRes as string)
+				setRenderResolution rendOldRes submission:true
 			)
 			
 			if (m.useHideLayers_chb == true) then
 			(
 				local layer_array = m.hideLayers_tab
 				print ("Will hide these layers" + layer_array as string)
-				layersSetHiddenArray layer_array			
+				setHiddenLayers layer_array			
 			)
 			else 
 			(
-				layersSetHiddenArray hideLayersOld
+				setHiddenLayers hideLayersOld
 			)
 			
 			if (m.useHDRIMap_chb == true) then
 			(
-				setEnvSettings #(m.hdriMap_btn, true,
-					true, m.hdriMapGIMult_sp, m.hdriMap_btn, true,
-					true, m.hdriMapReflMult_sp, m.hdriMap_btn, true,
+				setEnvSettings #(m.hdriMap_btn, true,\
+					true, m.hdriMapGIMult_sp, m.hdriMap_btn, true,\
+					true, m.hdriMapReflMult_sp, m.hdriMap_btn, true,\
 					true, m.hdriMapRefrMult_sp, m.hdriMap_btn, true)
 			)
 			else
@@ -864,8 +1108,9 @@ buttontext:"v.902"
 		(
 			begframe = (currenttime as integer)/(4800/framerate)
 			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			rendSetRes rendOldRes
-			layersSetHiddenArray hideLayersOld
+			print ("Setting old res in parse no mod with override " + rendOldRes as string)
+			setRenderResolution rendOldRes submission:true
+			setHiddenLayers hideLayersOld
 			setEnvSettings oldEnvSettings
 			SingleFrame = true
 		)
@@ -874,12 +1119,13 @@ buttontext:"v.902"
 			MessageBox ("Camera " + c.name + " does not have a Submitter Attribute.\nUsing one frame.") title:"Missing Submitter Attribute" beep:false
 			begframe = (currenttime as integer)/(4800/framerate)
 			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			rendSetRes rendOldRes
-			layersSetHiddenArray hideLayersOld
+			print ("Setting old res in parse no mod no overrid" + rendOldRes as string)
+			setRenderResolution rendOldRes submission:true
+			setHiddenLayers hideLayersOld
 			setEnvSettings oldEnvSettings
 			SingleFrame = true
 		)
-
+		print ("Setting old res in parse at end " + rendOldRes as string)
 	)
 	
 	
@@ -1280,14 +1526,13 @@ buttontext:"v.902"
 		if (vrayRend.output_getsetsfrommax == false) then
 		(
 			prevWidth = vrayRend.output_width as string
-		)
-		else (prevWidth = renderWidth as string)
-
-		if (vrayRend.output_getsetsfrommax == false) then
-		(
 			prevHeight = vrayRend.output_height as string
 		)
-		else (prevHeight = renderHeight as string)
+		else 
+		(
+			prevWidth = renderWidth as string
+			prevHeight = renderHeight as string
+		)
 
 		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/calibri.ttf: text='camera\: " + currentCameraName + "    frame\: %{frame_num}    lens\: "+camLens+"mm': start_number=" + (begframe as string) + ": x=(w-tw)/10: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt gbrp -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
 		print command
@@ -1377,7 +1622,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						--Disable render elements
 						re = maxOps.GetCurRenderElementMgr()
 						oldRE = re.getElementsActive()
@@ -1505,7 +1750,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						--vrayRend = renderers.current
 						vrayRend.gi_on = true
@@ -1579,7 +1824,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.gi_on = false
 						vrayRend.options_dontRenderImage = false
@@ -1640,7 +1885,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
@@ -1708,7 +1953,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
@@ -1789,7 +2034,7 @@ buttontext:"v.902"
 			vrayRend.gi_irradmap_interpSamples			
 			) 
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						vrayRend.gi_on = true
@@ -1925,7 +2170,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						vrayRend.gi_on = true
@@ -2005,7 +2250,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						renderSceneDialog.close()
+						if renderSceneDialog.isOpen() then renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						
@@ -2206,16 +2451,18 @@ buttontext:"v.902"
 -------------------------------------------------------------------------	
 	
 	fn FA_submission_fn submissionType = 
-	(	
+	(
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		getOldEnvLayers()
+		--not sure why this is here?
+		--getOldEnvLayers()
 
-		try(destroydialog cancelPreviewRO)catch()
-		createDialog cancelPreviewRO modal:true escapeEnable:true
+		try(destroydialog cancelProcessRO)catch()
+		createDialog cancelProcessRO parent:multiCamSubmitter.hwnd--escapeEnable:true --modal:true 
 
-		for i = 1 to sceneCams.count while not keyboard.escPressed do
+		local iterator = 0
+		for i = 1 to sceneCams.count while (cancelProcessRO.cancelPreview_bn.checked == false and cancelProcessRO.open == true)  do ---while not keyboard.escPressed do
 		(
 			currentCameraName = sceneCams[i].name as string
 			currentCamera = sceneCams[i]
@@ -2223,7 +2470,7 @@ buttontext:"v.902"
 			moveSuntoPoint()
 			viewport.setCamera currentCamera
 
-			redrawViews()
+			--redrawViews()
 			
 			case submissionType of
 			(
@@ -2236,12 +2483,22 @@ buttontext:"v.902"
 				#bruteForce:bruteForce_settings begframe endframe
 				#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 			)
+			iterator += 1  
 		)--end for
+		
+		if cancelProcessRO.cancelPreview_bn.checked == true or iterator != sceneCams.count then 
+		(
+			local s = ""
+			if iterator > 1 then s = "s"
+			Messagebox ("Submission Cancelled after " + iterator as string + " camera"+ s +" submitted.")
+		)
+
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
-		destroydialog cancelPreviewRO
+		
 		destroydialog multiCamSubmitter
 		setSaveRequired true
+
 	)--end function FA_flythrough_fn
 	
 	fn FA_preview_fn = 
@@ -2253,12 +2510,13 @@ buttontext:"v.902"
 		clearSelection()
 		--viewport.SetRenderLevel #smoothhighlights
 		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+		
 		unregisterRedrawViewsCallback gwActiveSettings
 
 		local notCancelled = true
-		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
+		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir and doesfileexist ffmpegExe) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir and doesfileexist ffmpegExe) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
-			for i = 1 to  sceneCams.count do
+			for i = 1 to sceneCams.count while notCancelled do
 			(
 				currentCameraName = sceneCams[i].name as string
 				currentCamera = sceneCams[i]
@@ -2303,6 +2561,8 @@ buttontext:"v.902"
 		)
 		else 
 		( 
+			if (doesfileexist ffmpegExe) != true then ( if queryBox ("FFMPEG is missing!\nCheck the directory\n"+ffmpegExe+".\n\nDownload FFMPEG?\n") then (DOSCommand (("explorer " + "\"" + "https://ffmpeg.org/" + "\""))))
+
 			if (rootnode.CA_previewOutputExt == ".mov") then ( if queryBox ("Avid codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://avid.force.com/pkb/articles/en_US/download/Avid-QuickTime-Codecs-LE" + "\""))))
 			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
@@ -2321,21 +2581,26 @@ buttontext:"v.902"
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
-		getOldEnvLayers()
+		--not sure why this is here?
+		--getOldEnvLayers()
 
-		if camChecklistRO.open == true then 
+		local notCancelled = true
+
+		if (camChecklistRO.open == true) then 
 		(
-			for i in LV_ITEMS where i.checked == true do
-			(
-				--if i.checked then
-				--(	
-				currentCameraName = i.text
+			local checkedCams = for i in LV_ITEMS where i.checked == true collect i
+			
+			try(destroydialog cancelProcessRO)catch()
+			createDialog cancelProcessRO  parent:multiCamSubmitter.hwnd--escapeEnable:true --modal:true 
+
+			local iterator = 0
+			for i = 1 to checkedCams.count while (cancelProcessRO.cancelPreview_bn.checked == false and cancelProcessRO.open == true)  do 
+			(	
+				currentCameraName = checkedCams[i].text--i.text
 				currentCamera = (getnodebyname currentCameraName)
 				parseRangeFile currentCamera
 				moveSuntoPoint()
 				viewport.setCamera currentCamera
-
-				redrawViews()
 
 				case submissionType of
 				(
@@ -2348,13 +2613,21 @@ buttontext:"v.902"
 					#bruteForce:bruteForce_settings begframe endframe
 					#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 				)
-				--)
+				iterator += 1 
+			)
+
+			if cancelProcessRO.cancelPreview_bn.checked == true or iterator != checkedCams.count then 
+			(
+				local s = ""
+				if iterator > 1 then s = "s"
+				Messagebox ("Submission Cancelled after " + iterator as string + " camera"+ s +" submitted.")
 			)
 		)
-		else 
+		else
 		(
 			parseRangeFile currentCamera
 			moveSuntoPoint()
+			
 			case submissionType of
 			(
 				#flyThrough: fly_settings begframe endframe i
@@ -2367,8 +2640,10 @@ buttontext:"v.902"
 				#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 			)
 		)
+
 		setOldRPS()
 		hideByCategory.cameras = hideCatCams
+		
 		destroydialog multiCamSubmitter
 		setSaveRequired true
 	)--end function SA_flythrough_fn	
@@ -2386,7 +2661,7 @@ buttontext:"v.902"
 		
 		local notCancelled = true
 
-		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir) or (rootnode.CA_previewOutputExt == ".jpg")) then
+		if ((rootnode.CA_previewOutputExt == ".mov" and doesfileexist avidDir and doesfileexist ffmpegExe) or (rootnode.CA_previewOutputExt == ".avi" and doesfileexist utvideoDir and doesfileexist ffmpegExe) or (rootnode.CA_previewOutputExt == ".jpg")) then
 		(
 			if camChecklistRO.open == true then 
 			(
@@ -2473,6 +2748,8 @@ buttontext:"v.902"
 		)
 		else 
 		( 
+			if (doesfileexist ffmpegExe) != true then ( if queryBox ("FFMPEG is missing!\nCheck the directory\n"+ffmpegExe+".\n\nDownload FFMPEG?\n") then (DOSCommand (("explorer " + "\"" + "https://ffmpeg.org/" + "\""))))
+
 			if (rootnode.CA_previewOutputExt == ".mov") then ( if queryBox ("Avid codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://avid.force.com/pkb/articles/en_US/download/Avid-QuickTime-Codecs-LE" + "\""))))
 			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
@@ -2652,7 +2929,7 @@ buttontext:"v.902"
 	
 	fn clear_render_paths = 
 	(
-		renderSceneDialog.close()
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
 		rendOutputFilename = ""
 		re = maxops.getcurrenderelementmgr()
 		ele_num = re.numrenderelements() as integer
@@ -2696,7 +2973,7 @@ buttontext:"v.902"
 	
 	on repath_btn pressed do
 	(
-		renderSceneDialog.close()
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
 		if (rendOutputFilename != "") then (repath())
 		else 
 		(
@@ -2709,7 +2986,7 @@ buttontext:"v.902"
 	(
 		if (thestate == true) then 
 		(
-			renderSceneDialog.close()		
+			if renderSceneDialog.isOpen() then renderSceneDialog.close()		
 			re = maxops.getcurrenderelementmgr()
 			ele_num = re.numrenderelements() as integer
 			for i= 0 to (ele_num - 1)do
@@ -2796,13 +3073,15 @@ buttontext:"v.902"
 	( 
 		jobPrefix_txt.text = rootnode.CA_jobPrefix
 		updateFrameOut()
-		
+		resetViewports()
+		displaySafeFrames = true
+
 		if (getRenderType() != #view or vrayVFBGetRegionEnabled() == true) then
 		(
 			if (queryBox  "Warning, render region is ON! Do you want to disable?" title:"Render Region") then
 			(
 				local rs = renderSceneDialog.isopen()
-				renderSceneDialog.close()
+				if renderSceneDialog.isOpen() then renderSceneDialog.close()
 				try (vrayVFBSetRegionEnabled false) catch()
 				setRenderType #view
 				if rs == true then renderSceneDialog.open()
@@ -2822,11 +3101,13 @@ buttontext:"v.902"
 	
 	on multiCamSubmitter close do
 	(
-		rendSetRes rendOldRes
-		layersSetHiddenArray hideLayersOld
+		print ("Setting old res on close " + rendOldRes as string)
+		setRenderResolution rendOldRes
+		setHiddenLayers hideLayersOld
 		setEnvSettings oldEnvSettings
 		setAnimation oldAnimationSettings
 		try(destroydialog camChecklistRO )catch()
+		try(destroydialog cancelProcessRO )catch()
 		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
 		SubmitterNodeEventCallback = undefined
 		unregisterRedrawViewsCallback gwActiveSettings
@@ -3010,7 +3291,7 @@ buttontext:"v.902"
 			FA_BFS_btn.enabled = false
 			FA_VDR_btn.enabled = false	
 			
-			createdialog camChecklistRO style:#(#style_sysmenn) pos:[((GetDialogPos multiCamSubmitter).x) + 580,(GetDialogPos multiCamSubmitter).y + 0]
+			createdialog camChecklistRO style:#(#style_sysmenn) pos:[((GetDialogPos multiCamSubmitter).x) + 580,(GetDialogPos multiCamSubmitter).y + 0] parent:multiCamSubmitter.hwnd
 		)
 		else
 		(
@@ -3241,9 +3522,18 @@ buttontext:"v.902"
 		)
 	)
 	
-	rollout cancelPreviewRO "Cancel Process" width: 220 --modal:true
+	rollout cancelProcessRO "Cancel Process" width: 220 --modal:true
 	(
-		button cancelPreview_bn "Cancel"
+		checkbutton cancelPreview_bn "Cancel"
+		
+		on cancelPreview_bn changed state do 
+		(
+			if state == true then
+			(
+				cancelPreview_bn.text = "Cancelling..."
+				cancelPreview_bn.enabled = false
+			)
+		)
 	)
 	
 	on execute do 

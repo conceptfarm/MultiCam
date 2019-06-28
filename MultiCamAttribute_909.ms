@@ -5,6 +5,14 @@
 -- A modifier that is added to the camera, and specifies various setting for the
 -- render job submission.
 -------------------------------------------------------------------------------
+-- Bugs:
+-- When moving a modifier it thinks that there are two modifiers present and gives warning trying to delete
+
+-- Nice to Have:
+-- When multiple select text cells:
+-- For cameras: enumerate name
+-- For last, first, width, height - set the same number in all the selected cells
+
 plugin modifier MultiCamAttribute
 name:"MultiCam Attribute"
 category:"ilya_s Scripts"
