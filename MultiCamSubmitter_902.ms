@@ -446,6 +446,7 @@ buttontext:"v.902"
 			Targetcamera: (cameraFOV.FOVtoMM cam.curFOV) as integer
 			Freecamera: (cameraFOV.FOVtoMM cam.curFOV) as integer
 			Physical: (cam.focal_length_mm) as integer
+			default:0
 		)
 		result
 	)
@@ -547,7 +548,8 @@ buttontext:"v.902"
 		if updateMultiCamSubmitterRollout == true then
 		(
 			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
-			createdialog multiCamSubmitter
+			macros.run "ilya_s Scripts" "MultiCamSubmitter"
+			--createdialog multiCamSubmitter
 		)
 		updateMultiCamSubmitterRollout = false
 	)
@@ -668,7 +670,7 @@ buttontext:"v.902"
 		renderers.current = vrayRend
  	)
 	
-	fn hideCatsForPrev = 
+	fn hideCatsForPreview = 
 	(
 		hideByCategory.geometry = false
 		hideByCategory.shapes =  true
@@ -691,7 +693,7 @@ buttontext:"v.902"
 		oldHideCats[7] = hideByCategory.particles 
 		oldHideCats[8] = hideByCategory.bones	
 		
-		hideCatsForPrev()
+		hideCatsForPreview()
 	)
 	
 	fn setOldHideCats = 
@@ -724,13 +726,7 @@ buttontext:"v.902"
 	fn setRenderResolution arr submission:false= 
 	(
 		if renderSceneDialog.isOpen() then renderSceneDialog.close()
-		-- strange this doesn't work, 
-		-- try renderers.current = vrayrend
-		--vrayRend = renderers.current
-		--renderers.current = vrayRend
-		--local tempArr = copy arr #nomap
 
-		-- resolution issues here probably submission true in the parceRangeFile, either pass false from the camerachooser and true on actual submission or rethink this function
 		if arr.count < 3 then
 		(
 			arr[3] = false
@@ -952,6 +948,13 @@ buttontext:"v.902"
 	)
 
 
+	------------------------------------
+	--UI Functions
+	------------------------------------
+	fn setUIElementEnabled state strPattern =
+	(
+		for c in MultiCamSubmitter.controls where (matchpattern c.name pattern:strPattern) == true do c.enabled = state
+	)
 
 	------------------------------------
 	--Deadline Functions
@@ -1018,7 +1021,7 @@ buttontext:"v.902"
 		)
 	)
 	
-	fn CollectDeadlineSlaves=
+	fn CollectDeadlineSlaves =
 	(
 		local st = timestamp()
 		local tempArray = #("")
@@ -1625,7 +1628,7 @@ buttontext:"v.902"
 				re = maxops.getcurrenderelementmgr()
 				re.setrenderelementfilename zdeptharray[i] newpath
 			)
-		)	
+		)
 	)
 	
 	
@@ -2942,7 +2945,7 @@ buttontext:"v.902"
 		if (out_type.state == 6) then (customPassDate.enabled = true)	
 	)-- end updateFrameOut
 	
-	fn clear_render_paths = 
+	fn clearRenderElementsPaths = 
 	(
 		if renderSceneDialog.isOpen() then renderSceneDialog.close()
 		rendOutputFilename = ""
@@ -2954,7 +2957,7 @@ buttontext:"v.902"
 		)	
 	)
 	
-	fn repath =
+	fn repathRenderElements =
 	(
 		re = maxops.getcurrenderelementmgr()
 		ele_num = re.numrenderelements() as integer
@@ -2989,11 +2992,11 @@ buttontext:"v.902"
 	on repath_btn pressed do
 	(
 		if renderSceneDialog.isOpen() then renderSceneDialog.close()
-		if (rendOutputFilename != "") then (repath())
+		if (rendOutputFilename != "") then (repathRenderElements())
 		else 
 		(
 			try(rendOutputFilename = getSaveFileName caption: "Render Output File"  types:"Targa (*.tga)|*.tga|JPEG (*.jpg)|*.jpg|BMP (*.bmp)|*.bmp|OpenEXR (*.exr)|*.exr"	
-			repath() ) catch()
+			repathRenderElements() ) catch()
 		)
 	)
 		
@@ -3038,7 +3041,7 @@ buttontext:"v.902"
 	
 	on clearRend pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 	)
 		
 	on out_type changed state do 
@@ -3339,35 +3342,35 @@ buttontext:"v.902"
 
 	on FA_fly_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #flyThrough
 		--FA_flythrough_fn()
 	)
 		
 	on FA_single_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #singleFrame
 		--FA_single_fn()
 	)
 	
 	on FA_as_is_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #asIS
 		--FA_as_is_fn()
 	)
 	
 	on FA_VDR_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #vrayDR
 		--FA_VDR_fn()
 	)
 	
 	on FA_nogi_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #noGI
 		--FA_nogi_fn()
 	)
@@ -3378,49 +3381,49 @@ buttontext:"v.902"
 	
 	on FA_an_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #animated
 		--FA_animated_fn()
 	)
 	
 	on FA_bf_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #bruteForce
 		--FA_bruteForce_fn()
 	)
 	
 	on FA_bfs_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		FA_submission_fn #bruteForceSpheres
 		--FA_bruteForceSphere_fn()
 	)
 	
 	on SA_fly_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #flyThrough
 		--SA_flythrough_fn()
 	)
 		
 	on SA_single_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #singelFrame
 		--SA_single_fn()
 	)
 	
 	on SA_as_is_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #asIs
 		--SA_as_is_fn()
 	)
 	
 	on SA_VDR_btn pressed do 
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #vrayDR
 		--SA_VDR_fn()
 	)
@@ -3428,7 +3431,7 @@ buttontext:"v.902"
 	
 	on SA_nogi_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #noGI
 		--SA_nogi_fn()
 	)
@@ -3440,21 +3443,21 @@ buttontext:"v.902"
 	
 	on SA_an_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #animated
 		--SA_animated_fn()
 	)
 	
 	on SA_bf_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #bruteForce
 		--SA_bruteForce_fn()
 	)
 	
 	on SA_BFS_btn pressed do
 	(
-		clear_render_paths()
+		clearRenderElementsPaths()
 		SA_submission_fn #bruteForceSpheres
 		--SA_bruteForceSphere_fn()
 	)
@@ -3745,7 +3748,7 @@ buttontext:"v.902"
 			
 			
 			
-			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO)catch()
 			createDialog multiCamSubmitter
 			errorCheck = true
 		)

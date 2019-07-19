@@ -43,7 +43,7 @@ Icon:#("Lights",7)
 
 	local dgvMaxHeight = 800
 	local dgvRefreshing = false
-	local dgvDoUpdate = false
+	local dgvPostDeleteUpdate = false
 	local disabledColor = (dotnetclass "system.drawing.color").fromARGB 128 128 128
 	local enabledColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
 	local enabledStyle = dotnetobject "DataGridViewCellStyle"
@@ -623,6 +623,7 @@ Icon:#("Lights",7)
 			)
 		)
 	)
+	
 	fn nameChangeFN ev nd = 
 	(
 		local obj = GetAnimByHandle nd[1]
@@ -695,32 +696,34 @@ Icon:#("Lights",7)
 			)
 		)
 	)
+
+	fn postDeleteFN ev nd =
+	(
+		if dgvPostDeleteUpdate == true then
+		(
+			print "postDeleteFN"
+			dgvUpdate()
+			dgvPostDeleteUpdate = false
+		)
+	)
 	
-	global preDeleteFN, modiferFN, postDeleteFN
+	global preDeleteFN, modiferFN
+	
 	fn preDeleteFN = 
 	(
 		local obj = callbacks.notificationParam()
-		local dgv = MultiCamLister.dgv
-		if dgv.Focused == false then
+		if superclassof obj == camera then
 		(
-			if superclassof obj == camera then
+			local dgv = MultiCamLister.dgv
+			if dgv.Focused == false then
 			(
 				print "preDeleteFN"
-				dgvDoUpdate = true
+				dgvPostDeleteUpdate = true
 			)
 		)
 	)
 
-	fn postDeleteFN =
-	(
-		local dgv = MultiCamLister.dgv
-		if dgvDoUpdate == true then
-		(
-			print "postDeleteFN"
-			dgvUpdate()
-			dgvDoUpdate = false
-		)
-	)
+
 
 	fn modiferFN = 
 	(
@@ -811,12 +814,12 @@ Icon:#("Lights",7)
 			callBacks.AddScript #systemPreNew "closeRolloutFloater  MultiCamListerFloater" id:#MultiCamListerDialog
 			callBacks.AddScript #filePreOpen "closeRolloutFloater  MultiCamListerFloater" id:#MultiCamListerDialog
 			callBacks.AddScript #nodePreDelete "preDeleteFN()" id:#MultiCamListerDialog
-			callBacks.AddScript #nodepostDelete "postDeleteFN()" id:#MultiCamListerDialog
+			--callBacks.AddScript #nodepostDelete "postDeleteFN()" id:#MultiCamListerDialog
 
 			--we use modifier add because we can't tell if the modifier is added or geometryChanged nodeEventCallback is triggered
 			callBacks.AddScript #postModifierAdded "modiferFN()" id:#MultiCamListerDialog
 
-			listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN
+			listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN callbackEnd:postDeleteFN
 			
 			MultiCamListerOpen = true
 		)
