@@ -8,6 +8,8 @@
 
 --to do:
 --	split camera option
+--  Add checking for deadline installation
+--  add checking for ffmpeg 
 
 
 
@@ -329,7 +331,9 @@ buttontext:"v.902"
 	global cancelProcessRO
 	global vrayRend
 	global SubmitterNodeEventCallback
-
+	
+	local updateMultiCamSubmitterRollout = false
+	
 	local begframe = 0
 	local endframe = 1
 	local sceneCams = #()
@@ -539,8 +543,19 @@ buttontext:"v.902"
 	-- this should be a rollout update function, update dropdown and updata LV_ITEMS, triggers when the submitter is open and user changes the name of the camera or adds or subtracts one.
 	fn SubmitterNodeEventFN ev nd = 
 	(
-		try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
-		createdialog multiCamSubmitter
+		print "--submitter callbacksEnd function--"
+		if updateMultiCamSubmitterRollout == true then
+		(
+			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+			createdialog multiCamSubmitter
+		)
+		updateMultiCamSubmitterRollout = false
+	)
+	
+	fn SubmitterNodeEventSetUpdate ev nd =
+	(
+		print "--submitter callback added function--"
+		updateMultiCamSubmitterRollout = true
 	)
 
 	fn gwActiveSettings =
@@ -3095,7 +3110,7 @@ buttontext:"v.902"
 		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		--callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
-		SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:2000  added:SubmitterNodeEventFN nameChanged:SubmitterNodeEventFN deleted:SubmitterNodeEventFN
+		SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:2000  added:SubmitterNodeEventSetUpdate nameChanged:SubmitterNodeEventSetUpdate deleted:SubmitterNodeEventSetUpdate  callbackEnd:SubmitterNodeEventFN
 	)--end on buttons open
 	
 	

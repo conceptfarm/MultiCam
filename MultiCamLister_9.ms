@@ -8,6 +8,8 @@
 -- checking in the modifier, checks in the lister but doesnot un-gray
 -- Text feilds when edited lose focus
 -- When lost focus dgv needs to comit changes and finalize edits
+-- Post delete runs for every object, need to find a way to run once after all the objects are deleted
+-- Issue: with nodeeventCallback, interacting with nodeEventCallback from the submitter
 
 macroScript MultiCamLister
 category:"ilya_s Scripts"
@@ -38,8 +40,7 @@ Icon:#("Lights",7)
 	local prevSelectedRows = #()
 	local prevSelectedRowsLessSelf = #()
 	local prevSelectedRowsPlusSelf = #()
-	local dgvRowHeight = 26
-	local dgvHeaderRowHeight = 36
+
 	local dgvMaxHeight = 800
 	local dgvRefreshing = false
 	local dgvDoUpdate = false
@@ -50,48 +51,64 @@ Icon:#("Lights",7)
 	local disabledStyle = dotnetobject "DataGridViewCellStyle"
 		disabledStyle.forecolor = disabledColor
 	local gapBetweenDGVs = 20
-	local camChangeName = false
+	--local camChangeName = false
 	local prevScrollPos = 0
-
 	
+	local s = getViewSize()
+	--local k = getRendImageAspect()
+	
+	local dib = (gw.getViewportDib())
+	local windowScaleWidth = dib.width / s.x
+	local windowScaleHeight = dib.height / s.y
+	free dib
+		
+	displayScale = windowScaleWidth
+
+	fn scaleForDisplay n s = 
+	(
+		--return ((floor (n*s)) as integer)
+		return n*s
+	)
 	-- Name, Type, Width
 	local defList = #(
-		#("Select","button",41), 
-		#("Camera Name","text",101), 
-		#("First Frame","number",40), 
-		#("Last Frame","number",37), 
-		#("Get Range","button",56),  
-		#(" ","text",11),  
-		#("Use Hide Layers","check",55),
-		#("Clear All","button",56), 
-		#("Add Hidden","button",72),
-		#(" ","text",11),  
-		#("Use Sunpoints","check",58),
-		#("Show Sunpoints","check",58), 
-		#("Get From Sun","button",80),
-		#("Move Sun","button",80),
-		#(" ","text",11),  
-		#("Use Resolution","check",57), 
-		#("Width","number",46), 
-		#("Height","number",46), 
-		#("Get Res.","button",56),
-		#(" ","text",11),  
-		#("Use HDRI","check",42),  
-		#("HDRI Map","button",56),
-		#("Link HDRI","check",56),
-		#("Edit Map","button",56),
-		#("ID","text",42),
-		#("IDMat","text",42))
+		#("Select","button",scaleForDisplay 41 displayScale), 
+		#("Camera Name","text",scaleForDisplay 101 displayScale), 
+		#("First Frame","number",scaleForDisplay 40 displayScale), 
+		#("Last Frame","number",scaleForDisplay 37 displayScale), 
+		#("Get Range","button",scaleForDisplay 56 displayScale),  
+		#(" ","text",scaleForDisplay 11 displayScale),  
+		#("Use Hide Layers","check",scaleForDisplay 55 displayScale),
+		#("Clear All","button",scaleForDisplay 56 displayScale), 
+		#("Add Hidden","button",scaleForDisplay 72 displayScale),
+		#(" ","text",scaleForDisplay 11 displayScale),  
+		#("Use Sunpoints","check",scaleForDisplay 58 displayScale),
+		#("Show Sunpoints","check",scaleForDisplay 58 displayScale), 
+		#("Get From Sun","button",scaleForDisplay 80 displayScale),
+		#("Move Sun","button",scaleForDisplay 80 displayScale),
+		#(" ","text",scaleForDisplay 11 displayScale),  
+		#("Use Resolution","check",scaleForDisplay 57 displayScale), 
+		#("Width","number",scaleForDisplay 46 displayScale), 
+		#("Height","number",scaleForDisplay 46 displayScale), 
+		#("Get Res.","button",scaleForDisplay 56 displayScale),
+		#(" ","text",scaleForDisplay 11 displayScale),  
+		#("Use HDRI","check",scaleForDisplay 42 displayScale),  
+		#("HDRI Map","button",scaleForDisplay 56 displayScale),
+		#("Link HDRI","check",scaleForDisplay 56 displayScale),
+		#("Edit Map","button",scaleForDisplay 56 displayScale),
+		#("ID","text",scaleForDisplay 42 displayScale),
+		#("IDMat","text",scaleForDisplay 42 displayScale))
 		
 	
 	local defListNoMod = #(
-		#("Select","button",41), 
-		#("Camera Name","text",178),
-		#("Add MultiCam Attribute Modifier","button",974),
-		#("ID","text",42))
+		#("Select","button",scaleForDisplay 41 displayScale), 
+		#("Camera Name","text",scaleForDisplay 178 displayScale),
+		#("Add MultiCam Attribute Modifier","button",scaleForDisplay 974 displayScale),
+		#("ID","text",scaleForDisplay 42 displayScale))
 
 	local dgvWidth = (local c = 0; for i=1 to defList.count - 2 do c= c+defList[i][3];c) + 3 --1196
-	local dgvWidthWithBar = dgvWidth + 17 --1212
+	local dgvWidthWithBar = dgvWidth + 17--(scaleForDisplay 17 displayScale) --1212
+	local dgvRowHeight = scaleForDisplay 26 displayScale
+	local dgvHeaderRowHeight = scaleForDisplay 36 displayScale
 	
 	fn getWindowClass =
 	(
@@ -117,7 +134,9 @@ Icon:#("Lights",7)
 		local compilerResults = csharpProvider.CompileAssemblyFromSource compilerParams #(source)
 			compilerResults.CompiledAssembly.CreateInstance "Window"
 	)
+	
 
+	
 	fn getVraySunInScene = 
 	(
 		local result = undefined
@@ -452,7 +471,7 @@ Icon:#("Lights",7)
 			for i = 0 to dgvObject.rows.count - 1 do (append cameraObjIDsNoMod dgvObject.rows.item[i].cells.item["ID"].value)
 		)
 		
-		dgvObject.height = 	ceil ((dgvRowHeight*(allCams.count)) + dgvHeaderRowHeight + (0.6* (allCams.count)))
+		dgvObject.height = 	ceil ((dgvRowHeight/displayScale*(allCams.count)) + dgvHeaderRowHeight/displayScale + (0.6* (allCams.count)))
 
 		dgvObject.AllowUserToAddRows = false
 		dgvObject.AllowUserToDeleteRows = false
@@ -478,7 +497,7 @@ Icon:#("Lights",7)
 		else dgv2.visible = true
 
 		dgv2.pos = [dgv1.pos[1], dgv1.pos[2] + dgv1.height + gapBetweenDGVs]
-		multicamlisterfloater.rollouts[1].height = dgv1.pos[2] + dgv1.height + gapBetweenDGVs + dgv2.height + 40
+		multicamlisterfloater.rollouts[1].height = (dgv1.pos[2] + dgv1.height + gapBetweenDGVs + dgv2.height + 40)*displayScale
 		multicamlisterfloater.size = [multicamlisterfloater.size[1],(multicamlisterfloater.rollouts[1].height + 30)]
 		if multicamlisterfloater.size[2] > dgvMaxHeight then multicamlisterfloater.size = [multicamlisterfloater.size[1], dgvMaxHeight]
 	)
@@ -499,7 +518,7 @@ Icon:#("Lights",7)
 		dgvUpdateSize dgv dgvNoMod
 		
 		dgvRefreshing = false
-		--print "Updating DGV"
+		print "Updating DGV"
 	)
 	
 	fn styleDGV dgvObject = 
@@ -569,7 +588,7 @@ Icon:#("Lights",7)
 
 			for o in selection where superClassOf o == camera do 
 			(
-				--print "selectionFN"
+				print "selectionFN"
 				local objID = (GetHandleByAnim o) as string
 				local item = findItem cameraObjIDs objID
 				local itemNoMod = findItem cameraObjIDsNoMod objID
@@ -599,23 +618,64 @@ Icon:#("Lights",7)
 		(
 			if superclassof (GetAnimByHandle nd[1]) == camera then
 			(
-				--print "addedFN"
+				print "addedFN"
 				dgvUpdate()
+			)
+		)
+	)
+	fn nameChangeFN ev nd = 
+	(
+		local obj = GetAnimByHandle nd[1]
+		if (superclassof obj == camera) then
+		(
+			local dgv = MultiCamLister.dgv
+			local dgvNoMod = MultiCamLister.dgvNoMod
+			if dgv.Focused == false and dgvNoMod.Focused == false then
+			(
+				print "nameChangedFn"
+				if (obj.modifiers[#MultiCamAttribute] != undefined) then 
+				(
+					local row = findItem cameraObjIDs ((nd[1] as string)+"P")
+					if (row != 0) then
+					(
+						local rowToInvalidate = row - 1
+						dgv.InvalidateRow rowToInvalidate
+						dgvRefreshing = true
+						populateRow dgv rowToInvalidate obj
+						dgvRefreshing = false
+					)
+				)
+				else if (obj.modifiers[#MultiCamAttribute] == undefined) then
+				(
+					local row = findItem cameraObjIDsNoMod ((nd[1] as string)+"P")
+					if (row != 0) then
+					(
+						local rowToInvalidate = row - 1
+						dgvNoMod.InvalidateRow rowToInvalidate
+						dgvRefreshing = true
+						populateRowNoMod dgvNoMod rowToInvalidate obj
+						dgvRefreshing = false
+					)
+				)
 			)
 		)
 	)
 
 	fn otherPropFN ev nd = 
 	(
-		local dgv = MultiCamLister.dgv
-		if dgv.Focused == false then
+		local obj = GetAnimByHandle nd[1]
+		if (superclassof obj == camera) then
 		(
-			local obj = GetAnimByHandle nd[1]
-			if (superclassof obj == camera) then
+			local dgv = MultiCamLister.dgv
+			local dgvNoMod = MultiCamLister.dgvNoMod
+			
+			if dgv.Focused == false and dgvNoMod.Focused == false then
 			(
-				--print "otherPropFN"
+				print "otherPropFN"
+				--updates when multicam att are changed from mod panel
 				if (obj.modifiers[#MultiCamAttribute] != undefined) then 
 				(
+					print "yes modifier"
 					local row = findItem cameraObjIDs ((nd[1] as string)+"P")
 					if (row != 0) then
 					(
@@ -627,12 +687,9 @@ Icon:#("Lights",7)
 						dgvRefreshing = false
 					)
 				)
-				else if (camChangeName == true) then
+				else if (obj.modifiers[#MultiCamAttribute] == undefined) then
 				(
-					camChangeName = false
-				)
-				else if (camChangeName == false) then
-				(
+					print "no modifier"
 					dgvUpdate()
 				)
 			)
@@ -648,7 +705,7 @@ Icon:#("Lights",7)
 		(
 			if superclassof obj == camera then
 			(
-				--print "preDeleteFN"
+				print "preDeleteFN"
 				dgvDoUpdate = true
 			)
 		)
@@ -659,7 +716,7 @@ Icon:#("Lights",7)
 		local dgv = MultiCamLister.dgv
 		if dgvDoUpdate == true then
 		(
-			--print "postDeleteFN"
+			print "postDeleteFN"
 			dgvUpdate()
 			dgvDoUpdate = false
 		)
@@ -669,13 +726,14 @@ Icon:#("Lights",7)
 	(
 		local obj = (callbacks.notificationParam())[1]
 		local objMod = (callbacks.notificationParam())[2]
-		local dgv = MultiCamLister.dgv
-		local dgvNoMod = MultiCamLister.dgvNoMod
-		if dgv.Focused == false and dgvnomod.Focused == false then
+
+		if superclassof obj == camera and classof objMod == MultiCamAttribute then
 		(
-			if superclassof obj == camera and classof objMod == MultiCamAttribute then
+			local dgv = MultiCamLister.dgv
+			local dgvNoMod = MultiCamLister.dgvNoMod
+			if dgv.Focused == false and dgvnomod.Focused == false then
 			(
-				--print "modiferFN"
+				print "modiferFN"
 				dgvUpdate()
 			)
 		)
@@ -744,7 +802,9 @@ Icon:#("Lights",7)
   			populateDGV dgvNoMod noMod:false
 
   			dgvUpdateSize dgv dgvNoMod
-					
+			
+			local dgvScale = (1.0*dgvNoMod.width) / dgvNoMod.size.width
+						
 			--dgv.SelectionMode=(dotNetClass "System.Windows.Forms.DataGridViewSelectionMode").FullRowSelect
 
 			callBacks.AddScript #systemPreReset "closeRolloutFloater  MultiCamListerFloater" id:#MultiCamListerDialog
@@ -753,9 +813,10 @@ Icon:#("Lights",7)
 			callBacks.AddScript #nodePreDelete "preDeleteFN()" id:#MultiCamListerDialog
 			callBacks.AddScript #nodepostDelete "postDeleteFN()" id:#MultiCamListerDialog
 
+			--we use modifier add because we can't tell if the modifier is added or geometryChanged nodeEventCallback is triggered
 			callBacks.AddScript #postModifierAdded "modiferFN()" id:#MultiCamListerDialog
 
-			listerNodeEventCallback = NodeEventCallback mouseUp:true delay:2000 selectionChanged:selectionFN added:addedFN nameChanged:otherPropFN geometryChanged:otherPropFN
+			listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN
 			
 			MultiCamListerOpen = true
 		)
@@ -1206,7 +1267,7 @@ Icon:#("Lights",7)
 				case val.ColumnIndex of
 				(
 					1:(--Camera Name
-						camChangeName = true
+						--camChangeName = true
 						local obj = getObjectByRow dgvNoMod val.RowIndex
 						obj.name = (dgvNoMod.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value)
 
