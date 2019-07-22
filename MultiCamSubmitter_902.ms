@@ -11,6 +11,15 @@
 --  Add checking for deadline installation
 --  add checking for ffmpeg 
 
+--  Strange bug with create camera from view when submitter and lister are open, something about passing Scene Explorer as a variable
+--  probably something to do with layer hidding in the attribute
+
+--  Reset vray frame buffer to old res
+--  Reset region to old region
+--  Very large resolution settings
+--  Look at different systemTools options for screen scaling
+--  systemScale = (sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)
+--  systemScale = (systemTools.GetScreenWidth applyUIScaling:false) / (systemTools.GetScreenWidth applyUIScaling:true)
 
 
 --ver.902
@@ -977,48 +986,104 @@ buttontext:"v.902"
 	-- test conflict in aspect ratios of max resolution and vray resolution
 	-- test conflict in regions from max to vray 
 
-
-
-
-	fn deadlineRegionRenderTest = 
+	fn disableAllRenderRegions = 
 	(
+		local rs = renderSceneDialog.isopen()
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
+		try (vrayVFBSetRegionEnabled false) catch()
+		setRenderType #view
+		if rs == true then renderSceneDialog.open()
+	)
+
+
+	fn deadlineRegionRendering = 
+	(
+		--convert to vray region here, max region will be disabled but coordinates will still be readable.
 		SMTDSettings.RegionRenderingMode = #none
 		
-		if (getRenderType() == #region or vrayVFBGetRegionEnabled == true) then 
+		if (getRenderType() == #region or vrayVFBGetRegionEnabled() == true) then 
 		(
-			SMTDSettings.RegionRendering = true
-			SMTDSettings.RegionRenderingMode = #maxRegion 
-			SMTDSettings.RegionType = 1
-			SMTDSettings.RegionUseMaxValues = true
+			print "--region rendering enabled--"
+			convertMaxRegionToVray()
 		)
 	)
 
 	fn convertMaxRegionToVray =
 	(
-		--x,y,w,h
 		local regionCoords = viewport.getRegionRect viewport.activeViewport
-		--vrayVFBSetRegion 134 241 1920 617 --x1 y1 x2 y2
+		setRenderType #view
 		local widthScale = 1
 		local heightScale = 1
+		local _w = renderWidth
+		local _h = renderHeight
 		if vrayRend.output_getsetsfrommax == false then
 		(
-			widthScale = vrayRend.output_width/renderWidth
-			heightScale = vrayRend.output_height/renderHeight
+			_w = vrayRend.output_width
+			_h = vrayRend.output_height
+			widthScale = _w/renderWidth
+			heightScale = _h/renderHeight
 		)
+		
+		-- Workaround for setting the size of the vray frame buffer by loading the right size image into it.
+		local vraySizeBitmap = bitmap _w _h color:black gamma:0.45454545 filename:((getdir #temp)+"\\vraySizeBitmap.jpg")
+		save vraySizeBitmap
+		close vraySizeBitmap
+		vfbControl #hide
+		vfbControl #loadimage vraySizeBitmap.filename
+		
+		vrayVFBSetRegionEnabled true
 		vrayVFBSetRegion (regionCoords.x*widthScale) (regionCoords.y*heightScale) ((regionCoords.x+regionCoords.w)*widthScale) ((regionCoords.y+regionCoords.h)*heightScale)
 		
+		deletefile vraySizeBitmap.filename
+		free vraySizeBitmap
+		vfbControl #clearimage
 	)
 
 	fn convertVrayRegionToMax =
 	(
-		if vrayVFBGetRegionEnabled == true then
+		if vrayVFBGetRegionEnabled() == true then
 		(
-			local regionCoords = vrayVFBGetRegion()
+			--local regionAsRatio = convertRegionToRatio type:#vrayToVray
+			local vrayReg = vrayVFBGetRegion()
+			local ratio = #()
+			local _x, _y, _w, _h
+			if vrayRend.output_getSetsFromMax == false then
+			( 
+				_x = ((1.0*vrayReg[1])/vrayRend.output_width * renderWidth) as integer
+				_y = ((1.0*vrayReg[2])/vrayRend.output_height * renderHeight) as integer
+				_w = ((1.0*(vrayReg[3] - vrayReg[1]))/vrayRend.output_width * renderWidth) as integer
+				_h = ((1.0*(vrayReg[4] - vrayReg[2]))/vrayRend.output_height * renderHeight) as integer
+
+			)
+			else 
+			(
+				_x = vrayReg[1]
+				_y = vrayReg[2]
+				_w = vrayReg[3] - vrayReg[1]
+				_h = vrayReg[4] - vrayReg[2]
+			)
+
 			setRenderType #region
 			vrayVFBSetRegionEnabled false
-
-
+			viewport.setRegionRect viewport.activeViewport (Box2 _x _y _w _h)
 		)
+	)
+
+	fn setVFBSize _w _h = 
+	(
+		-- Workaround for setting the size of the vray frame buffer by loading the right size image into it.
+		local vraySizeBitmap = bitmap _w _h color:black gamma:0.45454545 filename:((getdir #temp)+"\\vraySizeBitmap.jpg")
+		save vraySizeBitmap
+		close vraySizeBitmap
+		vfbControl #hide
+		vfbControl #loadimage vraySizeBitmap.filename
+		
+		vrayVFBSetRegionEnabled true
+		vrayVFBSetRegion (regionCoords.x*widthScale) (regionCoords.y*heightScale) ((regionCoords.x+regionCoords.w)*widthScale) ((regionCoords.y+regionCoords.h)*heightScale)
+		
+		deletefile vraySizeBitmap.filename
+		free vraySizeBitmap
+		vfbControl #clearimage
 	)
 	
 	fn CollectDeadlineSlaves =
@@ -1062,6 +1127,7 @@ buttontext:"v.902"
 	
 	fn parseRangeFile c =
 	(
+		if (EditRenderRegion.IsEditing == true) do (EditRenderRegion.EditRegion() )
 		begframe = endframe = undefined
 		
 		local allMods = for m in c.modifiers where (classof m == MultiCamAttribute) collect m
@@ -1669,7 +1735,7 @@ buttontext:"v.902"
 						
 						exrSettingsOff()
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						
@@ -1798,7 +1864,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true) then (AddCallbackJPG())	
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--SingleFrame"
@@ -1860,7 +1926,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 		
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 							
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--NOGI"
@@ -1920,7 +1986,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--AS_IS"
@@ -1988,7 +2054,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = "02.DR___" + rootnode.CA_jobPrefix + "___" + currentCameraName
@@ -2080,7 +2146,7 @@ buttontext:"v.902"
 						
 						exrSettingsOff()
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = "01.IR_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
@@ -2141,7 +2207,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = "02.Fr_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
@@ -2222,7 +2288,7 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = "02.BF_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
@@ -2340,7 +2406,7 @@ buttontext:"v.902"
 						oldRenderHidden = rendHidden
 						renderHidden = false
 						
-						deadlineRegionRenderTest()
+						deadlineRegionRendering()
 						
 						
 						SMTDSettings.JobName = "02.SphereMask_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
@@ -3094,15 +3160,31 @@ buttontext:"v.902"
 		resetViewports()
 		displaySafeFrames = true
 
-		if (getRenderType() != #view or vrayVFBGetRegionEnabled() == true) then
+		--if both are enabled
+		if (getRenderType() != #view and vrayVFBGetRegionEnabled() == true) then
 		(
+			if (EditRenderRegion.IsEditing == true) do (EditRenderRegion.EditRegion() )
+			local qb = yesNoCancelBox ("Warning, both Vray and Max render regions are ON!\n\n[ YES ]        Keep VRAY Region\n[ NO ]         Keep MAX Region\n[ CANCEL ] Disable BOTH") title:"Render Region"
+			case qb of
+			(
+				#yes:(convertVrayRegionToMax()) --keep vray
+				#no:(vrayVFBSetRegionEnabled false) --keep max
+				#cancel:(disableAllRenderRegions()) --disable both
+			)
+		)
+		--if one of them is enabled
+		else if (getRenderType() != #view or vrayVFBGetRegionEnabled() == true) then
+		(
+			if (EditRenderRegion.IsEditing == true) do (EditRenderRegion.EditRegion() )
 			if (queryBox  "Warning, render region is ON! Do you want to disable?" title:"Render Region") then
 			(
-				local rs = renderSceneDialog.isopen()
-				if renderSceneDialog.isOpen() then renderSceneDialog.close()
-				try (vrayVFBSetRegionEnabled false) catch()
-				setRenderType #view
-				if rs == true then renderSceneDialog.open()
+				--yes, disable region render
+				disableAllRenderRegions()
+			)
+			else
+			(
+				--no, keep region render on
+				if vrayVFBGetRegionEnabled() == true then convertVrayRegionToMax()
 			)
 		)
 
@@ -3113,7 +3195,11 @@ buttontext:"v.902"
 		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		--callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
-		SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:2000  added:SubmitterNodeEventSetUpdate nameChanged:SubmitterNodeEventSetUpdate deleted:SubmitterNodeEventSetUpdate  callbackEnd:SubmitterNodeEventFN
+		if SubmitterNodeEventCallback == undefined then	
+		(
+			SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:500  added:SubmitterNodeEventSetUpdate nameChanged:SubmitterNodeEventSetUpdate deleted:SubmitterNodeEventSetUpdate callbackEnd:SubmitterNodeEventFN
+		)
+		else SubmitterNodeEventCallback.enabled = true
 	)--end on buttons open
 	
 	
@@ -3127,9 +3213,11 @@ buttontext:"v.902"
 		try(destroydialog camChecklistRO )catch()
 		try(destroydialog cancelProcessRO )catch()
 		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
-		SubmitterNodeEventCallback = undefined
+		if SubmitterNodeEventCallback != undefined then SubmitterNodeEventCallback.enabled = false
+		
+		--SubmitterNodeEventCallback = undefined
 		unregisterRedrawViewsCallback gwActiveSettings
-		gc light:true
+		--gc light:true
 	)
 	
 	on extSelection selected i do
@@ -3249,39 +3337,17 @@ buttontext:"v.902"
 				rootnode.CA_frameOutput = getFilenamePath vrayRend.output_splitfilename
 				rootnode.CA_frameOutputCustom = rootnode.CA_frameOutput
 				pathLable.text = (rootnode.CA_frameOutputCustom)
-				FA_fly_btn.enabled = true 
-				FA_single_btn.enabled = true 
-				FA_nogi_btn.enabled = true 
-				FA_as_is_btn.enabled = true 
-				FA_pv_btn.enabled = true
-				FA_an_btn.enabled = true	
-				FA_BF_btn.enabled = true	
-				FA_BFS_btn.enabled = true
-				FA_VDR_btn.enabled = true
+				setUIElementEnabled true "FA_*"
+				
 			)
 			) catch (
 				pathRootChoice.state = 4
 				pathLable.text = "None Defined" 
 				rootnode.CA_frameOutput = pathLable.text
 				rootnode.CA_frameOutputCustom = rootnode.CA_frameOutput
-				FA_fly_btn.enabled = false 
-				FA_single_btn.enabled = false 
-				FA_nogi_btn.enabled = false 
-				FA_as_is_btn.enabled = false 
-				FA_pv_btn.enabled = false
-				FA_an_btn.enabled = false	
-				FA_BF_btn.enabled = false
-				FA_BFS_btn.enabled = false
-				FA_VDR_btn.enabled = false	
-				SA_fly_btn.enabled = false
-				SA_single_btn.enabled = false 
-				SA_nogi_btn.enabled = false 
-				SA_as_is_btn.enabled = false
-				SA_pv_btn.enabled = false
-				SA_an_btn.enabled = false
-				SA_BF_btn.enabled = false
-				SA_BFS_btn.enabled = false
-				SA_VDR_btn.enabled = false
+				setUIElementEnabled false "FA_*"
+				setUIElementEnabled false "SA_*"
+
 			)
 	)
 
@@ -3290,25 +3356,9 @@ buttontext:"v.902"
 		if state == true then
 		(
 			camSelection.enabled = false	
-			SA_fly_btn.enabled = true 
-			SA_single_btn.enabled = true 
-			SA_nogi_btn.enabled = true 
-			SA_as_is_btn.enabled = true	
-			SA_pv_btn.enabled = true
-			SA_an_btn.enabled = true
-			SA_BF_btn.enabled = true
-			SA_BFS_btn.enabled = true
-			SA_VDR_btn.enabled = true
-			FA_fly_btn.enabled = false 
-			FA_single_btn.enabled = false 
-			FA_nogi_btn.enabled = false 
-			FA_as_is_btn.enabled = false 
-			FA_pv_btn.enabled = false
-			FA_an_btn.enabled = false	
-			FA_BF_btn.enabled = false
-			FA_BFS_btn.enabled = false
-			FA_VDR_btn.enabled = false	
-			
+			setUIElementEnabled false "FA_*"
+			setUIElementEnabled true "SA_*"
+
 			createdialog camChecklistRO style:#(#style_sysmenn) pos:[((GetDialogPos multiCamSubmitter).x) + 580,(GetDialogPos multiCamSubmitter).y + 0] parent:multiCamSubmitter.hwnd
 		)
 		else
@@ -3317,25 +3367,8 @@ buttontext:"v.902"
 				camSelection.enabled = true
 				camSelection.selection = 1
 				
-				FA_fly_btn.enabled = true 
-				FA_single_btn.enabled = true 
-				FA_nogi_btn.enabled = true 
-				FA_as_is_btn.enabled = true 
-				FA_pv_btn.enabled = true
-				FA_an_btn.enabled = true	
-				FA_BF_btn.enabled = true	
-				FA_BFS_btn.enabled = true
-				FA_VDR_btn.enabled = true	
-			
-				SA_fly_btn.enabled = false
-				SA_single_btn.enabled = false 
-				SA_nogi_btn.enabled = false 
-				SA_as_is_btn.enabled = false
-				SA_pv_btn.enabled = false
-				SA_an_btn.enabled = false
-				SA_BF_btn.enabled = false
-				SA_BFS_btn.enabled = false
-				SA_VDR_btn.enabled = false				
+				setUIElementEnabled true "FA_*"
+				setUIElementEnabled false "SA_*"	
 		)
 	)
 
@@ -3510,8 +3543,7 @@ buttontext:"v.902"
 			lv_objects.HideSelection = false
 			layout_def = #("Cameras")	 
 			
-			for i in layout_def do
-				lv_objects.Columns.add i --96 --add column with name and optional width
+			for i in layout_def do lv_objects.Columns.add i --96 --add column with name and optional width
 			
 			--fill in spreadshit dotNet version
 			ItemsArray = #() --array to collect the list items
@@ -3534,8 +3566,7 @@ buttontext:"v.902"
 		
 		on camChecklistRO close do 
 		(
-			for i in LV_ITEMS do
-				i.checked = false
+			for i in LV_ITEMS do i.checked = false
 			free LV_ITEMS
 		)
 	)
@@ -3582,8 +3613,19 @@ buttontext:"v.902"
 				MessageBox ("MultiCam Lister is not usable, check MAXScript Listener to make sure all MultiCam assets are loaded correctly.") title:"Missing MultiCam Assets"
 				exit
 			)
+
+			if (doesfileexist (systemTools.getEnvVariable "deadline_path")) != true then
+			(
+				MessageBox ("Deadline Client is not installed or DEADLINE_PATH Environment variable is not configured on this machine") title:"Deadline Error"
+				exit
+			)
+
+			if (doesfileexist (DeadlineRoot + "\\settings\\repository.ini")) != true then
+			(
+				MessageBox ("Deadline Repository cannot be found at path\n"+(DeadlineRoot + "\\settings\\repository.ini")) title:"Deadline Error"
+				exit
+			)
 				
-			
 			print ("Using " + vrayRend as string +" to render.")
 			
 			sceneCams = for o in cameras where (superclassof o == camera) collect o
@@ -3605,7 +3647,7 @@ buttontext:"v.902"
 			
 			if vraySuns.count > 1 then 
 			(
-				MessageBox ("There are " + (vraySuns.count) as string + " VRayvraySuns in the scene. There can only be one.") title:"Duplicate vraySuns"
+				MessageBox ("There are " + (vraySuns.count) as string + " VRaySuns in the scene. There can only be one.") title:"Duplicate vraySuns"
 				exit
 			)
 
@@ -3728,7 +3770,6 @@ buttontext:"v.902"
 				rootnode.CA_Version = CA_CurrentVersion
 			)
 			
-			
 			rootnode.CA_passDirectory = case rootnode.CA_passDirectoryType of 
 			(
 				1: usetoday()
@@ -3745,8 +3786,6 @@ buttontext:"v.902"
 				9: "08.ExtraPass03"
 				10: rootnode.CA_passDirectory = rootnode.CA_passCustom
 			)
-			
-			
 			
 			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO)catch()
 			createDialog multiCamSubmitter

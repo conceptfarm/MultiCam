@@ -51,64 +51,20 @@ Icon:#("Lights",7)
 	local disabledStyle = dotnetobject "DataGridViewCellStyle"
 		disabledStyle.forecolor = disabledColor
 	local gapBetweenDGVs = 20
-	--local camChangeName = false
-	local prevScrollPos = 0
-	
-	local s = getViewSize()
-	--local k = getRendImageAspect()
-	
-	local dib = (gw.getViewportDib())
-	local windowScaleWidth = dib.width / s.x
-	local windowScaleHeight = dib.height / s.y
-	free dib
-		
-	displayScale = windowScaleWidth
+	local prevScrollPos = 0	
+	local displayScale = 1
+	local defList = #()
+	local defListNoMod = #()
+	local dgvWidth = 1196
+	local dgvWidthWithBar = 1212
+	local dgvRowHeight = 25--26
+	local dgvHeaderRowHeight = 32--36
 
 	fn scaleForDisplay n s = 
 	(
 		--return ((floor (n*s)) as integer)
 		return n*s
 	)
-	-- Name, Type, Width
-	local defList = #(
-		#("Select","button",scaleForDisplay 41 displayScale), 
-		#("Camera Name","text",scaleForDisplay 101 displayScale), 
-		#("First Frame","number",scaleForDisplay 40 displayScale), 
-		#("Last Frame","number",scaleForDisplay 37 displayScale), 
-		#("Get Range","button",scaleForDisplay 56 displayScale),  
-		#(" ","text",scaleForDisplay 11 displayScale),  
-		#("Use Hide Layers","check",scaleForDisplay 55 displayScale),
-		#("Clear All","button",scaleForDisplay 56 displayScale), 
-		#("Add Hidden","button",scaleForDisplay 72 displayScale),
-		#(" ","text",scaleForDisplay 11 displayScale),  
-		#("Use Sunpoints","check",scaleForDisplay 58 displayScale),
-		#("Show Sunpoints","check",scaleForDisplay 58 displayScale), 
-		#("Get From Sun","button",scaleForDisplay 80 displayScale),
-		#("Move Sun","button",scaleForDisplay 80 displayScale),
-		#(" ","text",scaleForDisplay 11 displayScale),  
-		#("Use Resolution","check",scaleForDisplay 57 displayScale), 
-		#("Width","number",scaleForDisplay 46 displayScale), 
-		#("Height","number",scaleForDisplay 46 displayScale), 
-		#("Get Res.","button",scaleForDisplay 56 displayScale),
-		#(" ","text",scaleForDisplay 11 displayScale),  
-		#("Use HDRI","check",scaleForDisplay 42 displayScale),  
-		#("HDRI Map","button",scaleForDisplay 56 displayScale),
-		#("Link HDRI","check",scaleForDisplay 56 displayScale),
-		#("Edit Map","button",scaleForDisplay 56 displayScale),
-		#("ID","text",scaleForDisplay 42 displayScale),
-		#("IDMat","text",scaleForDisplay 42 displayScale))
-		
-	
-	local defListNoMod = #(
-		#("Select","button",scaleForDisplay 41 displayScale), 
-		#("Camera Name","text",scaleForDisplay 178 displayScale),
-		#("Add MultiCam Attribute Modifier","button",scaleForDisplay 974 displayScale),
-		#("ID","text",scaleForDisplay 42 displayScale))
-
-	local dgvWidth = (local c = 0; for i=1 to defList.count - 2 do c= c+defList[i][3];c) + 3 --1196
-	local dgvWidthWithBar = dgvWidth + 17--(scaleForDisplay 17 displayScale) --1212
-	local dgvRowHeight = scaleForDisplay 26 displayScale
-	local dgvHeaderRowHeight = scaleForDisplay 36 displayScale
 	
 	fn getWindowClass =
 	(
@@ -471,7 +427,7 @@ Icon:#("Lights",7)
 			for i = 0 to dgvObject.rows.count - 1 do (append cameraObjIDsNoMod dgvObject.rows.item[i].cells.item["ID"].value)
 		)
 		
-		dgvObject.height = 	ceil ((dgvRowHeight/displayScale*(allCams.count)) + dgvHeaderRowHeight/displayScale + (0.6* (allCams.count)))
+		dgvObject.height = 	ceil ((dgvRowHeight/displayScale*(allCams.count)) + dgvHeaderRowHeight/displayScale + 2)
 
 		dgvObject.AllowUserToAddRows = false
 		dgvObject.AllowUserToDeleteRows = false
@@ -788,7 +744,53 @@ Icon:#("Lights",7)
 			 
   			if NOT isKindOf windowDotNetObj dotNetObject do windowDotNetObj = getWindowClass()
   			floaterHWND = windowDotNetObj.getForegroundWindow()
+			
+			local s = getViewSize()
+			
+			local dib = (gw.getViewportDib())
+			displayScale = (((dib.width / s.x)*100.0) as integer)/100.0
+			free dib
 
+			-- Name, Type, Width
+			defList = #(
+				#("Select","button",scaleForDisplay 41 displayScale),
+				#("Camera Name","text",scaleForDisplay 101 displayScale),
+				#("First Frame","number",scaleForDisplay 40 displayScale), 
+				#("Last Frame","number",scaleForDisplay 37 displayScale), 
+				#("Get Range","button",scaleForDisplay 56 displayScale),  
+				#(" ","text",scaleForDisplay 11 displayScale),  
+				#("Use Hide Layers","check",scaleForDisplay 55 displayScale),
+				#("Clear All","button",scaleForDisplay 56 displayScale), 
+				#("Add Hidden","button",scaleForDisplay 72 displayScale),
+				#(" ","text",scaleForDisplay 11 displayScale),  
+				#("Use Sunpoints","check",scaleForDisplay 58 displayScale),
+				#("Show Sunpoints","check",scaleForDisplay 58 displayScale), 
+				#("Get From Sun","button",scaleForDisplay 80 displayScale),
+				#("Move Sun","button",scaleForDisplay 80 displayScale),
+				#(" ","text",scaleForDisplay 11 displayScale),  
+				#("Use Resolution","check",scaleForDisplay 57 displayScale), 
+				#("Width","number",scaleForDisplay 46 displayScale), 
+				#("Height","number",scaleForDisplay 46 displayScale), 
+				#("Get Res.","button",scaleForDisplay 56 displayScale),
+				#(" ","text",scaleForDisplay 11 displayScale),  
+				#("Use HDRI","check",scaleForDisplay 42 displayScale),  
+				#("HDRI Map","button",scaleForDisplay 56 displayScale),
+				#("Link HDRI","check",scaleForDisplay 56 displayScale),
+				#("Edit Map","button",scaleForDisplay 56 displayScale),
+				#("ID","text",scaleForDisplay 42 displayScale),
+				#("IDMat","text",scaleForDisplay 42 displayScale))
+				
+			
+			defListNoMod = #(
+				#("Select","button",scaleForDisplay 41 displayScale), 
+				#("Camera Name","text",scaleForDisplay 178 displayScale),
+				#("Add MultiCam Attribute Modifier","button",scaleForDisplay 974 displayScale),
+				#("ID","text",scaleForDisplay 42 displayScale))
+
+			dgvWidth = (local c = 0; for i=1 to defList.count - 2 do c= c+defList[i][3];c) + 3 --1196
+			dgvWidthWithBar = dgvWidth + 17--(scaleForDisplay 17 displayScale) --1212
+			dgvRowHeight = scaleForDisplay 25 displayScale
+			dgvHeaderRowHeight = scaleForDisplay 32 displayScale
 
   			dgv.Dock = dgv.Dock.Fill
   			dgv.RowHeadersVisible = false
@@ -814,12 +816,15 @@ Icon:#("Lights",7)
 			callBacks.AddScript #systemPreNew "closeRolloutFloater  MultiCamListerFloater" id:#MultiCamListerDialog
 			callBacks.AddScript #filePreOpen "closeRolloutFloater  MultiCamListerFloater" id:#MultiCamListerDialog
 			callBacks.AddScript #nodePreDelete "preDeleteFN()" id:#MultiCamListerDialog
-			--callBacks.AddScript #nodepostDelete "postDeleteFN()" id:#MultiCamListerDialog
 
 			--we use modifier add because we can't tell if the modifier is added or geometryChanged nodeEventCallback is triggered
 			callBacks.AddScript #postModifierAdded "modiferFN()" id:#MultiCamListerDialog
 
-			listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN callbackEnd:postDeleteFN
+			if listerNodeEventCallback == undefined then
+			(
+				listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN callbackEnd:postDeleteFN
+			)
+			else listerNodeEventCallback.enabled = true
 			
 			MultiCamListerOpen = true
 		)
@@ -836,8 +841,9 @@ Icon:#("Lights",7)
 			dgvNoMod.ClearSelection()
 			
 			callBacks.RemoveScripts id:#MultiCamListerDialog
-			listerNodeEventCallback = undefined
-			gc light:true 
+			if listerNodeEventCallback != undefined then listerNodeEventCallback.enabled = false
+			--listerNodeEventCallback = undefined
+			--gc light:true 
 			MultiCamListerOpen =  false	
 		)
 				
