@@ -5,8 +5,8 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
-multiCamRepo = @"C:\temp\Repo\"
---multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+--multiCamRepo = @"C:\temp\Repo\"
+multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 multiCamUsable = false
 
 global drCreateNewCam,drDeleteNewCam

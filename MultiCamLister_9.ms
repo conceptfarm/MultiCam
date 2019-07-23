@@ -745,11 +745,15 @@ Icon:#("Lights",7)
   			if NOT isKindOf windowDotNetObj dotNetObject do windowDotNetObj = getWindowClass()
   			floaterHWND = windowDotNetObj.getForegroundWindow()
 			
-			local s = getViewSize()
+/* 			local s = getViewSize()
 			
 			local dib = (gw.getViewportDib())
 			displayScale = (((dib.width / s.x)*100.0) as integer)/100.0
-			free dib
+			free dib */
+			displayScale = ((sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)).x
+			print("Dispay Scale is " + displayScale as string)
+
+
 
 			-- Name, Type, Width
 			defList = #(

@@ -342,13 +342,11 @@ buttontext:"v.902"
 	global SubmitterNodeEventCallback
 	
 	local updateMultiCamSubmitterRollout = false
-	
 	local begframe = 0
 	local endframe = 1
 	local sceneCams = #()
 	local vraySuns = #()
 	local sceneCamsNames_array = #()
-	
 	local currentCameraName = undefined
 	local currentCamera = undefined
 	local SingleFrame = false
@@ -357,33 +355,35 @@ buttontext:"v.902"
 	local extensions = #(".tga", ".exr", ".exr", ".jpg")
 	local extensionsList = #(".tga", ".exr", ".exr+.jpg", ".jpg")
 	local zdeptharray = #()
-	local rendOldRes = #()
-	local hideLayersOld = #()
-	local oldAnimationSettings = #()
-	local rendTimeTypeOld = rendTimeType
-	local rendNThFrameOld = rendNThFrame
-	local oldEnvSettings = #()
 	local view_size = [1920,1080] 
 	local LV_ITEMS = #()
-	local oldHideCats = #()
-	local oldViewportLayout = undefined
 	local projectName = "Project Noname"
 	local outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender\\", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom")
 	
+	local oldRenderRes = #()
+	local oldHideLayers = #()
+	local oldAnimationSettings = #()
+	local oldRenderTimeType = rendTimeType
+	local oldRenderNthFrame = rendNThFrame
+	local oldEnvSettings = #()
+	local oldHideCats = #()
+	local oldViewportLayout = undefined
+	local oldRenderRegion = #()
 	
 	
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
-	local DeadlineRoot = @"C:\DeadlineRepository10"
-	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+	--local DeadlineRoot = @"C:\DeadlineRepository10"
+	local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg\\bin\\ffmpeg.exe"
-	local multiCamRepo = @"C:\temp\Repo\"
-	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+	--local multiCamRepo = @"C:\temp\Repo\"
+	local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 	local UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
 
---########################--	
---GENERAL FUNCTIONS
---########################--		
+	--########################--	
+	--GENERAL FUNCTIONS
+	--########################--
+
 	fn getMaxVer = (return ("20" + (((substring ((maxVersion())[1] as string) 1 2) as integer) - 2) as string))
 
 	--List is a string of comma separated entries
@@ -660,8 +660,8 @@ buttontext:"v.902"
 
 		renderpresets.Save 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}	
 		
-		rendTimeTypeOld = rendTimeType
-		rendNThFrameOld = rendNThFrame
+		oldRenderTimeType = rendTimeType
+		oldRenderNthFrame = rendNThFrame
 	)
 	
 	fn setOldRPS = 
@@ -674,8 +674,8 @@ buttontext:"v.902"
 		renderpresets.Load 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}
 		deletefile ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps")
 		
-		rendTimeType = rendTimeTypeOld
-		rendNThFrame = rendNThFrameOld
+		rendTimeType = oldRenderTimeType
+		rendNThFrame = oldRenderNthFrame
 		renderers.current = vrayRend
  	)
 	
@@ -770,48 +770,6 @@ buttontext:"v.902"
 			)
 		)
 	)
-
-
-	fn setRenderResolutionOld arr submission:false= 
-	(
-		if renderSceneDialog.isOpen() then renderSceneDialog.close()
-		local tempArr = copy arr #nomap
-
-		-- resolution issues here probably submission true in the parceRangeFile, either pass false from the camerachooser and true on actual submission or rethink this function
-		if tempArr.count < 3 then
-		(
-			tempArr[3] = false
-			tempArr[4] = tempArr[1]
-			tempArr[5] = tempArr[2]
-		)
-		
-		renderWidth = tempArr[1]
-		renderHeight = tempArr[2]
-		vrayRend.output_getsetsfrommax = tempArr[3]
-		vrayRend.output_width = tempArr[4]
-		vrayRend.output_height = tempArr[5]
-		
-		if submission == true then
-		(
-			print "submission true"
-			if tempArr[3] == true then 
-			(
-				vrayRend.output_getsetsfrommax = false
-				vrayRend.output_width = tempArr[1]
-				vrayRend.output_height = tempArr[2]
-				renderWidth = tempArr[1]/10
-				renderHeight = tempArr[2]/10
-			)
-			else
-			(
-				vrayRend.output_getsetsfrommax = false
-				vrayRend.output_width = tempArr[4]
-				vrayRend.output_height = tempArr[5]
-				renderWidth = tempArr[4]/10
-				renderHeight = tempArr[5]/10
-			)
-		)
-	)
 	
 	fn setEnvSettings arr = 
 	(
@@ -861,10 +819,10 @@ buttontext:"v.902"
 
 	fn getOldEnvLayers = 
 	(
-		rendOldRes = getRenderResolution()
-		hideLayersOld = getHiddenLayers()
+		oldRenderRes = getRenderResolution()
+		oldHideLayers = getHiddenLayers()
 		oldEnvSettings = getEnvSettings()
-		print ("Old resolution is " + rendOldRes as string)
+		print ("Old resolution is " + oldRenderRes as string)
 		print ("Old environmet is " + oldEnvSettings as string)
 	)
 
@@ -1069,21 +1027,65 @@ buttontext:"v.902"
 		)
 	)
 
-	fn setVFBSize _w _h = 
+	fn getOldRenderRegion = 
 	(
+		local result = #()
+		if vrayVFBGetRegionEnabled() == true then
+		(
+			result = join #("vray") (vrayVFBGetRegion())
+		)
+		else if (getRenderType() != #view) then
+		(
+			local maxRegion = viewport.getRegionRect viewport.activeViewport
+			result = #("max", maxRegion)
+		)
+		return result
+	)
+
+	fn setOldRenderRegion arr = 
+	(
+		if arr[1]=="vray" then
+		(
+			setRenderType #view
+			vrayVFBSetRegionEnabled true
+			vrayVFBSetRegion arr[2] arr[3] arr[4] arr[5]
+		)
+		else if arr[1]=="max" then
+		(
+			setRenderType #region
+			vrayVFBSetRegionEnabled false
+			viewport.setRegionRect viewport.activeViewport arr[2]
+		)
+	)
+
+	fn setVFBSize arr setOldRegion: = 
+	(
+		-- expecting oldRenderRes #(640, 480, true, 640, 480)
 		-- Workaround for setting the size of the vray frame buffer by loading the right size image into it.
+		local _w, _h
+		
+		if arr[3] == true then
+		(
+			_w = arr[1]
+			_h = arr[2]
+		)
+		else
+		(
+			_w = arr[4]
+			_h = arr[5]
+		)
+		
 		local vraySizeBitmap = bitmap _w _h color:black gamma:0.45454545 filename:((getdir #temp)+"\\vraySizeBitmap.jpg")
 		save vraySizeBitmap
 		close vraySizeBitmap
 		vfbControl #hide
-		vfbControl #loadimage vraySizeBitmap.filename
-		
-		vrayVFBSetRegionEnabled true
-		vrayVFBSetRegion (regionCoords.x*widthScale) (regionCoords.y*heightScale) ((regionCoords.x+regionCoords.w)*widthScale) ((regionCoords.y+regionCoords.h)*heightScale)
-		
+		vfbControl #loadimage vraySizeBitmap.filename	
 		deletefile vraySizeBitmap.filename
 		free vraySizeBitmap
 		vfbControl #clearimage
+		
+		if setOldRegion != unsupplied then setOldRenderRegion setOldRegion 
+
 	)
 	
 	fn CollectDeadlineSlaves =
@@ -1096,7 +1098,7 @@ buttontext:"v.902"
 		(
 			SMTDFunctions.ReadFileIntoArray SMTDPaths.SubmitOutput tempArray
 			DeadlineSlaves = for i in tempArray where i != "" collect i
-			print DeadlineSlaves
+			--print DeadlineSlaves
 		)
 	)
 	
@@ -1155,13 +1157,13 @@ buttontext:"v.902"
 			
 			if (m.useHeightWidth_chb == true) then
 			(
-				print ("Setting old res in parse with found " + rendOldRes as string)
+				print ("Setting old res in parse with found " + oldRenderRes as string)
 				setRenderResolution #(m.imgWidth_sp, m.imgHeight_sp) submission:true
 			)
 			else
 			(
-				print ("Setting old res in parse " + rendOldRes as string)
-				setRenderResolution rendOldRes submission:true
+				print ("Setting old res in parse " + oldRenderRes as string)
+				setRenderResolution oldRenderRes submission:true
 			)
 			
 			if (m.useHideLayers_chb == true) then
@@ -1172,7 +1174,7 @@ buttontext:"v.902"
 			)
 			else 
 			(
-				setHiddenLayers hideLayersOld
+				setHiddenLayers oldHideLayers
 			)
 			
 			if (m.useHDRIMap_chb == true) then
@@ -1192,9 +1194,9 @@ buttontext:"v.902"
 		(
 			begframe = (currenttime as integer)/(4800/framerate)
 			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			print ("Setting old res in parse no mod with override " + rendOldRes as string)
-			setRenderResolution rendOldRes submission:true
-			setHiddenLayers hideLayersOld
+			print ("Setting old res in parse no mod with override " + oldRenderRes as string)
+			setRenderResolution oldRenderRes submission:true
+			setHiddenLayers oldHideLayers
 			setEnvSettings oldEnvSettings
 			SingleFrame = true
 		)
@@ -1203,13 +1205,13 @@ buttontext:"v.902"
 			MessageBox ("Camera " + c.name + " does not have a Submitter Attribute.\nUsing one frame.") title:"Missing Submitter Attribute" beep:false
 			begframe = (currenttime as integer)/(4800/framerate)
 			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			print ("Setting old res in parse no mod no overrid" + rendOldRes as string)
-			setRenderResolution rendOldRes submission:true
-			setHiddenLayers hideLayersOld
+			print ("Setting old res in parse no mod no overrid" + oldRenderRes as string)
+			setRenderResolution oldRenderRes submission:true
+			setHiddenLayers oldHideLayers
 			setEnvSettings oldEnvSettings
 			SingleFrame = true
 		)
-		print ("Setting old res in parse at end " + rendOldRes as string)
+		print ("Setting old res in parse at end " + oldRenderRes as string)
 	)
 	
 	
@@ -3167,8 +3169,8 @@ buttontext:"v.902"
 			local qb = yesNoCancelBox ("Warning, both Vray and Max render regions are ON!\n\n[ YES ]        Keep VRAY Region\n[ NO ]         Keep MAX Region\n[ CANCEL ] Disable BOTH") title:"Render Region"
 			case qb of
 			(
-				#yes:(convertVrayRegionToMax()) --keep vray
-				#no:(vrayVFBSetRegionEnabled false) --keep max
+				#yes:(oldRenderRegion = getOldRenderRegion(); convertVrayRegionToMax()) --keep vray
+				#no:(oldRenderRegion = getOldRenderRegion(); vrayVFBSetRegionEnabled false) --keep max
 				#cancel:(disableAllRenderRegions()) --disable both
 			)
 		)
@@ -3184,9 +3186,16 @@ buttontext:"v.902"
 			else
 			(
 				--no, keep region render on
-				if vrayVFBGetRegionEnabled() == true then convertVrayRegionToMax()
+				if vrayVFBGetRegionEnabled() == true then 
+				(
+					oldRenderRegion = getOldRenderRegion()
+					convertVrayRegionToMax()
+
+				)
 			)
 		)
+
+		
 
 		unregisterRedrawViewsCallback gwActiveSettings
 		registerRedrawViewsCallback gwActiveSettings
@@ -3205,13 +3214,16 @@ buttontext:"v.902"
 	
 	on multiCamSubmitter close do
 	(
-		print ("Setting old res on close " + rendOldRes as string)
-		setRenderResolution rendOldRes
-		setHiddenLayers hideLayersOld
+		print ("Setting old res on close " + oldRenderRes as string)
+		setRenderResolution oldRenderRes
+		setHiddenLayers oldHideLayers
 		setEnvSettings oldEnvSettings
 		setAnimation oldAnimationSettings
+		setVFBSize oldRenderRes setOldRegion:oldRenderRegion
+
 		try(destroydialog camChecklistRO )catch()
 		try(destroydialog cancelProcessRO )catch()
+		
 		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
 		if SubmitterNodeEventCallback != undefined then SubmitterNodeEventCallback.enabled = false
 		
@@ -3666,6 +3678,7 @@ buttontext:"v.902"
 			)
 			
 			print ("Project name is " + projectName)
+			
 			--------------------------------------
 			---Deadline Load Submitter script	
 			--------------------------------------		
