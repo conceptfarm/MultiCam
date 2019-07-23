@@ -373,11 +373,11 @@ buttontext:"v.902"
 	
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
-	--local DeadlineRoot = @"C:\DeadlineRepository10"
-	local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+	local DeadlineRoot = @"C:\DeadlineRepository10"
+	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg\\bin\\ffmpeg.exe"
 	--local multiCamRepo = @"C:\temp\Repo\"
-	local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 	local UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
 
 	--########################--	
@@ -924,7 +924,7 @@ buttontext:"v.902"
 	)
 
 	------------------------------------
-	--Deadline Functions
+	-- Region Render Functions
 	------------------------------------
 	-- Issues with region rendering
 	-- Each viewport can have its own region coordinates 
@@ -1044,14 +1044,17 @@ buttontext:"v.902"
 
 	fn setOldRenderRegion arr = 
 	(
+		print "setting old region"
 		if arr[1]=="vray" then
 		(
+			print "rr is vray"
 			setRenderType #view
 			vrayVFBSetRegionEnabled true
 			vrayVFBSetRegion arr[2] arr[3] arr[4] arr[5]
 		)
 		else if arr[1]=="max" then
 		(
+			print "rr is max"
 			setRenderType #region
 			vrayVFBSetRegionEnabled false
 			viewport.setRegionRect viewport.activeViewport arr[2]
@@ -1087,6 +1090,23 @@ buttontext:"v.902"
 		if setOldRegion != unsupplied then setOldRenderRegion setOldRegion 
 
 	)
+
+	fn getVFBSize = 
+	(
+		local result = undefined
+		local vbfWindowName = filterstring (tolower ((for wnd in (windows.getChildrenHWND 0) where ((matchpattern wnd[5] pattern:"V-Ray frame buffer*")) collect wnd)[1][5])) "abcdefghijklmnopqrstuvwxyz[] -"
+		--returns #("25%", "2500", "2500")
+
+		if ((vbfWindowName.count == 3) and (vbfWindowName[1][vbfWindowName[1].count] == "%") and (vbfWindowName[2] as integer) != undefined and (vbfWindowName[3] as integer) != undefined) then 
+		(
+			result = #(vbfWindowName[2] as integer,vbfWindowName[3] as integer)
+		)
+		return result
+	)
+
+	------------------------------------
+	--Deadline Functions
+	------------------------------------
 	
 	fn CollectDeadlineSlaves =
 	(
@@ -3190,7 +3210,10 @@ buttontext:"v.902"
 				(
 					oldRenderRegion = getOldRenderRegion()
 					convertVrayRegionToMax()
-
+				)
+				else 
+				(
+					oldRenderRegion = getOldRenderRegion()
 				)
 			)
 		)

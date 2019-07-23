@@ -5,16 +5,14 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
---multiCamRepo = @"C:\temp\Repo\"
-multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+multiCamRepo = @"C:\temp\Repo\"
+--multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 multiCamUsable = false
 
 global drCreateNewCam,drDeleteNewCam
 fn drCreateNewCam = 
 (
-	
-	local vr = renderers.current
-			
+	local vr = renderers.current	
 	if(vr != undefined) then 
 	(
 		if ((vr.classid[1] == 1941615238) and (vr.classid[2] == 2012806412)) == true then
@@ -86,12 +84,12 @@ fn checkMacro macro =
 				if (isDirectoryWriteable (getDir #scripts)) == true then
 				(
 					print ("INFO: Local scripts directory is writable.")
-					d = deleteFile localScript
+					local d = deleteFile localScript
 					
 					if d ==  true then
 					(
 						print ("INFO: Deleted local macro "+macro+" successfully.")
-						c = copyFile remoteScript localScript
+						local c = copyFile remoteScript localScript
 						if (c==true) then 
 						(
 							print ("INFO: Update to "+macro+" is successful, loading new macro")
@@ -139,7 +137,7 @@ fn checkMacro macro =
 			if (isDirectoryWriteable (getDir #scripts)) == true then
 			(
 				print ("INFO: Local scripts directory is writable.")
-				c = copyFile remoteScript localScript
+				local c = copyFile remoteScript localScript
 				if (c == true) then 
 				(
 					print ("INFO: Copied macro "+macro+" to local location, loading new macro.")
