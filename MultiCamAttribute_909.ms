@@ -12,6 +12,7 @@
 -- When multiple select text cells:
 -- For cameras: enumerate name
 -- For last, first, width, height - set the same number in all the selected cells
+-- Possible bug: Map display button doesn't update on first selection
 
 plugin modifier MultiCamAttribute
 name:"MultiCam Attribute"
@@ -206,8 +207,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
 		this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
 	)
-	
-	
+		
 	fn checkHDRIconnection =
 	(
 		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
@@ -222,6 +222,11 @@ registerRedrawViewsCallback GW_displayObjectNames
 				this.hdriMapLink_chb = true
 				this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
 			)
+		)
+		if (this.hdriMap_btn != undefined) then
+		(
+			hdriMapName = this.hdriMap_btn.name
+			this.hdrimap_ro.hdriMapLoader_btn.caption = hdriMapName
 		)
 		else
 		(
@@ -250,8 +255,6 @@ registerRedrawViewsCallback GW_displayObjectNames
 				unregisterRedrawViewsCallback gwActiveSettings
 			)
 		)
-
-
 
 		on main reload do 
 		(
@@ -442,6 +445,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 	(
 		--HDRI MAP
 		useHDRIMap_chb type:#boolean animatable:false ui:useHDRIMap_chb default:false
+		hdriMapLoader_btn type:#boolean animatable:false ui:hdriMapLoader_btn default:false
 		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn
 		hdriMapLink_chb type:#boolean animatable:false ui:hdriMapLink_chb default:false
 		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
@@ -453,8 +457,8 @@ registerRedrawViewsCallback GW_displayObjectNames
 		on useHDRIMap_chb set state do 
 		(
 			this.hdriMap_ro.hdriMap_btn.enabled = state
-			--this.checkHDRIconnection()				
 			this.hdriMap_ro.hdriMapLink_chb.enabled = state
+			this.hdriMap_ro.hdriMapLoader_btn.enabled = state
 			this.hdriMap_ro.hdriMapEdit_btn.enabled = state
 			this.hdriMap_ro.hdriMapOffset_sp.enabled = state
 			this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
@@ -462,6 +466,45 @@ registerRedrawViewsCallback GW_displayObjectNames
 			this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
 		)
 
+		on hdriMapLoader_btn set val do
+		(
+			if val == true then
+			(
+				local selectedMap = MultiCamHDRILib.show2()
+				if selectedMap != undefined then 
+				(
+					selectedMap.name = "HDRI for " + objectName
+					hdriMap_btn = selectedMap
+					this.hdrimap_ro.hdriMapLoader_btn.caption = selectedMap.name
+
+					-- ask to link here --
+					local qb = QueryBox "Link the HDRI map to the VraySun?"
+					if qb == true then
+					(
+						hdriMapLink_chb = true
+					)
+					else 
+					(
+						hdriMapLink_chb = false
+						this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+					)
+				)
+				else if (selectedMap == undefined and this.hdriMap_btn != undefined) then
+				(
+					this.hdrimap_ro.hdriMapLoader_btn.caption = this.hdriMap_btn.name
+				)
+				else 
+				(
+					this.hdrimap_ro.hdriMapLoader_btn.caption = "None"
+					hdriMapLink_chb = false
+					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+				)
+				
+				hdriMapLoader_btn = false
+			)
+
+		)
+		
 		on hdriMap_btn set val do
 		(
 			if (classof val == VRayHDRI) then
@@ -495,13 +538,17 @@ registerRedrawViewsCallback GW_displayObjectNames
 
 		on hdriMapLink_chb set val do
 		(
+			print "1"
 			if val == true then
 			(	
+				print "2"
 				if ((getVraySunInScene()) != undefined) then
 				(
+					print "3"
 					if (hdriMap_btn != undefined) then
 					(
 						local m = hdriMap_btn
+						print m.name
 						m.cropplace_u.controller = float_script()
 						
 						local sun = getVraySunInScene()
@@ -523,9 +570,11 @@ registerRedrawViewsCallback GW_displayObjectNames
 						
 						hdriMapLink_chb = true
 						this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
+						print "4"
 					)
 					else
 					(
+						print "5"
 						MessageBox ("The map is not a VrayHDRI map.")
 						hdriMapLink_chb = false
 						this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
@@ -533,14 +582,17 @@ registerRedrawViewsCallback GW_displayObjectNames
 				)
 				else
 				(
+					print "6"
 					hdriMapLink_chb = false
 					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 				)
 			)
 			else
 			(
+				print "7"
 				if (hdriMap_btn != undefined) then
 				(
+					print "8"
 					hdriMap_btn.cropplace_u.controller = Bezier_Float()
 				)
 
@@ -711,7 +763,8 @@ registerRedrawViewsCallback GW_displayObjectNames
 	rollout hdriMap_ro "HDRI Map"
 	(
 		checkbox useHDRIMap_chb "Use HDRI Map" pos:[13,7] align:#center
-		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center
+		checkbutton hdriMapLoader_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center 
+		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center visible:false
 		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,53] align:#center
 		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,79] align:#center
 		spinner hdriMapOffset_sp "Map Rotation: "  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state pos:[21,105] align:#center fieldWidth:54 width:(buttonWidth - 7)
@@ -731,7 +784,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		
 		on hdriMapOffset_sp changed n do
 		(
-			if (hdriMap_btn.map != undefined and hdriMap_btn.map.cropplace_u.controller != undefined) then
+			if (hdriMap_btn.map != undefined and (classof hdriMap_btn.map.cropplace_u.controller == float_script)) then
 			(
 				hdriMap_btn.map.cropplace_u.controller.update()
 			)
@@ -984,12 +1037,17 @@ registerRedrawViewsCallback GW_displayObjectNames
 		
 	on deleted  do
 	(
+		print "deleting"
+		-- store map's handle as custom attribute
+		-- convert float_expression to bezier_float with the result of the previous float_expression
+		-- hdriMap_btn.cropplace_u.controller = Bezier_Float()
 		unregisterRedrawViewsCallback gwDisplay
 		unregisterRedrawViewsCallback gwActiveSettings
 	)
 
 	on detachedFromNode this do
 	(	
+		print "detaching"
 		for i=1 to 24 do
 		(
 			if (getmeditmaterial i == hdriMap_btn) then
