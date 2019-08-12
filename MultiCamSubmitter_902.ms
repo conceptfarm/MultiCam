@@ -373,8 +373,8 @@ buttontext:"v.902"
 	
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
-	local DeadlineRoot = @"C:\DeadlineRepository10"
-	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+	--local DeadlineRoot = @"C:\DeadlineRepository10"
+	local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg\\bin\\ffmpeg.exe"
 	--local multiCamRepo = @"C:\temp\Repo\"
 	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
@@ -496,6 +496,12 @@ buttontext:"v.902"
 		destroydialog multiCamSubmitter
 	)
 	*/
+	
+	fn AddCallbackRemoveModifier = 
+	(
+		local scriptString = "activeCam = getactivecamera();result = for i=1 to activeCam.modifiers.count where (classof activeCam.modifiers[i] == MultiCamAttribute) collect i;for i = result.count to 1 by -1 do (deleteModifier activeCam (result[i]));redrawViews()"
+		callbacks.addscript #filePostOpenProcess scriptString persistent:true id:#removeModifier_callback
+	)
 	
 	fn AddCallbackLatest denoise:true =
 	(
@@ -1728,7 +1734,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						--Disable render elements
 						re = maxOps.GetCurRenderElementMgr()
 						oldRE = re.getElementsActive()
@@ -1759,8 +1765,8 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
-						
-						
+						AddCallbackRemoveModifier()
+
 						SMTDSettings.JobName = "01.IR___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						SMTDSettings.Comment = "Scripted IR Job"
 						SMTDSettings.Priority = 100
@@ -1839,7 +1845,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
@@ -1856,7 +1863,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						--vrayRend = renderers.current
 						vrayRend.gi_on = true
@@ -1888,6 +1895,7 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--SingleFrame"
 						SMTDSettings.Comment = "Scripted Single Frame Job"
@@ -1914,7 +1922,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()							
@@ -1930,7 +1939,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.gi_on = false
 						vrayRend.options_dontRenderImage = false
@@ -1941,7 +1950,7 @@ buttontext:"v.902"
 						rendShowVFB = false
 						rendSaveFile = false
 						
-						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory)
+						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory)
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 		
@@ -1950,6 +1959,7 @@ buttontext:"v.902"
 		
 						deadlineRegionRendering()
 							
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--NOGI"
 						SMTDSettings.Comment = "Scripted No GI Frame Job"
@@ -1976,7 +1986,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
@@ -1991,7 +2002,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
@@ -2001,7 +2012,7 @@ buttontext:"v.902"
 						rendSaveFile = false
 						rendShowVFB = false
 						
-						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
+						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 						
@@ -2010,6 +2021,7 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = rootnode.CA_jobPrefix + currentCameraName + "--AS_IS"
 						SMTDSettings.Comment = "Scripted AS IS Frame Job"
@@ -2036,7 +2048,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
@@ -2059,7 +2072,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""													    --reset render 
 						vrayRend.options_dontRenderImage = false
 						rendFieldRender = false 
@@ -2069,7 +2082,7 @@ buttontext:"v.902"
 						rendSaveFile = false
 						rendShowVFB = false
 						
-						makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
+						makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
 						if rootnode.CA_extension == ".exr" then exrSettings()
 						else nonExrSettings ""
 						
@@ -2078,10 +2091,11 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = "02.DR___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						--piggy back off the comment to get the dependency settings in 
-						SMTDSettings.Comment = ("Scripted VDR Job\nResumeOnCompleteDependencies=False\nJobDependencyPercentage=0\nScriptDependency0="+UnixDeadlineRoot+"/custom/scripts/Jobs/script_pre.py")
+						SMTDSettings.Comment = "Scripted VDR Job\nResumeOnCompleteDependencies=False\nJobDependencyPercentage=0\nScriptDependency0=//cicada-hvh1/DeadlineRepository10/custom/scripts/Jobs/script_pre.py"
 						--Encode max version into ExtraInfo0
 						SMTDSettings.ExtraInfo0 = getMaxVer()
 						--copyFile <existing_filename_string> <target_filename_string> 
@@ -2091,7 +2105,7 @@ buttontext:"v.902"
 						copyfile vrayFile destination
 						
 						SMTDSettings.RunPostJobScript = true
-						SMTDSettings.PostJobScriptFile = (UnixDeadlineRoot + "/custom/scripts/Jobs/script_post.py")
+						SMTDSettings.PostJobScriptFile = "//cd-prod/DeadlineRepository10/custom/scripts/Jobs/script_post.py"
 						SMTDSettings.Group = "workstations"
 							
 						SMTDSettings.Priority = rootnode.CA_Priority
@@ -2119,6 +2133,7 @@ buttontext:"v.902"
 						SMTDFunctions.SubmitJobFromUI batchName:batchName forceCamera:currentCameraName
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
+						callbacks.removescripts id:#removeModifier_callback
 
 						SMTDSettings.group = "none"
 						SMTDSettings.ForceWorkstationMode = false
@@ -2140,7 +2155,7 @@ buttontext:"v.902"
 			vrayRend.gi_irradmap_interpSamples			
 			) 
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						vrayRend.gi_on = true
@@ -2170,6 +2185,7 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = "01.IR_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						SMTDSettings.Comment = "Scripted IR Animated Job"
@@ -2229,9 +2245,6 @@ buttontext:"v.902"
 						if rootnode.CA_latestDir == true then (AddCallbackLatest())
 						if (rootnode.CA_extensionType == 3 or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
 						
-						deadlineRegionRendering()
-						
-						
 						SMTDSettings.JobName = "02.Fr_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						SMTDSettings.Comment = "Scripted FR Animated Job"
 						SMTDSettings.Priority = rootnode.CA_Priority
@@ -2259,7 +2272,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
@@ -2276,7 +2290,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						vrayRend.gi_on = true
@@ -2312,6 +2326,7 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = "02.BF_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						SMTDSettings.Comment = "Scripted Brute Force Frame Job"
@@ -2338,7 +2353,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
@@ -2356,7 +2372,7 @@ buttontext:"v.902"
 		------------------------------------------------------------------
 						
 						--Vray Properties
-						if renderSceneDialog.isOpen() then renderSceneDialog.close()
+						renderSceneDialog.close()
 						rendOutputFilename = ""								 --reset render 
 						fullfilename = maxFilePath + currentCameraName
 						
@@ -2430,6 +2446,7 @@ buttontext:"v.902"
 						
 						deadlineRegionRendering()
 						
+						AddCallbackRemoveModifier()
 						
 						SMTDSettings.JobName = "02.SphereMask_ani___" + rootnode.CA_jobPrefix + "___" + currentCameraName
 						SMTDSettings.Comment = "Scripted Brute Force Frame Job"
@@ -2540,7 +2557,8 @@ buttontext:"v.902"
 						
 						if rootnode.CA_latestDir == true then (callbacks.removescripts id:#copyLatest_callback)
 						if (rootnode.CA_SubmitMOV == true) or (rootnode.CA_extensionType == 3) then (callbacks.removescripts id:#copyJPG_callback)
-
+						callbacks.removescripts id:#removeModifier_callback
+						
 						if (rootnode.CA_SubmitMOV == true and SingleFrame != true) then
 						(
 							AutomaticFFmpegGeneration()						
