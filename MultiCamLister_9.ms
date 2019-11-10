@@ -63,7 +63,7 @@ Icon:#("Lights",7)
 	fn scaleForDisplay n s = 
 	(
 		--return ((floor (n*s)) as integer)
-		return n*s
+		n*s
 	)
 	
 	fn getWindowClass =
@@ -112,7 +112,7 @@ Icon:#("Lights",7)
 			--MessageBox ("No VraySun in the scene.")
 			result = undefined
 		)
-		return result
+		result
 	)
 	
 	fn getRowsFromSelection dgvObject = --subtract:true cell:unsupplied = 
@@ -198,7 +198,7 @@ Icon:#("Lights",7)
 	fn getObjectByRow dgvObject row = 
 	(
 		local obj = GetAnimByHandle ((dgvObject.rows.item[row].cells.item["ID"].value) as integerPtr)
-		return obj		
+		obj		
 	)
 
 	fn getRowFromObject obj dgvObject = 
@@ -206,14 +206,14 @@ Icon:#("Lights",7)
 		local result = undefined
 		local objID = (GetHandleByAnim obj) as string
 		
-		return result	
+		result	
 	)
 
 	
 	fn getObjectsFromChecked dgvObject col = 
 	(
 		local objToSelect = (for i = 0 to (dgvObject.rows.count - 1) where ( (dgvObject.rows.item[i].cells.item[col].value)  == true ) collect (GetAnimByHandle ((dgvObject.rows.item[i].cells.item["ID"].value) as integerPtr)))
-		return objToSelect
+		objToSelect
 	)
 	
 	fn changeControlStatus dgvObject row val arr = 
@@ -525,7 +525,7 @@ Icon:#("Lights",7)
 		(
 			result = false
 		)
-		return result
+		result
 	)
 
 
@@ -620,6 +620,8 @@ Icon:#("Lights",7)
 
 	fn otherPropFN ev nd = 
 	(
+		print ev
+		print nd
 		local obj = GetAnimByHandle nd[1]
 		if (superclassof obj == camera) then
 		(
@@ -651,6 +653,38 @@ Icon:#("Lights",7)
 				)
 			)
 		)
+	)
+
+	fn otherEventFN ev nd =
+	(
+		print ev
+		print nd
+
+	)
+
+fn controllerStructuredFN  ev nd =
+	(
+		print ev
+		print nd
+
+	)
+fn controllerOtherEventFN  ev nd =
+	(
+		print ev
+		print nd
+
+	)
+fn modelStructuredFN  ev nd =
+	(
+		print ev
+		print nd
+
+	)
+fn modelOtherEventFN  ev nd =
+	(
+		print ev
+		print nd
+
 	)
 
 	fn postDeleteFN ev nd =
@@ -750,7 +784,7 @@ Icon:#("Lights",7)
 			local dib = (gw.getViewportDib())
 			displayScale = (((dib.width / s.x)*100.0) as integer)/100.0
 			free dib */
-			displayScale = ((sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)).x
+			if (maxVersion())[1] > 18000 then displayScale = ((sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)).x
 			print("Dispay Scale is " + displayScale as string)
 
 
@@ -826,7 +860,7 @@ Icon:#("Lights",7)
 
 			if listerNodeEventCallback == undefined then
 			(
-				listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN callbackEnd:postDeleteFN
+				listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN controllerStructured:controllerStructuredFN controllerOtherEvent:controllerOtherEventFN modelStructured:modelStructuredFN modelOtherEvent:modelOtherEventFN propertiesOtherEvent:otherEventFN callbackEnd:postDeleteFN
 			)
 			else listerNodeEventCallback.enabled = true
 			

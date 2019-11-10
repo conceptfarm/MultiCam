@@ -9,7 +9,13 @@ multiCamRepo = @"C:\temp\Repo\"
 --multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 multiCamUsable = false
 
-global drCreateNewCam,drDeleteNewCam
+global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory
+global multiCamHideCams = false
+global multiCamPrerenderSelection
+
+fn getHideCamsCategory = (multiCamHideCams = hideByCategory.cameras;multiCamPrerenderSelection = selection as array)
+fn setHideCamsCategory = (hideByCategory.cameras = multiCamHideCams;select multiCamPrerenderSelection)
+
 fn drCreateNewCam = 
 (
 	local vr = renderers.current	
@@ -21,12 +27,15 @@ fn drCreateNewCam =
 			(
 				if viewport.getCamera() != undefined then 
 				(
-					global newTempCamera = copy (viewport.getCamera())
-					for i = newTempCamera.modifiers.count to 1 by -1 do
+					if (viewport.getCamera()).modifiers.count != 0 then
 					(
-						deleteModifier newTempCamera i
+						global newTempCamera = copy (viewport.getCamera())
+						for i = newTempCamera.modifiers.count to 1 by -1 do
+						(
+							deleteModifier newTempCamera i
+						)
+						viewport.setCamera newTempCamera
 					)
-					viewport.setCamera newTempCamera
 				)
 			)
 		)
@@ -166,8 +175,10 @@ fn checkMacro macro =
 fn addMCCallbacks = 
 (
 	result = false
-	preRend = callbacks.addScript #preRender ("enableSceneRedraw(); global hideCatCams = hideByCategory.cameras; hideByCategory.cameras = true;completeRedraw(); drCreateNewCam()") id:#MCPrerender
-	postRend = callbacks.addScript #postRender("hideByCategory.cameras = hideCatCams; drDeleteNewCam()") id:#MCPostrender
+	callbacks.removeScripts id:#MCPrerender
+	callbacks.removeScripts id:#MCpostrender
+	preRend = callbacks.addScript #preRender ("enableSceneRedraw();getHideCamsCategory();hideByCategory.cameras = true;completeRedraw();drCreateNewCam()") id:#MCPrerender
+	postRend = callbacks.addScript #postRender("setHideCamsCategory();drDeleteNewCam()") id:#MCPostrender
 	
 	print ("--------------- Info for MultiCam Callbacks ---------------")
 	print ("INFO: MultiCam preRender callback is " + preRend as string )
@@ -178,8 +189,9 @@ fn addMCCallbacks =
 		result = true
 	)
 	
-	return result
+	result
 )
+
 MD = checkMacroLocalDir()
 MCA = checkMacro "MultiCamAttribute"
 MCL = checkMacro "MultiCamLister"

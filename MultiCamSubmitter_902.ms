@@ -373,8 +373,8 @@ buttontext:"v.902"
 	
 	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
-	--local DeadlineRoot = @"C:\DeadlineRepository10"
-	local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+	local DeadlineRoot = @"C:\DeadlineRepository10"
+	--local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg_20190826\\bin\\ffmpeg.exe"
 	--local multiCamRepo = @"C:\temp\Repo\"
 	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
@@ -387,6 +387,41 @@ buttontext:"v.902"
 	fn getMaxVer = (return ("20" + (((substring ((maxVersion())[1] as string) 1 2) as integer) - 2) as string))
 
 	--List is a string of comma separated entries
+	
+	fn checkWindowsLegalPath str =
+	(
+		--https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file
+		--not allowed as part of name < > : " / \ ' | ? * .  
+		--not allowed as name CON, PRN, AUX, NUL, COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9, LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, LPT9
+		--not allowed space at beginning or end
+		
+		local result = undefined
+		local illegalCharsSet = #("<",">",":","\"","/","\\","'","|",".") -- can use with matchpattern
+		local illegalCharsSet2 = #("?","*") --reserved chars for matchpattern need to use findstring instead
+		local illegalNameSet = #("CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9")
+		
+		for char in illegalCharsSet while result == undefined do
+		(
+			if ((matchpattern str pattern:("*"+char+"*")) == true) then (result = #(str,("illegal character " + char)))
+		)
+		
+		for char in illegalCharsSet2 while result == undefined do
+		(
+			if ((findstring str char) != undefined) then (result = #(str,("illegal character " + char)))
+		)
+		
+		for n in illegalNameSet while result == undefined do
+		(
+			if (toUpper str == n) then (result = #(str,("illegal name " + n)))
+		)
+
+		if (str[1] == " ") then (result = #(str,"space at beginning"))
+		if (str[str.count] == " ") then (result = #(str,"space at end"))
+				
+		result
+	)
+
+
 	fn getDrServers = 
 	(
 		local drServers = ""
@@ -2905,7 +2940,7 @@ buttontext:"v.902"
 		radioButtons pathRootChoice "" pos:[32,65] enabled:true labels: outputPaths default:rootnode.CA_frameOutputType columns:1
 		--radioButtons pathRootChoice "" pos:[32,65] enabled:true labels: #("Y:\\RenderOutput\\Project\\", "Z:\\Project\\01_Frames\\", "Z:\\Project\\03_Previews\\", "Custom") default:rootnode.CA_frameOutputType columns:1
 		button pathButton "..." pos:[50,130] enabled:false
-		editText pathLable "" text:rootnode.CA_frameOutputCustom pos:[90,132] width:440 height:18
+		editText pathLable "" text:rootnode.CA_frameOutputCustom pos:[90,132] width:440 height:18 enabled:false
 		
 	groupBox PassTypeGrp "Pass Directory" pos:[16,172] width:groupWidth height:75
 		radioButtons out_type "" pos:[32,188] height:176 enabled:true labels:#("Today's Date", "01.Sky", "02.Background", "03.Foreground", "04.PeopleCars", "Date+Custom", "06.Z-Depth", "07.ExtraPass02", "08.ExtraPass03", "Custom") default:rootnode.CA_passDirectoryType columns:5
@@ -3347,17 +3382,38 @@ buttontext:"v.902"
 	
 	on customPass entered txt do
 	(
-		rootnode.CA_passCustom = customPass.text
-		rootnode.CA_passDirectory = rootnode.CA_passCustom
-		print ("Pass Directory is " + rootnode.CA_passDirectory as string )
+		local checkPath = checkWindowsLegalPath txt
+		if checkPath != undefined then 
+		(
+			Messagebox ("Illegal path name " + checkPath[1] + "\nProblem is " + checkPath[2]+"\nPlease re-enter path legal text.")
+			customPass.text = ""
+			rootnode.CA_passCustom = ""
+			rootnode.CA_passDirectory = ""
+		)
+		else
+		(
+			rootnode.CA_passCustom = customPass.text
+			rootnode.CA_passDirectory = rootnode.CA_passCustom
+			print ("Pass Directory is " + rootnode.CA_passDirectory as string )
+		)
 	)
 	
 	on customPassDate entered txt do
 	(
 		rootnode.CA_passDirectory = useToday()
-		rootnode.CA_passDateCustom = customPassDate.text
-		rootnode.CA_passDirectory = rootnode.CA_passDirectory + rootnode.CA_passDateCustom
-		print ("Pass Directory is " + rootnode.CA_passDirectory)
+		local checkPath = checkWindowsLegalPath txt
+		if checkPath != undefined then 
+		(
+			Messagebox ("Illegal path name " + checkPath[1] + "\nProblem is " + checkPath[2]+"\nPlease re-enter path legal text.")
+			customPassDate.text = ""
+			rootnode.CA_passDateCustom = ""
+		)
+		else 
+		(
+			rootnode.CA_passDateCustom = customPassDate.text
+			rootnode.CA_passDirectory = rootnode.CA_passDirectory + rootnode.CA_passDateCustom
+			print ("Pass Directory is " + rootnode.CA_passDirectory)
+		)
 	)
 	
 	on jobPrefix_txt entered txt do
@@ -3682,6 +3738,25 @@ buttontext:"v.902"
 			print ("Using " + vrayRend as string +" to render.")
 			
 			sceneCams = for o in cameras where (superclassof o == camera) collect o
+			
+			local nameProblems = #()
+			for cam in sceneCams do
+			(
+				local checkName = checkWindowsLegalPath cam.name
+				if checkName != undefined then (append nameProblems checkName )
+			)
+
+			if nameProblems.count != 0 then
+			(
+				local problemString = "Found naming issues in the following cameras:\n\n"
+				for i=1 to nameProblems.count do
+				(
+					problemString = problemString + nameProblems[i][1] + " - problem is " + nameProblems[i][2] + "\n" 
+				)
+				Messagebox (problemString) title:"Camera Name Problem"
+				exit
+			)
+
 			sceneCamsNames_array_temp = for o in sceneCams collect o.name
 			sceneCamsNames_array_temp = makeUniqueArray sceneCamsNames_array_temp
 			sceneCamsNames_array = sort sceneCamsNames_array_temp
