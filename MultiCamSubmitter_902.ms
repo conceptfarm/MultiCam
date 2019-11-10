@@ -375,7 +375,7 @@ buttontext:"v.902"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
 	--local DeadlineRoot = @"C:\DeadlineRepository10"
 	local DeadlineRoot = @"\\fs-01\DeadlineRepository10"
-	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg\\bin\\ffmpeg.exe"
+	local FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg_20190826\\bin\\ffmpeg.exe"
 	--local multiCamRepo = @"C:\temp\Repo\"
 	--local multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 	local UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
@@ -916,7 +916,8 @@ buttontext:"v.902"
 			)
 			
 		)
-		actionMan.executeAction 0 "550"  -- Views: Viewport Visual Style Shaded
+		if ( (matchpattern (gw.getDriverString()) pattern:"Direct3d*") == true) then actionMan.executeAction -844228238 "7"
+		else (actionMan.executeAction 0 "550")  -- Views: Viewport Visual Style Shaded
 		enableSceneRedraw() 
 	)
 
@@ -957,19 +958,6 @@ buttontext:"v.902"
 		try (vrayVFBSetRegionEnabled false) catch()
 		setRenderType #view
 		if rs == true then renderSceneDialog.open()
-	)
-
-
-	fn deadlineRegionRendering = 
-	(
-		--convert to vray region here, max region will be disabled but coordinates will still be readable.
-		SMTDSettings.RegionRenderingMode = #none
-		
-		if (getRenderType() == #region or vrayVFBGetRegionEnabled() == true) then 
-		(
-			print "--region rendering enabled--"
-			convertMaxRegionToVray()
-		)
 	)
 
 	fn convertMaxRegionToVray =
@@ -1108,6 +1096,18 @@ buttontext:"v.902"
 			result = #(vbfWindowName[2] as integer,vbfWindowName[3] as integer)
 		)
 		return result
+	)
+	
+	fn deadlineRegionRendering = 
+	(
+		--convert to vray region here, max region will be disabled but coordinates will still be readable.
+		SMTDSettings.RegionRenderingMode = #none
+		
+		if (getRenderType() == #region or vrayVFBGetRegionEnabled() == true) then 
+		(
+			print "--region rendering enabled--"
+			convertMaxRegionToVray()
+		)
 	)
 
 	------------------------------------
