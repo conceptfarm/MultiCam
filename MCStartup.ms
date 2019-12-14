@@ -5,8 +5,14 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
-multiCamRepo = @"C:\temp\Repo\"
---multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+--global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+--global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+--global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
+
+global DeadlineRoot = @"C:\DeadlineRepository10"
+global multiCamRepo = @"C:\temp\Repo\"
+global multiCamHDRILibrary = @"C:\temp\Repo\MultiCamHDRI\"
+
 multiCamUsable = false
 
 global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory
@@ -193,12 +199,14 @@ fn addMCCallbacks =
 )
 
 MD = checkMacroLocalDir()
+MCHDlib = checkMacro "MultiCamHDRILibrary"
 MCA = checkMacro "MultiCamAttribute"
 MCL = checkMacro "MultiCamLister"
 MCS = checkMacro "MultiCamSubmitter"
+
 MCCB = addMCCallbacks()
 
-if (MCL == true and MCA == true and MCS == true and MCCB == true and MD == true) then
+if (MCL == true and MCA == true and MCS == true and MCCB == true and MD == true and MCHDlib==true) then
 (
 	multiCamUsable = true
 	print ("--------------- Info for MultiCam Suite ---------------")
@@ -211,6 +219,7 @@ else
 	print ("INFO: MultiCamLister usable is: " + MCL as string)
 	print ("INFO: MultiCamAttribute usable is: " + MCA as string)
 	print ("INFO: MultiCamSubmitter usable is: " + MCS as string)
+	print ("INFO: MultiCamHDRILibrary usable is: " + MCHDlib as string)
 	MessageBox ("MulticCam is not usable, check MAXScript Listener.")
 )
 --callbacks.removeScripts id:#MCPrerender

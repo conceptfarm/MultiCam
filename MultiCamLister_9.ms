@@ -474,7 +474,7 @@ Icon:#("Lights",7)
 		dgvUpdateSize dgv dgvNoMod
 		
 		dgvRefreshing = false
-		print "Updating DGV"
+		--print "Updating DGV"
 	)
 	
 	fn styleDGV dgvObject = 
@@ -544,7 +544,7 @@ Icon:#("Lights",7)
 
 			for o in selection where superClassOf o == camera do 
 			(
-				print "selectionFN"
+				--print "selectionFN"
 				local objID = (GetHandleByAnim o) as string
 				local item = findItem cameraObjIDs objID
 				local itemNoMod = findItem cameraObjIDsNoMod objID
@@ -574,7 +574,7 @@ Icon:#("Lights",7)
 		(
 			if superclassof (GetAnimByHandle nd[1]) == camera then
 			(
-				print "addedFN"
+				--print "addedFN"
 				dgvUpdate()
 			)
 		)
@@ -589,7 +589,7 @@ Icon:#("Lights",7)
 			local dgvNoMod = MultiCamLister.dgvNoMod
 			if dgv.Focused == false and dgvNoMod.Focused == false then
 			(
-				print "nameChangedFn"
+				--print "nameChangedFn"
 				if (obj.modifiers[#MultiCamAttribute] != undefined) then 
 				(
 					local row = findItem cameraObjIDs ((nd[1] as string)+"P")
@@ -620,21 +620,19 @@ Icon:#("Lights",7)
 
 	fn otherPropFN ev nd = 
 	(
-		print ev
-		print nd
 		local obj = GetAnimByHandle nd[1]
-		if (superclassof obj == camera) then
+		if (superclassof obj == camera and isAnimPlaying()==false) then
 		(
 			local dgv = MultiCamLister.dgv
 			local dgvNoMod = MultiCamLister.dgvNoMod
 			
 			if dgv.Focused == false and dgvNoMod.Focused == false then
 			(
-				print "otherPropFN"
+				--print "otherPropFN"
 				--updates when multicam att are changed from mod panel
 				if (obj.modifiers[#MultiCamAttribute] != undefined) then 
 				(
-					print "yes modifier"
+					--print "yes modifier"
 					local row = findItem cameraObjIDs ((nd[1] as string)+"P")
 					if (row != 0) then
 					(
@@ -648,50 +646,18 @@ Icon:#("Lights",7)
 				)
 				else if (obj.modifiers[#MultiCamAttribute] == undefined) then
 				(
-					print "no modifier"
+					--print "no modifier"
 					dgvUpdate()
 				)
 			)
 		)
 	)
 
-	fn otherEventFN ev nd =
-	(
-		print ev
-		print nd
-
-	)
-
-fn controllerStructuredFN  ev nd =
-	(
-		print ev
-		print nd
-
-	)
-fn controllerOtherEventFN  ev nd =
-	(
-		print ev
-		print nd
-
-	)
-fn modelStructuredFN  ev nd =
-	(
-		print ev
-		print nd
-
-	)
-fn modelOtherEventFN  ev nd =
-	(
-		print ev
-		print nd
-
-	)
-
 	fn postDeleteFN ev nd =
 	(
 		if dgvPostDeleteUpdate == true then
 		(
-			print "postDeleteFN"
+			--print "postDeleteFN"
 			dgvUpdate()
 			dgvPostDeleteUpdate = false
 		)
@@ -707,7 +673,7 @@ fn modelOtherEventFN  ev nd =
 			local dgv = MultiCamLister.dgv
 			if dgv.Focused == false then
 			(
-				print "preDeleteFN"
+				--print "preDeleteFN"
 				dgvPostDeleteUpdate = true
 			)
 		)
@@ -726,7 +692,7 @@ fn modelOtherEventFN  ev nd =
 			local dgvNoMod = MultiCamLister.dgvNoMod
 			if dgv.Focused == false and dgvnomod.Focused == false then
 			(
-				print "modiferFN"
+				--print "modiferFN"
 				dgvUpdate()
 			)
 		)
@@ -777,17 +743,14 @@ fn modelOtherEventFN  ev nd =
 		(
 			 
   			if NOT isKindOf windowDotNetObj dotNetObject do windowDotNetObj = getWindowClass()
-  			floaterHWND = windowDotNetObj.getForegroundWindow()
-			
+  			floaterHWND = windowDotNetObj.getForegroundWindow()		
 /* 			local s = getViewSize()
 			
 			local dib = (gw.getViewportDib())
 			displayScale = (((dib.width / s.x)*100.0) as integer)/100.0
 			free dib */
-			if (maxVersion())[1] > 18000 then displayScale = ((sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)).x
+			if ((maxVersion())[1] > 18000) then (displayScale = ((sysInfo.DesktopSizeUnscaled)/(sysInfo.desktopSize)).x)
 			print("Dispay Scale is " + displayScale as string)
-
-
 
 			-- Name, Type, Width
 			defList = #(
@@ -860,7 +823,7 @@ fn modelOtherEventFN  ev nd =
 
 			if listerNodeEventCallback == undefined then
 			(
-				listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN controllerStructured:controllerStructuredFN controllerOtherEvent:controllerOtherEventFN modelStructured:modelStructuredFN modelOtherEvent:modelOtherEventFN propertiesOtherEvent:otherEventFN callbackEnd:postDeleteFN
+				listerNodeEventCallback = NodeEventCallback mouseUp:true delay:500 selectionChanged:selectionFN added:addedFN nameChanged:nameChangeFn geometryChanged:otherPropFN callbackEnd:postDeleteFN
 			)
 			else listerNodeEventCallback.enabled = true
 			
@@ -1056,7 +1019,7 @@ fn modelOtherEventFN  ev nd =
 								(
 									local map = VrayHDRI()
 									map.name = "HDRI for " + obj.name
-									setProperty obj.modifiers[#MultiCam_Attribute] #hdriMap_btn map
+									setProperty obj.modifiers[#MultiCam_Attribute] #hdriMapLoader_btn true
 									dgv.rows.item[row].cells.item[25].value = (GetHandleByAnim map) as string
 									dgv.rows.item[row].cells.item[21].value = map.name
 								)
@@ -1067,7 +1030,7 @@ fn modelOtherEventFN  ev nd =
 									(
 										local map = VrayHDRI()
 										map.name = "HDRI for " + obj.name
-										setProperty obj.modifiers[#MultiCam_Attribute] #hdriMap_btn map
+										setProperty obj.modifiers[#MultiCam_Attribute] #hdriMapLoader_btn true
 										dgv.rows.item[row].cells.item[25].value = (GetHandleByAnim map) as string
 										dgv.rows.item[row].cells.item[21].value = map.name
 									)
@@ -1138,8 +1101,9 @@ fn modelOtherEventFN  ev nd =
 						(	
 							if (thisValue > nextValue) then 
 							(
-								Messagebox ("First frame number can't be grater than last frame number.")
-								(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = nextValue
+								--Messagebox ("First frame number can't be grater than last frame number.")
+								--(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = nextValue
+								(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex + 1].value) = (dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) as integer + 1
 								obj.modifiers[#MultiCam_Attribute].firstFrame_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
 							)
 							else
@@ -1165,8 +1129,9 @@ fn modelOtherEventFN  ev nd =
 						(	
 							if (thisValue < prevValue) then 
 							(
-								Messagebox ("Last frame number can't be smaller than first frame number.")
-								(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = prevValue
+								--Messagebox ("Last frame number can't be smaller than first frame number.")
+								--(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) = prevValue
+								(dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex - 1].value) = (dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value) as integer - 1
 								obj.modifiers[#MultiCam_Attribute].lastFrame_sp = dgv.rows.item[val.RowIndex].cells.item[val.ColumnIndex].value as integer
 							)
 							else

@@ -45,15 +45,12 @@ global MultiCamHDRILib
 									local parsedLine = readline JSONFile
 									local filterLine = filterString parsedLine " : "
 									local filterColour = filterString parsedLine "()"
-									print filterline
-									print vraySuns[1]
 									--setProperty <obj> <property_name> <value>
 									if filterColour.count > 1 then
 									(
 										setProperty vraySuns[1] filterLine[1] (execute(filterColour[2]))
 									)
 									else (setProperty vraySuns[1] filterLine[1] (execute(filterLine[2])))
-									
 								)
 								catch(print "end of vray_dr.cfg")
 								close JSONFile
@@ -73,7 +70,7 @@ global MultiCamHDRILib
 						gb.FlatStyle = (dotnetclass "System.Windows.Forms.FlatStyle").Flat;
 						gb.Height = 128;
 						gb.Width = MultiCamHDRILib_RO.width-30;
-						gb.text = f
+						gb.text = getFilenameFile f
 						gb.BackColor = oddColor
 						gb.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
 						--gb.font = (dotnetClass "System.Drawing.Font").size 12
@@ -133,7 +130,7 @@ global MultiCamHDRILib
 
 		fn openDialog = (print "opened";return ok),
 		
-		fn show2 = 
+		fn show = 
 		(
 			bResult = undefined
 			thumbnails = parseLibraryFolder()

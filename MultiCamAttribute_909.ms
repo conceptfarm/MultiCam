@@ -470,7 +470,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		(
 			if val == true then
 			(
-				local selectedMap = MultiCamHDRILib.show2()
+				local selectedMap = MultiCamHDRILib.show()
 				if selectedMap != undefined then 
 				(
 					selectedMap.name = "HDRI for " + objectName
@@ -478,10 +478,19 @@ registerRedrawViewsCallback GW_displayObjectNames
 					this.hdrimap_ro.hdriMapLoader_btn.caption = selectedMap.name
 
 					-- ask to link here --
-					local qb = QueryBox "Link the HDRI map to the VraySun?"
-					if qb == true then
-					(
-						hdriMapLink_chb = true
+					local vraySuns = for o in lights where (classof o == VRaySun) collect o
+					if vraySuns.count > 0 then
+					( 
+						local qb = QueryBox "Link the HDRI map to the VraySun?"
+						if qb == true then
+						(
+							hdriMapLink_chb = true
+						)
+						else 
+						(
+							hdriMapLink_chb = false
+							this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+						)
 					)
 					else 
 					(
@@ -727,12 +736,14 @@ registerRedrawViewsCallback GW_displayObjectNames
 		
 		on firstFrame_sp changed n do
 		(
-			if (n > lastFrame_sp.value) then (firstFrame_sp.value = lastFrame_sp.value)
+			if (n > lastFrame_sp.value) then (lastFrame_sp.value = n + 1)
+			--if (n > lastFrame_sp.value) then (firstFrame_sp.value = lastFrame_sp.value)
 		)
 		
 		on lastFrame_sp changed n do
 		(
-			if (n < firstFrame_sp.value) then (lastFrame_sp.value = firstFrame_sp.value)
+			if (n < firstFrame_sp.value) then (firstFrame_sp.value = n - 1)
+			--if (n < firstFrame_sp.value) then (lastFrame_sp.value = firstFrame_sp.value)
 		)
 	)
 	

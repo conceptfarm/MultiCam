@@ -534,7 +534,7 @@ buttontext:"v.902"
 	
 	fn AddCallbackRemoveModifier = 
 	(
-		local scriptString = "activeCam = getactivecamera();result = for i=1 to activeCam.modifiers.count where (classof activeCam.modifiers[i] == MultiCamAttribute) collect i;for i = result.count to 1 by -1 do (deleteModifier activeCam (result[i]));redrawViews()"
+		local scriptString = "activeCam = getactivecamera();backupCam = copy activeCam; backupCam.name = activeCam.name + "\""_ScriptBackup"\"";result = for i=1 to activeCam.modifiers.count where (classof activeCam.modifiers[i] == MultiCamAttribute) collect i;for i = result.count to 1 by -1 do (deleteModifier activeCam (result[i]));redrawViews()"
 		callbacks.addscript #filePostOpenProcess scriptString persistent:true id:#removeModifier_callback
 	)
 	
@@ -1117,7 +1117,6 @@ buttontext:"v.902"
 		vfbControl #clearimage
 		
 		if setOldRegion != unsupplied then setOldRenderRegion setOldRegion 
-
 	)
 
 	fn getVFBSize = 
