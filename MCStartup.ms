@@ -13,6 +13,10 @@ global DeadlineRoot = @"C:\DeadlineRepository10"
 global multiCamRepo = @"C:\temp\Repo\"
 global multiCamHDRILibrary = @"C:\temp\Repo\MultiCamHDRI\"
 
+--Maybe copy these with the scripts and load from local
+global MCiconImg = openBitMap (multiCamRepo + "MultiCamIcons.png")
+global MCiconImgMask = openBitMap (multiCamRepo + "MultiCamIconsMask.png")
+
 multiCamUsable = false
 
 global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory

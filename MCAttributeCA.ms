@@ -1,4 +1,16 @@
-MultiCamCA = attributes weaponData
+try(
+	close MCiconImgMask
+	close MCiconImg
+	free MCiconImgMask
+	free MCiconImg
+)catch("sfsdffsdfsadf")
+MCiconImgMask = null
+MCiconImg = null
+
+
+
+
+MultiCamCustomAttribute = attributes MultiCamAttributeData
 (
 	local hdriMapName = "None"
 	local objectName = ""
@@ -29,6 +41,7 @@ MultiCamCA = attributes weaponData
 		else 
 		(
 			MessageBox ("This scirpt only works with V-Ray Advanced renderer. Set the production renderer to V-Ray Advanced.") title:"Renderer is not V-Ray"
+			rend = undefined
 		)
 		rend
 	)
@@ -78,10 +91,10 @@ MultiCamCA = attributes weaponData
 		gw.enlargeUpdateRect #whole
 		
 		--check if the dependent is still there, in this case the camera
--- 		if ((refs.dependentNodes this).count  == 0) then
--- 		(
--- 			unregisterRedrawViewsCallback gwDisplay
--- 		)
+ 		if ((refs.dependentNodes (custattributes.getowner this)).count  == 0) then
+ 		(
+ 			unregisterRedrawViewsCallback gwDisplay
+ 		)
 	)
 
 	/*
@@ -123,7 +136,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		gw.enlargeUpdateRect eRect
 		gw.updateScreen()
 
-		if ((refs.dependentNodes this).count  == 0) then
+		if ((refs.dependentNodes (custattributes.getowner this)).count  == 0) then
 		(
 			unregisterRedrawViewsCallback gwActiveSettings
 		)
@@ -194,7 +207,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		print this.hdrimap_btn
 		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
 		(
-			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
+			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
 			(
 				print "--1"
 				this.hdriMapLink_chb = false
@@ -203,7 +216,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 			else
 			(
 				print "--2"
-				this.hdriMapLink_chb = true
+				if this.hdriMapLink_chb != true then this.hdriMapLink_chb = true
 				this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
 			)
 		)
@@ -673,12 +686,12 @@ registerRedrawViewsCallback GW_displayObjectNames
 	rollout sunpoints_ro "Sunpoints"
 	(
 		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center
-		checkbutton readSunPos_btn "Get Point from Sun" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,27] align:#center
 		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
 		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
-		checkbutton  showSunPoint_btn " Display Sun Points "	checked:false enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
-		checkbutton moveSunToPos_btn " Move Sun to Point " checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
-		checkbutton viewFromSun_btn "Sun POV"  checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,149] align:#center
+		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 4,2,2,2,2,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_chb.state width:buttonWidth pos:[14,27]  align:#center
+		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 4,1,1,1,1,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
+		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 4,4,4,4,4,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
+		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 4,3,3,3,3,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,149] align:#center
 		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth pos:[14,175] align:#center
 		
 		on sunpoints_ro open do
@@ -764,7 +777,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 	(
 		checkbox useHDRIMap_chb "Use HDRI Map" pos:[13,7] align:#center
 		checkbutton hdriMapLoader_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center 
-		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center visible:false
+		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,105] align:#center visible:false
 		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,53] align:#center
 		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,79] align:#center
 		--spinner hdriMapOffset_sp "Map Rotation: "  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state pos:[21,105] align:#center fieldWidth:54 width:(buttonWidth - 7)
@@ -938,12 +951,13 @@ registerRedrawViewsCallback GW_displayObjectNames
 	
 	on load do
 	(
+		print "loading"
 		if (multiCamUsable == true) then
 		(
 			if (hdriMap_btn != undefined and (classof hdriMap_btn.cropplace_u.controller) == float_script) then
 			(
 				m = hdriMap_btn
-				if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 2 then
+				if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
 				(
 					relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
 					if (relink == true) then
@@ -1001,6 +1015,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 -- 	
  	on attachedToNode this do
  	(
+ 		print "attaching to node"
  		if this != undefined then
  		(
 			result = for i=1 to this.modifiers.count where (classof this.modifiers[i] == MultiCamAttribute) collect i
@@ -1062,4 +1077,5 @@ registerRedrawViewsCallback GW_displayObjectNames
 	)
 )
 custAttributes.delete $ 1
-custAttributes.add $ MultiCamCA
+
+custAttributes.add $ MultiCamCustomAttribute
