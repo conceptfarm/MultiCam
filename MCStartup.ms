@@ -19,10 +19,11 @@ global MCiconImgMask = openBitMap (multiCamRepo + "MultiCamIconsMask.png")
 
 multiCamUsable = false
 
-global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory
-global multiCamHideCams = false
-global multiCamPrerenderSelection
+--global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory
+--global multiCamHideCams = false
+--global multiCamPrerenderSelection
 
+/*
 fn getHideCamsCategory = (multiCamHideCams = hideByCategory.cameras;multiCamPrerenderSelection = selection as array)
 fn setHideCamsCategory = (hideByCategory.cameras = multiCamHideCams;select multiCamPrerenderSelection)
 
@@ -56,7 +57,7 @@ fn drDeleteNewCam =
 (
 	try(delete newTempCamera)catch()
 )
-
+*/
 fn checkMacroLocalDir = 
 (
 	local result = false
@@ -76,7 +77,7 @@ fn checkMacroLocalDir =
 		print ("INFO: Directory MultiCam is already existing.")
 		result = true
 	)
-	return result
+	result
 )
 
 fn checkMacro macro =
@@ -182,6 +183,7 @@ fn checkMacro macro =
 	)
 )
 
+/*
 fn addMCCallbacks = 
 (
 	result = false
@@ -198,9 +200,9 @@ fn addMCCallbacks =
 	(
 		result = true
 	)
-	
 	result
 )
+*/
 
 MD = checkMacroLocalDir()
 MCHDlib = checkMacro "MultiCamHDRILibrary"
@@ -208,9 +210,9 @@ MCA = checkMacro "MultiCamAttribute"
 MCL = checkMacro "MultiCamLister"
 MCS = checkMacro "MultiCamSubmitter"
 
-MCCB = addMCCallbacks()
+--MCCB = addMCCallbacks()
 
-if (MCL == true and MCA == true and MCS == true and MCCB == true and MD == true and MCHDlib==true) then
+if (MCL == true and MCA == true and MCS == true and MD == true and MCHDlib==true) then
 (
 	multiCamUsable = true
 	print ("--------------- Info for MultiCam Suite ---------------")

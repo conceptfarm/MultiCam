@@ -1,4 +1,4 @@
-try(
+/*try(
 	close MCiconImgMask
 	close MCiconImg
 	free MCiconImgMask
@@ -6,7 +6,7 @@ try(
 )catch("sfsdffsdfsadf")
 MCiconImgMask = null
 MCiconImg = null
-
+*/
 
 
 
@@ -352,7 +352,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		(
 			if val == true then
 			(
-				local cam = (refs.dependentNodes this)[1]
+				local cam = (refs.dependentNodes (custattributes.getowner this))[1]
 				
 				if aniCheck_fn cam != undefined then
 				(
