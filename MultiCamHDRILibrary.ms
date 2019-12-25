@@ -68,8 +68,8 @@ global MultiCamHDRILib
 					(
 						local gB = (dotnetobject "System.Windows.Forms.GroupBox")
 						gb.FlatStyle = (dotnetclass "System.Windows.Forms.FlatStyle").Flat;
-						gb.Height = 128;
 						gb.Width = MultiCamHDRILib_RO.width-30;
+						gb.Height = gb.Width/2.0 + 20;
 						gb.text = getFilenameFile f
 						gb.BackColor = oddColor
 						gb.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
@@ -78,8 +78,8 @@ global MultiCamHDRILib
 						local pb = dotnetobject "PictureBox"
 						pb.BackColor = oddColor
 						pb.SizeMode = (dotnetclass "PictureBoxSizeMode").Zoom
-						pb.Height = 108;
-						pb.Width = MultiCamHDRILib_RO.width-30;
+						pb.Width = gb.Width - 20.0;
+						pb.Height = pb.Width/2.0;
 						pb.imageLocation =  f
 						pb.Dock = pb.Dock.Bottom
 						

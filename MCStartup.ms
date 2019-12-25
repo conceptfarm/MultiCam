@@ -9,13 +9,17 @@
 --global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 --global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
 
+--DEADLINE_PATH = C:\Program Files\Thinkbox\Deadline10\bin
+--%PROGRAMDATA%\Thinkbox\Deadline[VERSION]\deadline.ini
+--NetworkRoot=C:/DeadlineRepository10
 global DeadlineRoot = @"C:\DeadlineRepository10"
-global multiCamRepo = @"C:\temp\Repo\"
-global multiCamHDRILibrary = @"C:\temp\Repo\MultiCamHDRI\"
 
---Maybe copy these with the scripts and load from local
-global MCiconImg = openBitMap (multiCamRepo + "MultiCamIcons.png")
-global MCiconImgMask = openBitMap (multiCamRepo + "MultiCamIconsMask.png")
+print ("current dir is " + getThisScriptFilename() )
+
+global multiCamRepo = @"C:\temp\Repo\"
+global multiCamHDRILibrary = multiCamRepo + "MultiCamHDRI\\"
+
+
 
 multiCamUsable = false
 
@@ -23,45 +27,85 @@ multiCamUsable = false
 --global multiCamHideCams = false
 --global multiCamPrerenderSelection
 
-/*
-fn getHideCamsCategory = (multiCamHideCams = hideByCategory.cameras;multiCamPrerenderSelection = selection as array)
-fn setHideCamsCategory = (hideByCategory.cameras = multiCamHideCams;select multiCamPrerenderSelection)
-
-fn drCreateNewCam = 
+fn checkINIEncode iniFile = 
 (
-	local vr = renderers.current	
-	if(vr != undefined) then 
+	--check if the first character in file is BOM character
+	--getINISettings will fail on non-ASCII encoding
+	local result = undefined
+	local fBinary = fopen iniFIle "rb"
+	fseek fBinary 0 #seek_set
+	if ((ReadByte fBinary) < 0) then (result = false)
+	else (result = true)
+	fclose fBinary
+	result
+)
+
+fn getTimeNow =
+(	
+	local result = ""
+	local timenow = getlocaltime()
+	for i = 1 to timenow.count do (result = result + timenow[i] as string + "_")
+	result = substring result 1 (result.count - 1)
+	result
+)
+
+fn reEncodeINIFile iniFile = 
+(
+	local result = undefined
+	local timeNow = getTimeNow()
+	local rn = renamefile iniFile (iniFile + "_" + timeNow)
+	if rn == true then
 	(
-		if ((vr.classid[1] == 1941615238) and (vr.classid[2] == 2012806412)) == true then
+		try
 		(
-			if vr.system_distributedRender == true then
+			local oldINI  = openFile  (iniFile + "_" + timeNow) mode:"r" writeBOM:false
+			local newINI = openFile iniFile mode:"w" writeBOM:false
+			while not eof oldINI do
 			(
-				if viewport.getCamera() != undefined then 
-				(
-					if (viewport.getCamera()).modifiers.count != 0 then
-					(
-						global newTempCamera = copy (viewport.getCamera())
-						for i = newTempCamera.modifiers.count to 1 by -1 do
-						(
-							deleteModifier newTempCamera i
-						)
-						viewport.setCamera newTempCamera
-					)
-				)
+				local s = readLine oldINI
+				format s to:newINI
+				format "\n" to:newINI
 			)
-		)
-	) 
+			flush oldINI
+			flush newINI
+			close oldINI
+			close newINI
+			free oldINI
+			free newINI
+			result = true
+		)catch (result = undefined)
+	)
+	result
 )
 
-fn drDeleteNewCam = 
+
+fn getDeadlineRoot =
 (
-	try(delete newTempCamera)catch()
+	local result = undefined
+	local deadlinePath = systemTools.getEnvVariable "DEADLINE_PATH"
+	local deadlineVersionPath = pathConfig.removePathLeaf deadlinePath
+ 	deadlineVersionPath = pathConfig.stripPathToLeaf deadlineVersionPath
+ 	local deadlineINI = (systemTools.getEnvVariable "PROGRAMDATA") + "\\Thinkbox\\" + deadlineVersionPath + "\\deadline.ini"
+	if (doesFileExist deadlineINI) then
+	(
+		if (checkINIEncode deadlineINI) == false  then
+		(
+			local reEncode = reencodeINIFile deadlineINI
+			if reEncode == true then result = getINISetting deadlineINI "Deadline" "NetworkRoot"
+			if (result == "" or (doesfileexist result) != true ) then result = undefined
+		)
+		else 
+		(
+			result = getINISetting deadlineINI "Deadline" "NetworkRoot"
+			if (result == "" or (doesfileexist result) != true ) then result = undefined
+		)
+	)
+ 	result
 )
-*/
-fn checkMacroLocalDir = 
+
+fn checkLocalDir localDir = 
 (
 	local result = false
-	local localDir = (getDir #scripts + "\\MultiCam\\")
 	if doesFileExist localDir != true then
 	(
 		local md = makeDir localDir
@@ -74,13 +118,140 @@ fn checkMacroLocalDir =
 	)
 	else
 	(
-		print ("INFO: Directory MultiCam is already existing.")
+		print ("INFO: Directory "+localDir+" already exists.")
 		result = true
 	)
 	result
 )
 
-fn checkMacro macro =
+fn loadIcons =
+(
+	local result = false
+	local iconCopyError = false
+	local localDirs = #((getDir #ui_ln + "IconsDark"),(getDir #ui_ln + "Icons"))
+	local remoteIcons = (getfiles (multiCamRepo + "icons\\MultiCam*.bmp"))
+	
+	for dir in localDirs while iconCopyError == false do
+	(
+		iconCopyError = not (checkLocalDir dir)
+
+		for ico in remoteIcons do 
+		(
+			local localIcon = dir + "\\" + (pathConfig.stripPathToLeaf ico)
+			print ("--------------- Info for Macro: "+ico+" ---------------")
+			if (doesFileExist localIcon ) then
+			(					
+				print ("INFO: Local file for icon "+ico+" is found in" + dir)
+				
+				if (doesFileExist ico) then 
+				(
+					print ("INFO: Remote file for icon "+ico+" is found.")
+					
+					--ISSUE: getFileModDate comparison is flawed, can't compare dates that way, use dotnet instead
+					if ( ( ( (dotnetclass "System.IO.File").GetLastWriteTime(ico) ).ticks) > (((dotnetclass "System.IO.File").GetLastWriteTime(localIcon)).ticks) ) then 
+					(
+						print ("INFO: Update to "+ico+" is found.")
+						
+						if (isDirectoryWriteable dir) == true then
+						(
+							print ("INFO: Local icons directory is writable.")
+							local d = deleteFile localIcon
+							
+							if d ==  true then
+							(
+								print ("INFO: Deleted local icon "+ico+" successfully.")
+								local c = copyFile ico localIcon
+								if (c==true) then 
+								(
+									print ("INFO: Update to "+ico+" is successful, loading new icon")
+									--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of icon "+icon+" failed, error in script.");false)
+								) 
+								else
+								(
+									MessageBox ("ERROR: Macro "+icon+" was delete but failed to copy.\nCopy icon"+ico+" to "+ dir +" manually.")
+									iconCopyError = true
+								)
+							)
+							else
+							(
+								print ("ERROR: Failed to delete local icon "+ico+". Update failed, loading local.")
+								--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of icon "+icon+" failed, error in script.");false)
+							)
+							
+						)
+						else
+						(
+							print ("ERROR: Update to icon "+ico+" failed, scripts directory is not writable. Loading local.")
+							--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of icon "+icon+" failed, error in script.");false)
+						)
+					)
+					else
+					(
+						print ("INFO: Last update to local script "+ico+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(localIcon) ).ticks)) as string)
+						print ("INFO: Last update to remote script "+ico+" was done on " + (( ( (dotnetclass "System.IO.File").GetLastWriteTime(ico) ).ticks)) as string)
+						print ("INFO: No update for icon "+ico+" is available, loading local.")
+						--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of icon "+icon+" failed, error in script.");false)
+					)
+				)
+				else
+				(
+					print ("INFO: No remote file for icon "+ico+" found. Loading local.")
+					--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of icon "+icon+" failed, error in script.");false)
+				)
+			)
+			else
+			(
+				print ("INFO: Local file for icon "+ico+" is not found, trying to load remote file.")
+				if (doesFileExist ico) then 
+				(
+					print ("INFO: Remote file for icon "+ico+" is found.")
+					if (isDirectoryWriteable dir) == true then
+					(
+						print ("INFO: Local icon directory is writable.")
+						local c = copyFile ico localIcon
+						if (c == true) then 
+						(
+							print ("INFO: Copied icon "+ico+" to local location, loading new icon.")
+							--try(execute (openfile localIcon);print("INFO: Loaded icon "+icon+" successfully.");true)catch(print ("ERROR: Loading of macro "+macro+" failed, error in script.");false)
+						)
+						else
+						( 
+							print ("ERROR: Copy of icon "+ico+" failed, error in script.")
+							iconCopyError = true
+						)
+					)
+					else
+					(
+						MessageBox ("ERROR: Failed to load icon "+ico+", "+dir+ " directory is not writable!")
+						iconCopyError = true
+					)
+				)
+				else
+				(
+					MessageBox ("ERROR: No remote file for icon "+ico+" found!")
+					iconCopyError = true
+				)
+			)
+		)
+	)
+	
+	try 
+	(
+		if iconCopyError == false then
+		(
+			global MCiconImg = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIcons.bmp")
+			global MCiconImgMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIconsMask.bmp")
+
+			global MCiconImgSq = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24i.bmp")
+			global MCiconImgSqMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24a.bmp")
+			result = true
+		)
+	)catch (result = false)
+	result
+)
+
+
+fn loadMacro macro =
 (
 	local update = false
 	local localScript = (getDir #scripts + "\\MultiCam\\" + macro + ".ms")
@@ -204,29 +375,58 @@ fn addMCCallbacks =
 )
 */
 
-MD = checkMacroLocalDir()
-MCHDlib = checkMacro "MultiCamHDRILibrary"
-MCA = checkMacro "MultiCamAttribute"
-MCL = checkMacro "MultiCamLister"
-MCS = checkMacro "MultiCamSubmitter"
-
---MCCB = addMCCallbacks()
-
-if (MCL == true and MCA == true and MCS == true and MD == true and MCHDlib==true) then
+fn nullVariables = 
 (
-	multiCamUsable = true
-	print ("--------------- Info for MultiCam Suite ---------------")
-	print ("INFO: MultiCam is usable.")
+
+)
+
+DeadlineRoot = getDeadlineRoot()
+
+if DeadlineRoot != undefined then
+(
+	MCIco = loadIcons()
+	MD = checkLocalDir (getDir #scripts + "\\MultiCam\\")
+	MCHDlib = loadMacro "MultiCamHDRILibrary"
+	MCA = loadMacro "MulitCamAttributeCA"
+	MCL = loadMacro "MultiCamLister"
+	MCS = loadMacro "MultiCamSubmitter"
+
+	--MCCB = addMCCallbacks()
+
+	if (MCIco == true and MCL == true and MCA == true and MCS == true and MD == true and MCHDlib==true and DeadlineRoot != undefined) then
+	(
+		multiCamUsable = true
+		print ("--------------- Info for MultiCam Suite ---------------")
+		print ("INFO: MultiCam is usable.")
+		MCIco = undefined
+		MD = undefined
+		MCHDlib = undefined
+		MCA = undefined
+		MCL = undefined
+		MCS = undefined
+	)
+	else
+	(
+		print ("--------------- Info for MultiCam Suite ---------------")
+		print ("ERROR: MultiCam is NOT usable.")
+		print ("INFO: MultiCamLister usable is: " + MCL as string)
+		print ("INFO: MultiCamAttribute usable is: " + MCA as string)
+		print ("INFO: MultiCamSubmitter usable is: " + MCS as string)
+		print ("INFO: MultiCamHDRILibrary usable is: " + MCHDlib as string)
+		print ("INFO: DeadlineRoot is: " + DeadlineRoot as string)
+		MessageBox ("MulticCam is not usable, check MAXScript Listener.")
+		MCIco = undefined
+		MD = undefined
+		MCHDlib = undefined
+		MCA = undefined
+		MCL = undefined
+		MCS = undefined
+	)
 )
 else
 (
-	print ("--------------- Info for MultiCam Suite ---------------")
-	print ("ERROR: MultiCam is NOT usable.")
-	print ("INFO: MultiCamLister usable is: " + MCL as string)
-	print ("INFO: MultiCamAttribute usable is: " + MCA as string)
-	print ("INFO: MultiCamSubmitter usable is: " + MCS as string)
-	print ("INFO: MultiCamHDRILibrary usable is: " + MCHDlib as string)
-	MessageBox ("MulticCam is not usable, check MAXScript Listener.")
+	print ("INFO: DeadlineRoot is: " + DeadlineRoot as string)
+	MessageBox ("MulticCam is not usable, Deadline Repository Root not found")
 )
 --callbacks.removeScripts id:#MCPrerender
 --callbacks.show #preRender 
