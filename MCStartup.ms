@@ -239,11 +239,11 @@ fn loadIcons =
 	(
 		if iconCopyError == false then
 		(
-			global MCiconImg = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIcons.bmp")
-			global MCiconImgMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIconsMask.bmp")
+			global MCIconImg = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIcons.bmp")
+			global MCIconImgMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamIconsMask.bmp")
 
-			global MCiconImgSq = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24i.bmp")
-			global MCiconImgSqMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24a.bmp")
+			global MCIconImgSq = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24i.bmp")
+			global MCIconImgSqMask = openBitMap ((getDir #ui_ln) + "iconsDark\\MultiCamSq_24a.bmp")
 			result = true
 		)
 	)catch (result = false)

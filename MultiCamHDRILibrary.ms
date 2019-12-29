@@ -75,6 +75,7 @@ global MultiCamHDRILib
 						gb.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
 						--gb.font = (dotnetClass "System.Drawing.Font").size 12
 						--gb.font.size = 12
+						
 						local pb = dotnetobject "PictureBox"
 						pb.BackColor = oddColor
 						pb.SizeMode = (dotnetclass "PictureBoxSizeMode").Zoom
@@ -83,7 +84,6 @@ global MultiCamHDRILib
 						pb.imageLocation =  f
 						pb.Dock = pb.Dock.Bottom
 						
-						--dotNet.addEventHandler gb "paint" paintEvent
 						dotNet.addEventHandler pb "click" whenButtonIsPressed
 						gB.controls.add pb
 						fl.controls.add gB

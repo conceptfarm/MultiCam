@@ -1,16 +1,3 @@
-/*
-try(
-	close MCiconImgMask
-	close MCiconImg
-	free MCiconImgMask
-	free MCiconImg
-)catch("sfsdffsdfsadf")
-MCiconImgMask = null
-MCiconImg = null
-global MCiconImg = openBitMap (multiCamRepo + "MultiCamIcons.png")
-global MCiconImgMask = openBitMap (multiCamRepo + "MultiCamIconsMask.png")
-*/
-
 global MultiCamCustomAttribute
 MultiCamCustomAttribute = attributes MultiCamAttributeData
 (
@@ -82,10 +69,13 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	
 	fn gwDisplaySunpoints =
 	(
+		local cam = (refs.dependentNodes (custattributes.getowner this))
+		local camName = ""
+		if cam != undefined then camName = cam[1].name
 		--cols = #(yellow,red,blue,green,black)
 		gw.setTransform (matrix3 1)
-		gw.text (execute(this.sP_txt)) ("Sun_" + objectName) color:yellow--color:cols[( cols.count)]
-		gw.text (execute(this.sT_txt)) ("SunTarget_" + objectName) color:yellow
+		gw.text (execute(this.sP_txt)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
+		gw.text (execute(this.sT_txt)) ("SunTarget_" + camName) color:yellow
 		gw.Marker (execute(this.sP_txt)) #plusSign color:red
 		gw.Marker (execute(this.sT_txt)) #plusSign color:red
 		gw.setColor #line red
@@ -99,39 +89,18 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
  		)
 	)
 
-	/*
-unregisterRedrawViewsCallback GW_displayObjectNames
-fn GW_displayObjectNames =
-(
-	rect = (box2 13 47 96 97)
-	--gw.wrect rect red
-	gw.wmarker [rect.left,rect.top,0] #point color:green
-	gw.wmarker [rect.left,rect.bottom,0] #point color:green
-	gw.wmarker [rect.right,rect.top,0] #point color:green
-	gw.wmarker [rect.right,rect.bottom,0] #point color:green
-	eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
-	eRect.right += 1
-	eRect.bottom += 1
-	local displayText = ("Settings active for camera: " +"camera Name"+"\nNo changes to environment, frame range or resolution will affect default settings")
-	gw.wtext [rect.left + 15 ,rect.top+20,0] displayText color:white
-	local ext = gw.getTextExtent displayText
-	gw.wrect (box2 (rect.left + 15 ) (rect.top+25+ ext.y/2) ext.x 5) red
-	gw.enlargeUpdateRect eRect
-	gw.updateScreen()
-)
-
-registerRedrawViewsCallback GW_displayObjectNames
-	*/
-
 	fn gwActiveSettings = gwShowActiveSettings()
 
 	fn gwShowActiveSettings =
 	(
+		local cam = (refs.dependentNodes (custattributes.getowner this))
+		local camName = ""
+		if cam != undefined then camName = cam[1].name
 		rect = (box2 13 47 96 97)
 		eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
 		eRect.right += 1
 		eRect.bottom += 1
-		local displayText = ("Settings active for camera: " + objectName + "\nChanges made to Environment, Frame Range or Resolution will not effect default settings")
+		local displayText = ("Settings active for camera: " + camName + "\nChanges made to Environment, Frame Range or Resolution will not effect default settings")
 		local ext = gw.getTextExtent displayText
 		gw.wtext [rect.left + 15 ,rect.top+20,0] displayText color:white
 		gw.wrect (box2 (rect.left + 15 ) (rect.top+25+ ext.y/2) ext.x 5) red
@@ -160,6 +129,14 @@ registerRedrawViewsCallback GW_displayObjectNames
 			else return result
 		)
 		else return undefined
+	)
+
+	fn getThisCameraName =
+	(
+		local result = ( refs.dependentNodes (custattributes.getowner this) )
+		if result != undefined then result = result[1].name
+		else result = ""
+		result
 	)
 	
 	fn changeStateLayers state = 
@@ -204,9 +181,6 @@ registerRedrawViewsCallback GW_displayObjectNames
 		
 	fn checkHDRIconnection =
 	(
-		print "checking connection"
-		print hdriMap_btn
-		print this.hdrimap_btn
 		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
 		(
 			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
@@ -242,9 +216,11 @@ registerRedrawViewsCallback GW_displayObjectNames
 	
 	parameters main rollout:params
 	(
+		cameraObject_btn type:#node animatable:false ui:cameraObject_btn
 		--customPass_txt type:#string animatable:false ui:customPass_txt default:""
-		activateSettings_btn type:#boolean animatable:false ui:activateSettings_btn default:false
+		--activateSettings_btn type:#boolean animatable:false ui:activateSettings_btn default:false
 
+		/*
 		on activateSettings_btn set state do
 		(
 			if state == true then
@@ -256,6 +232,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 				unregisterRedrawViewsCallback gwActiveSettings
 			)
 		)
+		*/
 
 		on main reload do 
 		(
@@ -476,7 +453,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 				local selectedMap = MultiCamHDRILib.show()
 				if selectedMap != undefined then 
 				(
-					selectedMap.name = "HDRI for " + objectName
+					selectedMap.name = "HDRI for " + (getThisCameraName())
 					hdriMap_btn = selectedMap
 					this.hdrimap_ro.hdriMapLoader_btn.caption = selectedMap.name
 
@@ -668,9 +645,11 @@ registerRedrawViewsCallback GW_displayObjectNames
 
 	rollout params "Submitter Properties"
 	(
-		button openSubmitter_btn "Open Submitter" width:buttonWidth pos:[14,7] align:#center
-		button openLister_btn "Open Cam Lister" width:buttonWidth pos:[14,33] align:#center
-		checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
+		button openSubmitter_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,2,2,2,2,true) toolTip:"Open Submitter" width:24 height:24 pos:[14,7] align:#left
+		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,1,1,1,1,true) toolTip:"Open Cam Lister" width:24 height:24 pos:[69,7] align:#center
+		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,3,3,3,3,true) toolTip:"Delete this Custom Attribyte" width:24 height:24 pos:[125,7] align:#right
+		--checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
+		pickbutton cameraObject_btn width:1 height:1 pos:[0,0] visible:false
 		--editText customPass_txt "Custom Pass" text:""
 		
 		on openSubmitter_btn pressed do
@@ -682,25 +661,34 @@ registerRedrawViewsCallback GW_displayObjectNames
 		(
 			macros.run "ilya_s Scripts" "MultiCamLister"
 		)
+
+		on deleteMultiCamCA_btn pressed do 
+		(
+			unregisterRedrawViewsCallback gwDisplay
+			unregisterRedrawViewsCallback gwActiveSettings
+			custAttributes.delete $ 1
+			if multiCamListerFloater.open == true then ( multiCamListerFloater.rollouts[1].refresh_btn.pressed() )
+		)
+
+
 		
 	)--end rollout
 
 	rollout sunpoints_ro "Sunpoints"
 	(
 		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center
-		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
-		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
 		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 4,2,2,2,2,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[14,27]  align:#left
 		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 4,3,3,3,3,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[82,27] align:#right
-
+		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
+		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
 		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 4,1,1,1,1,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
 		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 4,4,4,4,4,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
-		
 		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth pos:[14,175] align:#center
 		
 		on sunpoints_ro open do
 		(
-			objectName = selection[1].name
+			objectName = getThisCameraName()
+			--gto()
 		)
 		
 		on useSunpoints_chb changed state do 
@@ -782,8 +770,8 @@ registerRedrawViewsCallback GW_displayObjectNames
 		checkbox useHDRIMap_chb "Use HDRI Map" pos:[13,7] align:#center
 		checkbutton hdriMapLoader_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,27] align:#center 
 		mapbutton hdriMap_btn hdriMapName tooltip:"Select Background Map" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,105] align:#center visible:false
-		checkbutton hdriMapEdit_btn "Edit HDRI" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,53] align:#center
-		checkbutton hdriMapLink_chb "Link HDRI to Sun" align:#center enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,79] align:#center
+		checkbutton hdriMapEdit_btn "Edit HDRI"  enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,53] align:#center
+		checkbutton hdriMapLink_chb "Link HDRI to Sun" enabled:useHDRIMap_chb.state width:buttonWidth pos:[14,79] align:#center
 		--spinner hdriMapOffset_sp "Map Rotation: "  type:#integer range:[0,360.0,0] enabled:useHDRIMap_chb.state pos:[21,105] align:#center fieldWidth:54 width:(buttonWidth - 7)
 		
 		groupBox hdriMults_gpb "HDRI Multipliers" pos:[4,126] width:154 height:83
@@ -938,20 +926,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 		label version_lbl "v 0.909" pos:[63,7] align:#center
 	)
 		
--- 	on params reload do
--- 	(
--- 		MessageBox "reloaded"
--- 	)
--- 	
--- 	on create do
--- 	(
--- 		MessageBox "created"
--- 	)
--- 	
--- 	on postcreate do
--- 	(
--- 		MessageBox "postcreated"
--- 	)
+
 	
 	on load do
 	(
@@ -1006,17 +981,33 @@ registerRedrawViewsCallback GW_displayObjectNames
 		showSunPoint_btn = false
 	)
 	
--- 	on postload do
--- 	(
--- 		MessageBox "postloaded"
--- 	)
--- 	
--- 	on update do
--- 	(
--- 		MessageBox "updated"
--- 	)
--- 	
--- 	
+	/*
+ 	on postload do
+ 	(
+ 		MessageBox "postloaded"
+ 	)
+ 	
+ 	on update do
+ 	(
+ 		MessageBox "updated"
+ 	)
+ 	
+ 	on params reload do
+ 	(
+ 		MessageBox "reloaded"
+ 	)
+ 	
+ 	on create do
+ 	(
+ 		MessageBox "created"
+ 	)
+ 	
+ 	on postcreate do
+ 	(
+		MessageBox "postcreated"
+ 	)
+ 	
+ 	
  	on attachedToNode this do
  	(
  		print "attaching to node"
@@ -1055,7 +1046,7 @@ registerRedrawViewsCallback GW_displayObjectNames
 			)
 		)
  	)	
-		
+	*/	
 	on deleted  do
 	(
 		print "deleting"
@@ -1080,5 +1071,3 @@ registerRedrawViewsCallback GW_displayObjectNames
 		unregisterRedrawViewsCallback gwActiveSettings
 	)
 )
---custAttributes.delete $ 1
---custAttributes.add $ MultiCamCustomAttribute

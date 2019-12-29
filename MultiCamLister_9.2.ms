@@ -237,6 +237,31 @@ Icon:#("MultiCamSq",1)
 		)
 	)
 	
+	fn setSelectionCells dgv1 dgv2 = 
+	(		
+		print "update cell selection"
+		if dgv1.Focused == false and dgv2.Focused == false then
+		(	
+			dgv1.ClearSelection()
+			dgv2.ClearSelection()
+
+			for o in selection where superclassof o == camera do
+			(
+				local objID = (getHandleByAnim o) as string
+				local item = findItem cameraObjIDs objID
+				local itemNoMod = findItem cameraObjIDsNoMod objID
+				if (item != 0) then
+				(
+					dgv1.rows.item[item-1].cells.item[0].selected = true
+				)
+				if (itemNoMod != 0) then
+				(
+					dgv2.rows.item[itemNoMod-1].cells.item[0].selected = true
+				)
+			)
+		)
+	)
+
 		
 	fn populateColumns dgvObject defList = 
 	(
@@ -486,8 +511,11 @@ Icon:#("MultiCamSq",1)
 
 		dgvUpdateSize dgv dgvNoMod
 		
+		setSelectionCells dgv dgvNoMod
+
 		dgvRefreshing = false
 		--print "Updating DGV"
+		--setSelectionCells dgv dgvNoMod
 	)
 	
 	fn styleDGV dgvObject = 
@@ -644,7 +672,6 @@ Icon:#("MultiCamSq",1)
 
 	fn addWhenChangeHandlers = 
 	(
-
 		--executes once for a group of objects
 		global multiCamDeleteCH = when cameras deleted  id:#MultiCamListerWhenHandler handleAt:#redrawViews obj do 
 		(
@@ -895,6 +922,8 @@ Icon:#("MultiCamSq",1)
 				dgv.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 				dgv.ClearSelection()
 			)
+
+			setSelectionCells dgv dgvNoMod
 			--print (dgv.IsCurrentCellInEditMode as string)
 			--dgv.ClearSelection()
 		)
@@ -918,6 +947,7 @@ Icon:#("MultiCamSq",1)
 				dgvNoMod.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 				dgvNoMod.ClearSelection()
 			)
+			setSelectionCells dgv dgvNoMods
 		)
 				
 		on dgv cellMouseDown val do
