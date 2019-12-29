@@ -334,14 +334,13 @@ Icon:#("MultiCamSq",2)
 	global SMTDSettings
 	global SMTDFunctions
 	global SMTDPaths
-	global DeadlineSlaves
-	
+	global DeadlineSlaves	
 	global multiCamSubmitter
 	global camChecklistRO
 	global cancelProcessRO
-	global vrayRend
 	global SubmitterNodeEventCallback
 	
+	local vrayRend = undefined
 	local updateMultiCamSubmitterRollout = false
 	local begframe = 0
 	local endframe = 1

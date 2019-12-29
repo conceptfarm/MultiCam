@@ -237,26 +237,22 @@ Icon:#("MultiCamSq",1)
 		)
 	)
 	
-	fn setSelectionCells dgv1 dgv2 = 
+	fn setSelectionCells dgvObject camIDArray = 
 	(		
 		print "update cell selection"
-		if dgv1.Focused == false and dgv2.Focused == false then
+		if dgvObject.Focused == false then 
 		(	
-			dgv1.ClearSelection()
-			dgv2.ClearSelection()
+			dgvObject.ClearSelection()
+
+			--local vals = for i = 0 to (dgvObject.rows.count - 1) collect dgvObject.rows.item[i].cells.item["ID"].value
 
 			for o in selection where superclassof o == camera do
 			(
 				local objID = (getHandleByAnim o) as string
-				local item = findItem cameraObjIDs objID
-				local itemNoMod = findItem cameraObjIDsNoMod objID
+				local item = findItem camIDArray objID
 				if (item != 0) then
 				(
-					dgv1.rows.item[item-1].cells.item[0].selected = true
-				)
-				if (itemNoMod != 0) then
-				(
-					dgv2.rows.item[itemNoMod-1].cells.item[0].selected = true
+					dgvObject.rows.item[item-1].cells.item[0].selected = true
 				)
 			)
 		)
@@ -511,8 +507,9 @@ Icon:#("MultiCamSq",1)
 
 		dgvUpdateSize dgv dgvNoMod
 		
-		setSelectionCells dgv dgvNoMod
-
+		setSelectionCells dgv cameraObjIDs
+		setSelectionCells dgvNoMod cameraObjIDsNoMod
+		
 		dgvRefreshing = false
 		--print "Updating DGV"
 		--setSelectionCells dgv dgvNoMod
@@ -923,7 +920,7 @@ Icon:#("MultiCamSq",1)
 				dgv.ClearSelection()
 			)
 
-			setSelectionCells dgv dgvNoMod
+			setSelectionCells dgv cameraObjIDs
 			--print (dgv.IsCurrentCellInEditMode as string)
 			--dgv.ClearSelection()
 		)
@@ -947,7 +944,7 @@ Icon:#("MultiCamSq",1)
 				dgvNoMod.commitEdit (dotNetClass "DataGridViewDataErrorContexts").commit
 				dgvNoMod.ClearSelection()
 			)
-			setSelectionCells dgv dgvNoMods
+			setSelectionCells dgvNoMod cameraObjIDsNoMod
 		)
 				
 		on dgv cellMouseDown val do

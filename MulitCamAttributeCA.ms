@@ -677,12 +677,12 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	rollout sunpoints_ro "Sunpoints"
 	(
 		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center
-		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 4,2,2,2,2,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[14,27]  align:#left
-		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 4,3,3,3,3,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[82,27] align:#right
+		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 8,3,3,4,4,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[14,27]  align:#left
+		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 8,5,5,6,6,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[82,27] align:#right
 		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
 		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
-		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 4,1,1,1,1,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
-		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 4,4,4,4,4,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
+		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 8,1,1,2,2,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
+		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 8,7,7,8,8,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
 		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth pos:[14,175] align:#center
 		
 		on sunpoints_ro open do
