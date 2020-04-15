@@ -22,6 +22,8 @@
 --  systemScale = (systemTools.GetScreenWidth applyUIScaling:false) / (systemTools.GetScreenWidth applyUIScaling:true)
 
 
+
+
 --ver.902
 ----------------------------------------------------
 -- Esc. to cancel preview 
@@ -46,6 +48,7 @@
 --  ^ Error appears after using the camera chooser dropdown
 --  SetOldRPS function is the issue, vrayRend variable gets lost and no settings can be set after that function runs
 --  getoldprs grabs settings before submission and restores them that why vfb gets the correct settings but since no changes can be made after setoldrps those settings stay
+--  Turns out vray settings could be stored by making a *copy* of the renderers.current, when vrayRend variable get assigned back to rend.curr the settings from the previous submission get restored as well
 
 --  Test at work:
 --  Find out about shaded camera view for all video graphics options
@@ -327,8 +330,8 @@
 
 macroScript MultiCamSubmitter
 category:"ilya_s Scripts"
-tooltip:"v.903"
-buttontext:"v.903"
+tooltip:"v.903.1"
+buttontext:"v.903.1"
 Icon:#("MultiCamSq",2)
 (
 	global SMTDSettings
@@ -341,12 +344,13 @@ Icon:#("MultiCamSq",2)
 	global SubmitterNodeEventCallback
 	
 	local vrayRend = undefined
+	local vrayRendPreSubmission = undefined
 	local updateMultiCamSubmitterRollout = false
 	local begframe = 0
 	local endframe = 1
 	local sceneCams = #()
 	local vraySuns = #()
-	local sceneCamsNames_array = #()
+	local sceneCamsNames = #()
 	local currentCameraName = undefined
 	local currentCamera = undefined
 	local SingleFrame = false
@@ -417,6 +421,18 @@ Icon:#("MultiCamSq",2)
 		result
 	)
 
+	fn setBitmapIOClasses = 
+	(
+		targa.itgaio.setColorDepth 32
+		targa.itgaio.setCompressed true
+		targa.itgaio.setAlphaSplit false
+		targa.itgaio.setPreMultAlpha true
+		targa.itgaio.setAuthor "Cicada Design Inc."
+
+		--TODO: exr settings here--
+		--needs testing for best settings--
+	)
+
 
 	fn getDrServers = 
 	(
@@ -445,7 +461,7 @@ Icon:#("MultiCamSq",2)
 		return (substring drServers 2 drServers.count)
 	)
 		
-	fn compareFN v1 v2 =
+	fn compareByObjectName v1 v2 =
 	(
 		local d = (v1.name < v2.name)
 		case of
@@ -684,30 +700,36 @@ Icon:#("MultiCamSq",2)
 	
 	fn getOldRPS = 
 	(
+     	vrayRendPreSubmission = copy vrayRend
+     	/*
      	local rpsIndex = 0
 		local rpsIndexArray = (renderpresets.SaveCategories 0) as array
 		
 		for i in rpsIndexArray do (if ((findString (renderpresets.MapSceneIndexToCategory 0 i) "V-Ray") != undefined) then ( rpsIndex = i))
 
 		renderpresets.Save 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}	
-		
+		*/
 		oldRenderTimeType = rendTimeType
-		oldRenderNthFrame = rendNThFrame
+		oldRenderNthFrame = rendNThFrame	
 	)
 	
 	fn setOldRPS = 
 	(
+     	
+		renderers.current = vrayRendPreSubmission
+     	vrayRend = renderers.current
+     	/*
      	local rpsIndex = 0
 		local rpsIndexArray = (renderpresets.SaveCategories 0) as array
 		
 		for i in rpsIndexArray do (if ((findString (renderpresets.MapSceneIndexToCategory 0 i) "V-Ray") != undefined) then ( rpsIndex = i))
 
-		renderpresets.Load 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}
-		deletefile ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps")
-		
+		local setSettings = renderpresets.Load 0 ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps") #{rpsIndex}
+		print("setting old rps: " + setSettings as string)
+		--deletefile ((systemTools.getEnvVariable "TEMP") + "//" + "tempPreset.rps")
+		*/
 		rendTimeType = oldRenderTimeType
 		rendNThFrame = oldRenderNthFrame
-		renderers.current = vrayRend
  	)
 	
 	fn hideCatsForPreview = 
@@ -2701,7 +2723,7 @@ Icon:#("MultiCamSq",2)
 			if (doesfileexist ffmpegExe) != true then ( if queryBox ("FFMPEG is missing!\nCheck the directory\n"+ffmpegExe+".\n\nDownload FFMPEG?\n") then (DOSCommand (("explorer " + "\"" + "https://ffmpeg.org/" + "\""))))
 
 			if (rootnode.CA_previewOutputExt == ".mov") then ( if queryBox ("Avid codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://avid.force.com/pkb/articles/en_US/download/Avid-QuickTime-Codecs-LE" + "\""))))
-			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
+			else if (rootnode.CA_previewOutputExt == ".avi" and (doesfileexist utvideoDir == false)) then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
 		
 		--cui.expertModeOff()  -- Views: Expert Mode Toggle
@@ -2888,7 +2910,7 @@ Icon:#("MultiCamSq",2)
 			if (doesfileexist ffmpegExe) != true then ( if queryBox ("FFMPEG is missing!\nCheck the directory\n"+ffmpegExe+".\n\nDownload FFMPEG?\n") then (DOSCommand (("explorer " + "\"" + "https://ffmpeg.org/" + "\""))))
 
 			if (rootnode.CA_previewOutputExt == ".mov") then ( if queryBox ("Avid codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://avid.force.com/pkb/articles/en_US/download/Avid-QuickTime-Codecs-LE" + "\""))))
-			else if (rootnode.CA_previewOutputExt == ".avi") then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
+			else if (rootnode.CA_previewOutputExt == ".avi"  and (doesfileexist utvideoDir == false)) then ( if queryBox ("UTVideo codec is missing.\nDownload latest?\n") then (DOSCommand (("explorer " + "\"" + "http://www.videohelp.com/software/Ut-Video-Codec-Suite" + "\""))))
 		)
 		--cui.expertModeOff()  -- Views: Expert Mode Toggle
 		setOldHideCats()
@@ -2899,7 +2921,7 @@ Icon:#("MultiCamSq",2)
 --########################--
 	
 
-	rollout multiCamSubmitter "MultiCam Submitter v.903" width:570 height:625
+	rollout multiCamSubmitter "MultiCam Submitter v.903.1" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
@@ -2921,7 +2943,7 @@ Icon:#("MultiCamSq",2)
 		editText pathLable "" text:rootnode.CA_frameOutputCustom pos:[90,132] width:440 height:18 enabled:false
 		
 	groupBox PassTypeGrp "Pass Directory" pos:[16,172] width:groupWidth height:75
-		radioButtons out_type "" pos:[32,188] height:176 enabled:true labels:#("Today's Date", "01.Sky", "02.Background", "03.Foreground", "04.PeopleCars", "Date+Custom", "06.Z-Depth", "07.ExtraPass02", "08.ExtraPass03", "Custom") default:rootnode.CA_passDirectoryType columns:5
+		radioButtons out_type "" pos:[32,188] height:176 enabled:true labels:#("Today's Date", "01_Sky", "02_Background", "03_Foreground", "04_PeopleCars", "Date+Custom", "06_Z-Depth", "07_ExtraPass02", "08_ExtraPass03", "Custom") default:rootnode.CA_passDirectoryType columns:5
 		editText customPassDate "" text:rootnode.CA_passDateCustom pos:[32,220] width:100 height:16 enabled:false
 		editText customPass "" text:rootnode.CA_passCustom pos:[427,220] width:100 height:16 enabled:false
 	
@@ -2954,8 +2976,8 @@ Icon:#("MultiCamSq",2)
 	
 	
 	groupBox SaGrp "Semi Automated: Per Camera" pos:[16,490] width:groupWidth height:120
-		dropDownList camSelection "Scene Cameras" width:344 height:40 items:sceneCamsNames_array enabled:true pos:[SaGrp.pos.x+(2*buttonSpace),SaGrp.pos.y+16] 
-		checkbutton CamCheck_btn "Select Cameras"  width:140 height:24 pos:[camSelection.pos.x+344+16,SaGrp.pos.y+32] 
+		dropDownList camSelection "Scene Cameras" width:344 height:40 items:sceneCamsNames enabled:true pos:[SaGrp.pos.x+(2*buttonSpace),SaGrp.pos.y+16] 
+		checkbutton CamCheck_btn "Select Cameras"  width:140 height:24 enabled:false pos:[camSelection.pos.x+344+16,SaGrp.pos.y+32] 
 		button SA_fly_btn "Fly Thru"  width:buttonW height:32 enabled:false pos:[SaGrp.pos.x+(2*buttonSpace),camSelection.pos.y+40] 
 		button SA_single_btn "Single Frame"  width:buttonW height:32 enabled:false pos:[SA_fly_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
 		button SA_nogi_btn "No GI"  width:buttonW height:32 enabled:false pos:[SA_single_btn.pos.x+buttonW+buttonSpace,camSelection.pos.y+40]
@@ -2969,7 +2991,7 @@ Icon:#("MultiCamSq",2)
 		
 	fn updateFrameOut = 
 	(
-		if (maxfilename == "" or (filterstring maxfilepath "\\")[1] !="X:" or (filterstring maxfilepath "\\").count <= 1) then 
+		if (maxfilename == "" or (filterstring maxfilepath "\\")[1] != "X:" or (filterstring maxfilepath "\\").count <= 1) then 
 		(
 			pathRootChoice.state = 4
 			if (rootnode.CA_frameOutputCustom  == "" or frameout == "None Defined") then
@@ -2980,11 +3002,12 @@ Icon:#("MultiCamSq",2)
 				FA_single_btn.enabled = false 
 				FA_nogi_btn.enabled = false 
 				FA_as_is_btn.enabled = false 
-				FA_pv_btn.enabled = false
+				FA_pv_btn.enabled = true
 				FA_an_btn.enabled = false	
 				FA_BF_btn.enabled = false
 				FA_BFS_btn.enabled = false
-				FA_VDR_btn.enabled = false				
+				FA_VDR_btn.enabled = false
+				CamCheck_btn.enabled = false			
 			) 
 			else
 			(
@@ -2998,7 +3021,8 @@ Icon:#("MultiCamSq",2)
 				FA_an_btn.enabled = true	
 				FA_BF_btn.enabled = true	
 				FA_BFS_btn.enabled = true
-				FA_VDR_btn.enabled = true	
+				FA_VDR_btn.enabled = true
+				CamCheck_btn.enabled = true	
 
 			)
 			pathButton.enabled = true
@@ -3015,6 +3039,7 @@ Icon:#("MultiCamSq",2)
 			FA_BF_btn.enabled = true
 			FA_BFS_btn.enabled = true
 			FA_VDR_btn.enabled = true
+			CamCheck_btn.enabled = true	
 			
 			rootnode.CA_frameOutput = case pathRootChoice.state of 
 			(
@@ -3029,11 +3054,12 @@ Icon:#("MultiCamSq",2)
 							FA_single_btn.enabled = false 
 							FA_nogi_btn.enabled = false 
 							FA_as_is_btn.enabled = false 
-							FA_pv_btn.enabled = false
+							FA_pv_btn.enabled = true
 							FA_an_btn.enabled = false	
 							FA_BF_btn.enabled = false
 							FA_BFS_btn.enabled = false
-							FA_VDR_btn.enabled = false	
+							FA_VDR_btn.enabled = false
+							CamCheck_btn.enabled = falsese		
 							""
 						)
 						else
@@ -3047,7 +3073,8 @@ Icon:#("MultiCamSq",2)
 							FA_an_btn.enabled = true	
 							FA_BF_btn.enabled = true
 							FA_BFS_btn.enabled = true
-							FA_VDR_btn.enabled = true	
+							FA_VDR_btn.enabled = true
+							CamCheck_btn.enabled = true	
 							rootnode.CA_frameOutputCustom
 						)
 					)
@@ -3168,19 +3195,19 @@ Icon:#("MultiCamSq",2)
 		rootnode.CA_passDirectory = case out_type.state of 
 		(
 			1: usetoday()
-			2: "01.Sky"
-			3: "02.Background"
-			4: "03.Foreground"
-			5: "04.PeopleCars"
+			2: "01_Sky"
+			3: "02_Background"
+			4: "03_Foreground"
+			5: "04_PeopleCars"
 			6: (
 					customPassDate.enabled = true	
 					rootnode.CA_passDirectory = useToday()
 					rootnode.CA_passDateCustom = customPassDate.text
 					rootnode.CA_passDirectory = rootnode.CA_passDirectory + rootnode.CA_passDateCustom
 				)
-			7: "06.Z-Depth"
-			8: "07.ExtraPass02"
-			9: "08.ExtraPass03"
+			7: "06_Z-Depth"
+			8: "07_ExtraPass02"
+			9: "08_ExtraPass03"
 			10: (
 					customPass.enabled = true
 					rootnode.CA_passCustom = customPass.text
@@ -3332,7 +3359,7 @@ Icon:#("MultiCamSq",2)
 				SA_single_btn.enabled = false 
 				SA_nogi_btn.enabled = false 
 				SA_as_is_btn.enabled = false
-				SA_pv_btn.enabled = false
+				SA_pv_btn.enabled = if camSelection.selection != 1 then true else false
 				SA_an_btn.enabled = false
 				SA_BF_btn.enabled = false
 				SA_BFS_btn.enabled = false
@@ -3341,10 +3368,12 @@ Icon:#("MultiCamSq",2)
 		
 		if (camSelection.selection != 1) then 
 		(
-			currentCamera = getnodebyname sceneCamsNames_array[i]
+			--currentCamera = getnodebyname sceneCamsNames[i]
+			currentCamera = sceneCams[i-1]
 			viewport.setCamera currentCamera
 
-			currentCameraName = sceneCamsNames_array[i] as string
+			--currentCameraName = sceneCamsNames[i] as string
+			currentCameraName = currentCamera.name
 			print ("Current camera is " + currentCameraName)
 			parseRangeFile currentCamera
 			moveSunToPoint()
@@ -3715,6 +3744,7 @@ Icon:#("MultiCamSq",2)
 				
 			print ("Using " + vrayRend as string +" to render.")
 			
+			setBitmapIOClasses()
 			FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg_20190826\\bin\\ffmpeg.exe"
 			UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
 			sceneCams = for o in cameras where (superclassof o == camera) collect o
@@ -3737,19 +3767,19 @@ Icon:#("MultiCamSq",2)
 				exit
 			)
 
-			sceneCamsNames_array_temp = for o in sceneCams collect o.name
-			sceneCamsNames_array_temp = makeUniqueArray sceneCamsNames_array_temp
-			sceneCamsNames_array = sort sceneCamsNames_array_temp
+			qsort sceneCams compareByObjectName
+			sceneCamsNames = for o in sceneCams collect o.name
+			sceneCamsNames = makeUniqueArray sceneCamsNames
 			
-			if sceneCamsNames_array.count != sceneCams.count then 
+			if sceneCamsNames.count != sceneCams.count then 
 			(
-				MessageBox ("There are " + (sceneCams.count - sceneCamsNames_array.count + 1) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
+				MessageBox ("There are " + (sceneCams.count - sceneCamsNames.count + 1) as string + " cameras with the same name in the scene. Rename or delete these cameras and rerun the script.") title:"Duplicate Cameras"
 				exit
 			)
 			
 			print ("Found " + sceneCams.count as string + " cameras in the scene.")
 			local spacer = #("Select Camera to Render")
-			sceneCamsNames_array = join spacer sceneCamsNames_array
+			sceneCamsNames = join spacer sceneCamsNames
 			
 			vraySuns = for o in lights where (classof o == VRaySun) collect o
 			
@@ -3882,17 +3912,17 @@ Icon:#("MultiCamSq",2)
 			rootnode.CA_passDirectory = case rootnode.CA_passDirectoryType of 
 			(
 				1: usetoday()
-				2: "01.Sky"
-				3: "02.Background"
-				4: "03.Foreground"
-				5: "04.PeopleCars"
+				2: "01_Sky"
+				3: "02_Background"
+				4: "03_Foreground"
+				5: "04_PeopleCars"
 				6: (
 						rootnode.CA_passDirectory = useToday()
 						rootnode.CA_passDirectory = rootnode.CA_passDirectory + rootnode.CA_passDateCustom
 					)
-				7: "06.Z-Depth"
-				8: "07.ExtraPass02"
-				9: "08.ExtraPass03"
+				7: "06_Z-Depth"
+				8: "07_ExtraPass02"
+				9: "08_ExtraPass03"
 				10: rootnode.CA_passDirectory = rootnode.CA_passCustom
 			)
 			
