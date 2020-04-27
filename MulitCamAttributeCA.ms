@@ -1,11 +1,39 @@
+/*
+Issues:
+--Still the issues of lister updating the visible in modifer panel not the actual object
+1. Deselect the object when lister is editing
+2. Select the object when lister is editing, need to handle multi-object editing without selection
+3. Move all the stuff in the parameters back to rollout and add update only if selected, add reload mod panel function to any functions that update the UI elements, could be slow for the panel to reload
+4. Go back to making each CA a unique CA, then need to add callback functions for cloning
+5. Unique CA is not the answer, bad functionality persists, move UI functions to the rollout, in parameters check for selection and then only update if selected
+
+source = $'PhysCamera001'
+target = $'PhysCamera002'
+
+fn copyMultiCamAttributeData souce target = 
+(
+	for i=(custAttributes.count target) to 1 by -1 where (classof (custAttributes.get target i) as string == "<AttributeDef:MCCAData>") do custAttributes.delete target i
+	
+	custAttributes.add target MCCA #unique 
+	
+	for prop in (getPropNames  source.baseObject.MultiCamAttributeData) do
+	(
+		p = getProperty  source.baseObject.MultiCamAttributeData prop
+		setProperty target.baseObject.MultiCamAttributeData prop p
+	)
+)
+
+
+*/
 global MultiCamCustomAttribute
-MultiCamCustomAttribute = attributes MultiCamAttributeData
+MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0, 0x29a2ba02) version:1
 (
 	local hdriMapName = "None"
 	local objectName = ""
 	local buttonWidth = 135
 	local gwDisplaySunpoints
 	local gwShowActiveSettings
+	local version = "0.909"
 	--local layers_ro
 	--local sunpoints_ro
 	--local resolution_ro
@@ -33,6 +61,11 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 			rend = undefined
 		)
 		rend
+	)
+
+	fn deleteMCCustAttribute obj =
+	(
+		for i=(custAttributes.count obj) to 1 by -1 where (classof (custAttributes.get obj i) as string == "<AttributeDef:MultiCamAttributeData>") do custAttributes.delete obj i
 	)
 
 
@@ -71,7 +104,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	(
 		local cam = (refs.dependentNodes (custattributes.getowner this))
 		local camName = ""
-		if cam != undefined then camName = cam[1].name
+		if cam[1] != undefined then camName = cam[1].name
 		--cols = #(yellow,red,blue,green,black)
 		gw.setTransform (matrix3 1)
 		gw.text (execute(this.sP_txt)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
@@ -95,7 +128,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	(
 		local cam = (refs.dependentNodes (custattributes.getowner this))
 		local camName = ""
-		if cam != undefined then camName = cam[1].name
+		if cam[1] != undefined then camName = cam[1].name
 		rect = (box2 13 47 96 97)
 		eRect = rect -- enlargeUpdateRect 1 pixel too small in either direction?
 		eRect.right += 1
@@ -138,6 +171,25 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		else result = ""
 		result
 	)
+
+	fn emitUpdateEvent = 
+	(
+		--workaround: need to find a good way to emit an event for callback function to catch
+		if this.params.cameraObject_btn.object != undefined then
+		(
+			if isProperty this.params.cameraObject_btn.object "MultiCamAttributeData" then
+			(
+				this.params.cameraObject_btn.object.multicamattributedata.hiddenController_spn = random 0 500
+			)
+		)
+	)
+
+	fn getObjectFromThis =
+	(
+		local result = ( refs.dependentNodes (custattributes.getowner this) )
+		if result != undefined then result = result[1]
+		result
+	)
 	
 	fn changeStateLayers state = 
 	(
@@ -145,6 +197,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		this.layers_ro.hideLayers_lb.enabled = state
 		this.layers_ro.clearLayers_btn.enabled = state
 		this.layers_ro.addLayers_btn.enabled = state
+		this.layers_ro.addHiddenLayers_btn.enabled = state
 		this.layers_ro.removeLayers_btn.enabled = state
 	)
 	
@@ -181,30 +234,30 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		
 	fn checkHDRIconnection =
 	(
-		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
+		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn) == VrayHDRI) then
 		(
-			if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
+			if ((classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
 			(
-				print "--1"
-				this.hdriMapLink_chb = false
-				this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
-			)
-			else
-			(
-				print "--2"
-				if this.hdriMapLink_chb != true then this.hdriMapLink_chb = true
-				this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
+				if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
+				(
+					this.hdriMapLink_chb = false
+					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+				)
+				else
+				(
+					if this.hdriMapLink_chb != true then this.hdriMapLink_chb = true
+					this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
+				)
 			)
 		)
+
 		if (this.hdriMap_btn != undefined) then
 		(
-			print "--3"
 			hdriMapName = this.hdriMap_btn.name
 			this.hdrimap_ro.hdriMapLoader_btn.caption = hdriMapName
 		)
 		else
 		(
-			print "--4"
 			this.hdriMapLink_chb = false
 			this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 		)
@@ -217,6 +270,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	parameters main rollout:params
 	(
 		cameraObject_btn type:#node animatable:false ui:cameraObject_btn
+		hiddenController_spn type:#float animatable:true ui:hiddenController_spn default:0.0
 		--customPass_txt type:#string animatable:false ui:customPass_txt default:""
 		--activateSettings_btn type:#boolean animatable:false ui:activateSettings_btn default:false
 
@@ -254,7 +308,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	parameters sunpoints_params rollout:sunpoints_ro
 	(
 		--SUNPOINTS
-		useSunpoints_chb type:#boolean animatable:false ui:useSunpoints_chb default:true
+		useSunpoints_param type:#boolean animatable:false ui:useSunpoints_chb default:true
 		sP_txt type:#string animatable:false ui:sp_txt default:"[10000,-7000,5500]"
 		sT_txt type:#string animatable:false ui:sT_txt default:"[0,0,0]"
 		sP_name type:#string animatable:false default:""
@@ -264,6 +318,29 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		readSunPos_btn type:#boolean animatable:false ui:readSunPos_btn default:false
 		moveSunToPos_btn type:#boolean animatable:false ui:moveSunToPos_btn default:false
 		
+		on useSunpoints_param set state do 
+		(
+			--format "this param com obj %\n" (getObjectFromThis())
+			if getObjectFromThis() == $ then
+			(
+				this.sunpoints_ro.sP_txt.enabled = state
+				this.sunpoints_ro.sT_txt.enabled = state
+				this.sunpoints_ro.showSunPoint_btn.enabled = state
+				this.sunpoints_ro.readSunPos_btn.enabled = state
+				this.sunpoints_ro.moveSunToPos_btn.enabled = state
+				this.sunpoints_ro.createSunPoint_btn.enabled = state
+				this.sunpoints_ro.viewFromSun_btn.enabled = state
+			)
+			
+			if state == false then
+			(
+				showSunPoint_btn = false
+				unregisterRedrawViewsCallback gwDisplay
+			)
+			emitUpdateEvent()
+		)
+		
+
 		on showSunPoint_btn set state do
 		(
 			if state == true then
@@ -274,6 +351,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 			(
 				unregisterRedrawViewsCallback gwDisplay
 			)
+			emitUpdateEvent()
 		)
 		
 		on viewFromSun_btn set val do
@@ -296,8 +374,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 				(
 					
 					local sun = getVraySunInScene()
-					print "sP_txt"
-					print sP_txt
 					sP_txt = sun.position as string
 					sT_txt = sun.target.position as string
 				)
@@ -332,7 +408,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 			if val == true then
 			(
 				local cam = (refs.dependentNodes (custattributes.getowner this))[1]
-				
 				if aniCheck_fn cam != undefined then
 				(
 					local camAnimation = AniCheck_fn cam
@@ -340,7 +415,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 					lastFrame_sp = camAnimation[camAnimation.count]
 				)
 				else (MessageBox ("No Animation"))
-
 				getFrameRange_btn = false
 			)
 		)
@@ -350,15 +424,82 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	(
 		--HIDE LAYERS
 		useHideLayers_chb type:#boolean animatable:false ui:useHideLayers_chb default:false
-		hideLayers_tab type:#stringTab tabSize:0 tabSizeVariable:true --ui:hideLayers_lb 
+		hideLayers_tab type:#stringTab tabSize:1 tabSizeVariable:true ui:hideLayers_lb default:"-- All Layers Unhidden --"
 		--hideLayers_lb type:#boolean ui:hideLayers_lb
 		clearLayers_btn type:#boolean animatable:false ui:clearLayers_btn default:false
 		addLayers_btn type:#boolean animatable:false ui:addLayers_btn default:false
+		addHiddenLayers_btn type:#boolean animatable:false ui:addHiddenLayers_btn default:false
 		
+		on addLayers_btn set val do
+		(
+			if val == true then
+			(			
+				local layerNameSelector = rollout layerNameSelector "Select Layers to Hide" width:200 height:460
+				(
+					local result = #()
+					local layerNames
+
+					MultiListBox  layerSelection_lb "Layers:" items:#() height:30
+					button addSelected_btn "Add Selected" across:2 width:80
+					button cancelAdding_btn "Cancel" width:80
+					
+					fn init val:undefined =
+					(
+						try destroyDialog layerNameSelector catch()
+						result = val
+						createDialog layerNameSelector modal:true
+						result
+					)
+					
+					--on layerSelection_lb selectionEnd do format "selectionEnd: %\n" layerSelection_lb.selection
+
+					on layerNameSelector open do 
+					(
+						layerNames = (for i=0 to layermanager.count-1 collect (layermanager.getlayer i).name)
+						layerNames = sort layerNames
+						layerSelection_lb.items = layerNames
+						setFocus layerNameSelector						
+					)
+
+					on cancelAdding_btn pressed do
+					(
+						result = #()
+						destroydialog layerNameSelector
+					)
+
+					on addSelected_btn pressed do
+					(
+						for l in layerSelection_lb.selection do
+						(
+							append result layerNames[l]
+						)
+
+						destroydialog layerNameSelector
+					)
+				)
+				
+				local layerResult = layerNameSelector.init()
+				hideLayers_tab = makeUniqueArray(join layerResult hideLayers_tab )
+
+				if hideLayers_tab.count > 1 then
+				(
+					local itemToDelete = (findItem hideLayers_tab "-- All Layers Unhidden --" )
+					if itemToDelete != 0 then deleteItem hideLayers_tab itemToDelete
+				)
+				
+				if getObjectFromThis() == $ then
+				(
+					this.layers_ro.hideLayers_lb.items = hideLayers_tab as array
+				)
+				addLayers_btn = false
+			)
+		)
+
 		on clearLayers_btn set val do
 		(
 			if val == true then
 			(
+				/*
 				hideLayers_tab = #()
 				this.layers_ro.hideLayers_lb.items = #()
 				
@@ -367,16 +508,24 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 					hideLayers_tab =  #("-- All Layers Unhidden --")
 					this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 				)
+				*/
+				
+				hideLayers_tab = #("-- All Layers Unhidden --")
+				
+				if getObjectFromThis() == $ then
+				(
+					this.layers_ro.hideLayers_lb.items = hideLayers_tab as array
+				)
 				clearLayers_btn = false
 			)
 		)
 		
-		on addLayers_btn set val do
+		on addHiddenLayers_btn set val do
 		(
 			if val == true then
 			(
 				hideLayers_tab = #()
-				this.layers_ro.hideLayers_lb.items = #()
+				--this.layers_ro.hideLayers_lb.items = #()
 				
 				n = LayerManager.count
 				for i = 0 to n-1 do
@@ -384,39 +533,52 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 					if (layermanager.getlayer i).on == false then
 					(
 						appendifunique hideLayers_tab (layermanager.getlayer i).name
-						this.layers_ro.hideLayers_lb.items = makeUniqueArray (append this.layers_ro.hideLayers_lb.items (layermanager.getlayer i).name)
+						--this.layers_ro.hideLayers_lb.items = makeUniqueArray (append this.layers_ro.hideLayers_lb.items (layermanager.getlayer i).name)
 					)
 				)
 				
 				if hideLayers_tab.count == 0 then
 				(
 					hideLayers_tab = #("-- All Layers Unhidden --")
-					this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 				)
-				addLayers_btn = false
+				
+				if getObjectFromThis() == $ then
+				(
+					this.layers_ro.hideLayers_lb.items = hideLayers_tab as array
+				)
+
+				addHiddenLayers_btn = false
 			)
 		)
 
 		on useHideLayers_chb set val do 
 		(
-			this.layers_ro.hideLayers_lb.enabled = val
-			this.layers_ro.clearLayers_btn.enabled = val
-			this.layers_ro.addLayers_btn.enabled = val
-			this.layers_ro.removeLayers_btn.enabled = val
-			
+
 			if val == true and hideLayers_tab.count == 0 then
 			(
 				hideLayers_tab = #("-- All Layers Unhidden --")
-				this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
+				--this.layers_ro.hideLayers_lb.items = #("-- All Layers Unhidden --")
 			)
 			else if val == false and hideLayers_tab == "-- All Layers Unhidden --" then
 			(
 				-- workaround when adding a modifier through MultiCam Lister
 				try(
 					hideLayers_tab = deleteItem hideLayers_tab 1
-					this.layers_ro.hideLayers_lb.items = deleteItem this.layers_ro.hideLayers_lb.items 1
+					--this.layers_ro.hideLayers_lb.items = deleteItem this.layers_ro.hideLayers_lb.items 1
 				)catch()
 			)
+
+			if getObjectFromThis() == $ then
+			(
+				this.layers_ro.hideLayers_lb.enabled = val
+				this.layers_ro.clearLayers_btn.enabled = val
+				this.layers_ro.addLayers_btn.enabled = val
+				this.layers_ro.addHiddenLayers_btn.enabled = val
+				this.layers_ro.removeLayers_btn.enabled = val
+				this.layers_ro.hideLayers_lb.items = hideLayers_tab as array
+			)
+
+			emitUpdateEvent()
 		)	
 		
 	)
@@ -426,7 +588,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		--HDRI MAP
 		useHDRIMap_chb type:#boolean animatable:false ui:useHDRIMap_chb default:false
 		hdriMapLoader_btn type:#boolean animatable:false ui:hdriMapLoader_btn default:false
-		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn
+		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn --this actually holds the map, hidden in ui
 		hdriMapLink_chb type:#boolean animatable:false ui:hdriMapLink_chb default:false
 		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
 		--hdriMapOffset_sp type:#float animatable:true ui:hdriMapOffset_sp default:0.0
@@ -436,14 +598,18 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 
 		on useHDRIMap_chb set state do 
 		(
-			this.hdriMap_ro.hdriMap_btn.enabled = state
-			this.hdriMap_ro.hdriMapLink_chb.enabled = state
-			this.hdriMap_ro.hdriMapLoader_btn.enabled = state
-			this.hdriMap_ro.hdriMapEdit_btn.enabled = state
-			--this.hdriMap_ro.hdriMapOffset_sp.enabled = state
-			this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
-			this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
-			this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+			if getObjectFromThis() == $ then
+			(
+				this.hdriMap_ro.hdriMap_btn.enabled = state
+				this.hdriMap_ro.hdriMapLink_chb.enabled = state
+				this.hdriMap_ro.hdriMapLoader_btn.enabled = state
+				this.hdriMap_ro.hdriMapEdit_btn.enabled = state
+				--this.hdriMap_ro.hdriMapOffset_sp.enabled = state
+				this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
+				this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
+				this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+			)
+			emitUpdateEvent()
 		)
 
 		on hdriMapLoader_btn set val do
@@ -451,52 +617,84 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 			if val == true then
 			(
 				local selectedMap = MultiCamHDRILib.show()
+				local hdriMapLoaderButtonCaption = "None"
+				local hdriMapLinkButtonCaption = "Link HDRI to Sun"
+				
 				if selectedMap != undefined then 
 				(
-					selectedMap.name = "HDRI for " + (getThisCameraName())
-					hdriMap_btn = selectedMap
-					this.hdrimap_ro.hdriMapLoader_btn.caption = selectedMap.name
+					if (classof selectedMap == VrayHDRI) then
+					(
+						selectedMap.name = "HDRI for " + (getThisCameraName())
+						hdriMap_btn = selectedMap
+						hdriMapLoaderButtonCaption = selectedMap.name
 
-					-- ask to link here --
-					local vraySuns = for o in lights where (classof o == VRaySun) collect o
-					if vraySuns.count > 0 then
-					( 
-						local qb = QueryBox "Link the HDRI map to the VraySun?"
-						if qb == true then
-						(
-							hdriMapLink_chb = true
+						-- ask to link here --
+						local vraySuns = for o in lights where (classof o == VRaySun) collect o
+						if vraySuns.count > 0 then
+						( 
+							local qb = QueryBox "Link the HDRI map to the VraySun?"
+							if qb == true then
+							(
+								hdriMapLink_chb = true
+							)
+							else 
+							(
+								hdriMapLink_chb = false
+								hdriMapLinkButtonCaption = "Link HDRI to Sun"
+							)
 						)
 						else 
 						(
 							hdriMapLink_chb = false
-							this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+							hdriMapLinkButtonCaption = "Link HDRI to Sun"
 						)
 					)
-					else 
+					else if (selectedMap == "none") then
 					(
+						hdriMap_btn = undefined
+						hdriMapLoaderButtonCaption = "None"
 						hdriMapLink_chb = false
-						this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+						hdriMapLinkButtonCaption = "Link HDRI to Sun"
+					)
+					else if (selectedMap == "vraysky") then
+					(
+						local newVraySky = VraySky()
+						newVraySky.name = "VraySky for " + (getThisCameraName())
+						
+						hdriMap_btn = newVraySky
+						hdriMapLoaderButtonCaption = newVraySky.name
+						hdriMapLink_chb = false
+						hdriMapLinkButtonCaption = "Link HDRI to Sun"
 					)
 				)
-				else if (selectedMap == undefined and this.hdriMap_btn != undefined) then
+				--cancelled selection but map alredy there
+				else if (selectedMap == undefined and hdriMap_btn != undefined) then
 				(
-					this.hdrimap_ro.hdriMapLoader_btn.caption = this.hdriMap_btn.name
+					hdriMapLoaderButtonCaption = hdriMap_btn.name
 				)
+				--cancelled selection with no map already present
 				else 
 				(
-					this.hdrimap_ro.hdriMapLoader_btn.caption = "None"
+					hdriMapLoaderButtonCaption = "None"
 					hdriMapLink_chb = false
-					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+					hdriMapLinkButtonCaption = "Link HDRI to Sun"
 				)
 				
+				if getObjectFromThis() == $ then
+				(
+					this.hdrimap_ro.hdriMapLink_chb.caption = hdriMapLinkButtonCaption
+					this.hdrimap_ro.hdriMapLoader_btn.caption = hdriMapLoaderButtonCaption
+				)
+
 				hdriMapLoader_btn = false
 			)
+			emitUpdateEvent()
 
 		)
 		
 		on hdriMap_btn set val do
 		(
-			if (classof val == VRayHDRI) then
+			if (classof val == VRayHDRI or classof val == VraySky) then
 			(
 				print ("val is " + val as string)
 				hdriMap_btn = val				
@@ -527,14 +725,13 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 
 		on hdriMapLink_chb set val do
 		(
-			print "1"
+			local hdriMapLinkButtonCaption = "Link HDRI to Sun"
+
 			if val == true then
 			(	
-				print "2"
 				if ((getVraySunInScene()) != undefined) then
 				(
-					print "3"
-					if (hdriMap_btn != undefined) then
+					if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
 					(
 						local m = hdriMap_btn
 						print m.name
@@ -559,36 +756,38 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 						m.cropplace_u.controller.script = scriptstring
 						
 						hdriMapLink_chb = true
-						this.hdrimap_ro.hdriMapLink_chb.caption = "Linked Press to Unlink"
-						print "4"
+						hdriMapLinkButtonCaption = "Linked Press to Unlink"
 					)
 					else
 					(
-						print "5"
 						MessageBox ("The map is not a VrayHDRI map.")
 						hdriMapLink_chb = false
-						this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+						hdriMapLinkButtonCaption = "Link HDRI to Sun"
 					)
 				)
 				else
 				(
-					print "6"
 					hdriMapLink_chb = false
-					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+					hdriMapLinkButtonCaption = "Link HDRI to Sun"
 				)
 			)
 			else
 			(
-				print "7"
-				if (hdriMap_btn != undefined) then
+				if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
 				(
-					print "8"
 					hdriMap_btn.cropplace_u.controller = Bezier_Float()
 				)
 
 				hdriMapLink_chb = false
-				this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
+				hdriMapLinkButtonCaption = "Link HDRI to Sun"
 			)
+
+			if getObjectFromThis() == $ then
+			(
+				this.hdrimap_ro.hdriMapLink_chb.caption = hdriMapLinkButtonCaption
+			)
+
+			emitUpdateEvent()
 		)
 	)
 	
@@ -603,9 +802,13 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 
 		on useHeightWidth_chb set val do 
 		(
-			this.resolution_ro.imgWidth_sp.enabled = val
-			this.resolution_ro.imgHeight_sp.enabled = val
-			this.resolution_ro.getImgFrame_btn.enabled = val
+			if getObjectFromThis() == $ then
+			(		
+				this.resolution_ro.imgWidth_sp.enabled = val
+				this.resolution_ro.imgHeight_sp.enabled = val
+				this.resolution_ro.getImgFrame_btn.enabled = val
+			)
+			emitUpdateEvent()
 		)
 
 		on getImgFrame_btn set val do
@@ -617,13 +820,19 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 				(
 					if (vrayRend.output_getsetsfrommax == false) then
 					(
-						this.resolution_ro.imgWidth_sp.value = vrayRend.output_width
-						this.resolution_ro.imgHeight_sp.value = vrayRend.output_height
+						imgWidth_sp = vrayRend.output_width
+						imgHeight_sp = vrayRend.output_height
 					)
 					else
 					(
-						this.resolution_ro.imgWidth_sp.value = renderWidth
-						this.resolution_ro.imgHeight_sp.value = renderHeight
+						imgWidth_sp = renderWidth
+						imgHeight_sp = renderHeight
+					)
+
+					if getObjectFromThis() == $ then
+					(
+						this.resolution_ro.imgWidth_sp.value = imgWidth_sp
+						this.resolution_ro.imgHeight_sp.value = imgHeight_sp
 					)
 				)
 				else 
@@ -633,6 +842,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 				
 				getImgFrame_btn = false
 			)
+			emitUpdateEvent()
 		)
 	)
 	
@@ -649,6 +859,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,1,1,1,1,true) toolTip:"Open Cam Lister" width:24 height:24 pos:[69,7] align:#center
 		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,3,3,3,3,true) toolTip:"Delete this Custom Attribyte" width:24 height:24 pos:[125,7] align:#right
 		--checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
+		spinner hiddenController_spn pos:[0,0] visible:false
 		pickbutton cameraObject_btn width:1 height:1 pos:[0,0] visible:false
 		--editText customPass_txt "Custom Pass" text:""
 		
@@ -666,24 +877,30 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		(
 			unregisterRedrawViewsCallback gwDisplay
 			unregisterRedrawViewsCallback gwActiveSettings
-			custAttributes.delete $ 1
+			--custAttributes.delete $ 1
+			deleteMCCustAttribute $
 			if multiCamListerFloater.open == true then ( multiCamListerFloater.rollouts[1].refresh_btn.pressed() )
 		)
 
+		on params open do
+		(
+			local cam = ( refs.dependentNodes (custattributes.getowner this) )[1]
+			cameraObject_btn.object = cam
+		)
 
 		
 	)--end rollout
 
 	rollout sunpoints_ro "Sunpoints"
 	(
-		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center
-		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 8,3,3,4,4,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[14,27]  align:#left
-		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 8,5,5,6,6,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_chb.state width:(buttonWidth/2) pos:[82,27] align:#right
-		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,53] align:#center
-		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_chb.state width:buttonWidth pos:[14,75] align:#center
-		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 8,1,1,2,2,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,123] align:#center
-		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 8,7,7,8,8,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_chb.state width:buttonWidth pos:[14,97] align:#center
-		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_chb.state width:buttonWidth pos:[14,175] align:#center
+		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center checked:useSunpoints_param
+		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 8,3,3,4,4,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_param width:(buttonWidth/2) pos:[14,27]  align:#left
+		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 8,5,5,6,6,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_param width:(buttonWidth/2) pos:[82,27] align:#right
+		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,53] align:#center
+		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,75] align:#center
+		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 8,1,1,2,2,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_param width:buttonWidth pos:[14,123] align:#center
+		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 8,7,7,8,8,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_param width:buttonWidth pos:[14,97] align:#center
+		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_param width:buttonWidth pos:[14,175] align:#center
 		
 		on sunpoints_ro open do
 		(
@@ -691,6 +908,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 			--gto()
 		)
 		
+		/*
 		on useSunpoints_chb changed state do 
 		(
 			sP_txt.enabled = state
@@ -706,7 +924,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 				showSunPoint_btn.checked = false
 				unregisterRedrawViewsCallback gwDisplay
 			)
+			emitUpdateEvent()
 		)
+		*/
 		
 		on createSunPoint_btn pressed do
 		(
@@ -731,12 +951,14 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		on firstFrame_sp changed n do
 		(
 			if (n > lastFrame_sp.value) then (lastFrame_sp.value = n + 1)
+			emitUpdateEvent()
 			--if (n > lastFrame_sp.value) then (firstFrame_sp.value = lastFrame_sp.value)
 		)
 		
 		on lastFrame_sp changed n do
 		(
 			if (n < firstFrame_sp.value) then (firstFrame_sp.value = n - 1)
+			emitUpdateEvent()
 			--if (n < firstFrame_sp.value) then (lastFrame_sp.value = firstFrame_sp.value)
 		)
 	)
@@ -745,9 +967,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	(			
 		checkbox useHideLayers_chb "Use Hide Layers" pos:[13,7] align:#center
 		listbox hideLayers_lb "Hide Layers:" items:(hideLayers_tab as array) enabled:useHideLayers_chb.state width:buttonWidth pos:[13,27] align:#center -- y position is desired position (pos:[13,43]) minus 16
-		checkbutton addLayers_btn "Add Hidden"  enabled:useHideLayers_chb.state width:buttonWidth pos:[14,185] align:#center
-		button removeLayers_btn "Remove Selected" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,211] align:#center
-		checkbutton clearLayers_btn "Clear All" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,237] align:#center
+		checkbutton addLayers_btn "Add Layers"  enabled:useHideLayers_chb.state width:buttonWidth pos:[14,185] align:#center
+		checkbutton addHiddenLayers_btn "Add Hidden"  enabled:useHideLayers_chb.state width:buttonWidth pos:[14,211] align:#center
+		button removeLayers_btn "Remove Selected" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,237] align:#center
+		checkbutton clearLayers_btn "Clear All" enabled:useHideLayers_chb.state width:buttonWidth pos:[13,263] align:#center
 		
 		on removeLayers_btn pressed do
 		(
@@ -808,6 +1031,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		spinner imgWidth_sp  " Width: " type:#integer range:[1,1000000,1920] enabled:useHeightWidth_chb.state pos:[41,27] width:(buttonWidth - 27)
 		spinner imgHeight_sp "Height: " type:#integer range:[1,1000000,1080] enabled:useHeightWidth_chb.state pos:[41,48] width:(buttonWidth - 27)
 		checkbutton getImgFrame_btn "Get Resolution"                         enabled:useHeightWidth_chb.state pos:[14,69] width:buttonWidth align:#center
+
+		on imgWidth_sp changed n do (emitUpdateEvent())
+		on imgHeight_sp changed n do (emitUpdateEvent())
 	)
 		
 	rollout import_ro "Import from Old"
@@ -923,52 +1149,54 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 	
 	rollout about_ro "About" 
 	(
-		label version_lbl "v 0.909" pos:[63,7] align:#center
+		label version_lbl version pos:[63,7] align:#center
 	)
 		
-
 	
 	on load do
 	(
 		print "loading"
 		if (multiCamUsable == true) then
 		(
-			if (hdriMap_btn != undefined and (classof hdriMap_btn.cropplace_u.controller) == float_script) then
+			if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
 			(
-				m = hdriMap_btn
-				if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
+				if ((classof hdriMap_btn.cropplace_u.controller) == float_script) then
 				(
-					relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
-					if (relink == true) then
+					m = hdriMap_btn
+					if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
 					(
-						------NEEDS TESTING----------
-						allSuns = for o in objects where classof o == VraySun collect o
-						if (allSuns.count == 1 ) then
+						relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
+						if (relink == true) then
 						(
-							m.cropplace_u.controller = float_script()
-							
-							sun = allSuns[1]
-							sunTarget = sun.target
-							--hdriMapOffset_sp.controller = Bezier_Float()
-							
-							m.cropplace_on = true
-							m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
-							m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
-							m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
-							m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
-							--We use addNode because of circular dependency
-							--Needs testing $ may not work
-							--m.cropplace_u.controller.addNode "offset" (refs.dependentNodes this)[1] --$
-							
-							--issue: when copy and pasted the link will be broken
-							--scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#MultiCam_Attribute].'hdriMapOffset_sp') 360 )/360.0"
-							scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos))) 360 )/360.0"
-							m.cropplace_u.controller.script = scriptstring
-						)
-						else if (allSuns.count > 1) then (MessageBox ("RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!"))
-						else
-						(
-							MessageBox ("RELINK FAILED!\nNo VraySun in the scene.")
+							------NEEDS TESTING----------
+							allSuns = for o in objects where classof o == VraySun collect o
+							if (allSuns.count == 1 ) then
+							(
+								m.cropplace_u.controller = float_script()
+								
+								sun = allSuns[1]
+								sunTarget = sun.target
+								--hdriMapOffset_sp.controller = Bezier_Float()
+								
+								m.cropplace_on = true
+								m.cropplace_u.controller.AddTarget "t_x_pos" sun.pos.controller.'X Position'.controller
+								m.cropplace_u.controller.AddTarget "t_y_pos" sun.pos.controller.'Y Position'.controller
+								m.cropplace_u.controller.AddTarget "s_x_pos" sunTarget.pos.controller.'X Position'.controller
+								m.cropplace_u.controller.AddTarget "s_y_pos" sunTarget.pos.controller.'Y Position'.controller
+								--We use addNode because of circular dependency
+								--Needs testing $ may not work
+								--m.cropplace_u.controller.addNode "offset" (refs.dependentNodes this)[1] --$
+								
+								--issue: when copy and pasted the link will be broken
+								--scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos)) + offset.modifiers[#MultiCam_Attribute].'hdriMapOffset_sp') 360 )/360.0"
+								scriptstring =  "(mod ((atan2 (t_y_pos-s_y_pos) (s_x_pos-t_x_pos))) 360 )/360.0"
+								m.cropplace_u.controller.script = scriptstring
+							)
+							else if (allSuns.count > 1) then (MessageBox ("RELINK FAILED!\nThere are " + allSuns.count as string + " in the scene.\nThere can only be one!"))
+							else
+							(
+								MessageBox ("RELINK FAILED!\nNo VraySun in the scene.")
+							)
 						)
 					)
 				)
@@ -1007,6 +1235,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		MessageBox "postcreated"
  	)
  	
+	on clone orig do (format "cloned: % : % : % : %\n" this orig(this == orig) (delegate == orig.delegate); print delegate)
+ 	on attachedToNode this do print ("attaching to node " + this as string)
+
+
  	
  	on attachedToNode this do
  	(
@@ -1070,4 +1302,5 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData
 		unregisterRedrawViewsCallback gwDisplay
 		unregisterRedrawViewsCallback gwActiveSettings
 	)
+	
 )

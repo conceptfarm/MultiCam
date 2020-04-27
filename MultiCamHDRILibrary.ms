@@ -16,60 +16,96 @@ global MultiCamHDRILib
 				
 				fn whenButtonIsPressed a b = 
 				(
-					local MATFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".mat"
-					local HDRIFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".hdr"
-					local JSONFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".json"
-		 			local tempMatLib = loadTempMaterialLibrary MATFile
-		 			
-		 			if tempMatLib != undefined then
-		 			(
-			 			local HDRIMap = tempMatLib[1]
-						HDRIMap.HDRIMapName = HDRIFile
+					format "variable a: %, variable b:%\n" a b
+					if (a.tag == "hdrimap") then
+					(
+						local MATFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".mat"
+						local HDRIFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".hdr"
+						local JSONFile = (getFilenamePath ((a.ImageLocation))) + (getFilenameFile ((a.ImageLocation))) + ".json"
+			 			local tempMatLib = loadTempMaterialLibrary MATFile
 			 			
-			 			local mat = VrayMtl()
-			 			mat.texmap_diffuse = HDRIMap
-						setMeditMaterial 1 mat
-						bResult = HDRIMap
-						
-						-- parse json file
-						local vraySuns = for o in lights where (classof o == VRaySun) collect o
-						if vraySuns.count > 0 then
-						( 
-							local qb = queryBox "Load settings for the VraySun to match the HDRI Map?" 
-							if qb == true then
+			 			if tempMatLib != undefined then
+			 			(
+				 			local HDRIMap = tempMatLib[1]
+							HDRIMap.HDRIMapName = HDRIFile
+				 			
+				 			local mat = VrayMtl()
+				 			mat.texmap_diffuse = HDRIMap
+							--setMeditMaterial 1 mat
+							bResult = HDRIMap
+							
+							-- parse json file
+							local vraySuns = for o in lights where (classof o == VRaySun) collect o
+							if vraySuns.count > 0 then
 							(
-								local JSONFile = openFile JSONFile
-								seek JSONFile 0
-								try while not eof JSONFile do 
+								local qb = queryBox "Load settings for the VraySun to match the HDRI Map?" 
+								if qb == true then
 								(
-									local parsedLine = readline JSONFile
-									local filterLine = filterString parsedLine " : "
-									local filterColour = filterString parsedLine "()"
-									--setProperty <obj> <property_name> <value>
-									if filterColour.count > 1 then
+									local JSONFile = openFile JSONFile
+									seek JSONFile 0
+									try while not eof JSONFile do 
 									(
-										setProperty vraySuns[1] filterLine[1] (execute(filterColour[2]))
+										local parsedLine = readline JSONFile
+										local filterLine = filterString parsedLine " : "
+										local filterColour = filterString parsedLine "()"
+										--setProperty <obj> <property_name> <value>
+										if filterColour.count > 1 then
+										(
+											setProperty vraySuns[1] filterLine[1] (execute(filterColour[2]))
+										)
+										else (setProperty vraySuns[1] filterLine[1] (execute(filterLine[2])))
 									)
-									else (setProperty vraySuns[1] filterLine[1] (execute(filterLine[2])))
+									catch(print "end of vray_dr.cfg")
+									close JSONFile
+									free JSONFile
 								)
-								catch(print "end of vray_dr.cfg")
-								close JSONFile
-								free JSONFile
 							)
 						)
 					)
+					else if a.tag == "none" then (bResult = "none")
+					else if a.tag == "vraysky" then (bResult = "vraysky")
+
 					try(destroydialog MultiCamHDRILib_RO)catch(print "????")
 				)
 				
 				on MultiCamHDRILib_RO open do
 				(
 					local oddColor=(dotnetclass "system.drawing.color").fromARGB 68 68 68  	
+					
+					fn createDotnetThumbs parentRollout parentPanel fileString bgColour =
+					(
+						local groupBoxForm = (dotnetobject "System.Windows.Forms.GroupBox")
+						groupBoxForm.FlatStyle = (dotnetclass "System.Windows.Forms.FlatStyle").Flat
+						groupBoxForm.Width = parentRollout.width-30
+						groupBoxForm.Height = groupBoxForm.Width/2.0 + 20
+						groupBoxForm.text = getFilenameFile fileString
+						groupBoxForm.BackColor = bgColour
+						groupBoxForm.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
+						--gb.font = (dotnetClass "System.Drawing.Font").size 12
+						--gb.font.size = 12
+						
+						local pictureBox = dotnetobject "PictureBox"
+						pictureBox.BackColor = bgColour
+						pictureBox.SizeMode = (dotnetclass "PictureBoxSizeMode").Zoom
+						pictureBox.Width = groupBoxForm.Width - 20.0
+						pictureBox.Height = pictureBox.Width/2.0
+						pictureBox.imageLocation =  fileString
+						pictureBox.Dock = pictureBox.Dock.Bottom
+						if (getFilenameFile fileString) == "00-00_None_Remove_Existing" then (pictureBox.tag = "none")
+						else if (getFilenameFile fileString) == "00-00_VraySky" then (pictureBox.tag = "vraysky")
+						else (pictureBox.tag = "hdrimap")
+						
+						dotNet.addEventHandler pictureBox "click" whenButtonIsPressed
+						groupBoxForm.controls.add pictureBox
+						parentPanel.controls.add groupBoxForm
+					)
+
 					for f in thumbnails do
 					(
 						local gB = (dotnetobject "System.Windows.Forms.GroupBox")
-						gb.FlatStyle = (dotnetclass "System.Windows.Forms.FlatStyle").Flat;
-						gb.Width = MultiCamHDRILib_RO.width-30;
-						gb.Height = gb.Width/2.0 + 20;
+						gb.FlatStyle = (dotnetclass "System.Windows.Forms.FlatStyle").Flat
+						gb.Width = MultiCamHDRILib_RO.width-30
+						gb.Height = gb.Width/2.0 + 20
 						gb.text = getFilenameFile f
 						gb.BackColor = oddColor
 						gb.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
@@ -79,26 +115,32 @@ global MultiCamHDRILib
 						local pb = dotnetobject "PictureBox"
 						pb.BackColor = oddColor
 						pb.SizeMode = (dotnetclass "PictureBoxSizeMode").Zoom
-						pb.Width = gb.Width - 20.0;
-						pb.Height = pb.Width/2.0;
+						pb.Width = gb.Width - 20.0
+						pb.Height = pb.Width/2.0
 						pb.imageLocation =  f
 						pb.Dock = pb.Dock.Bottom
-						
+						if (getFilenameFile f) == "00-00_None_Remove_Existing" then (pb.tag = "none")
+						else if (getFilenameFile f) == "00-00_VraySky" then (pb.tag = "vraysky")
+						else (pb.tag = "hdrimap")
+
+
 						dotNet.addEventHandler pb "click" whenButtonIsPressed
 						gB.controls.add pb
 						fl.controls.add gB
 					)
 					
-					fl.AutoScroll = true;
+					fl.AutoScroll = true
 					fl.BackColor = oddColor
-					fl.BorderStyle = (dotnetclass "System.Windows.Forms.BorderStyle").Fixed3D;
-					fl.CausesValidation = false;
-					fl.Dock = (dotnetclass "System.Windows.Forms.DockStyle").Fill;
-					fl.Name = "flowLayoutPanelMain";
-					fl.TabIndex = 0;
+					fl.BorderStyle = (dotnetclass "System.Windows.Forms.BorderStyle").Fixed3D
+					fl.CausesValidation = false
+					fl.Dock = (dotnetclass "System.Windows.Forms.DockStyle").Fill
+					fl.Name = "flowLayoutPanelMain"
+					fl.TabIndex = 0
+					setFocus MultiCamHDRILib_RO
 				)
 			)
 		),
+		
 		fn parseLibraryFolder =
 		(
 			local result = undefined
@@ -137,7 +179,7 @@ global MultiCamHDRILib
 			if thumbnails != undefined then 
 			(
 				createdialog MultiCamHDRILib_RO modal:true
-				return bResult
+				bResult
 			)
 			else
 			(
