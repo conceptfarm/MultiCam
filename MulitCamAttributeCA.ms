@@ -5,7 +5,7 @@ Issues:
 2. Select the object when lister is editing, need to handle multi-object editing without selection
 3. Move all the stuff in the parameters back to rollout and add update only if selected, add reload mod panel function to any functions that update the UI elements, could be slow for the panel to reload
 4. Go back to making each CA a unique CA, then need to add callback functions for cloning
-5. Unique CA is not the answer, bad functionality persists, move UI functions to the rollout, in parameters check for selection and then only update if selected
+5. Unique CA is not the answer, bad functionality persists, leave UI functions in parameters but now check if this is selected then do UI updates
 
 source = $'PhysCamera001'
 target = $'PhysCamera002'
@@ -856,8 +856,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	rollout params "Submitter Properties"
 	(
 		button openSubmitter_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,2,2,2,2,true) toolTip:"Open Submitter" width:24 height:24 pos:[14,7] align:#left
-		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,1,1,1,1,true) toolTip:"Open Cam Lister" width:24 height:24 pos:[69,7] align:#center
-		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,3,3,3,3,true) toolTip:"Delete this Custom Attribyte" width:24 height:24 pos:[125,7] align:#right
+		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,1,1,1,1,true) toolTip:"Open Camera Lister" width:24 height:24 pos:[69,7] align:#center
+		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,3,3,3,3,true) toolTip:"Delete this Custom Attribute" width:24 height:24 pos:[125,7] align:#right
 		--checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
 		spinner hiddenController_spn pos:[0,0] visible:false
 		pickbutton cameraObject_btn width:1 height:1 pos:[0,0] visible:false
