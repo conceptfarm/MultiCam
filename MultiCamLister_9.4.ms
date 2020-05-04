@@ -152,7 +152,7 @@ Icon:#("MultiCamSq",1)
 		nearName = undefined
 		farName = undefined
 		
-		if classof cam == Freecamera then --or classof cam == Targetcamera then
+		if classof cam == Freecamera or classof cam == Targetcamera then
 		(
 			clipName = #clipManually
 			nearName = #nearclip
