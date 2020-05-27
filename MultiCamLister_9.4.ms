@@ -800,6 +800,7 @@ Icon:#("MultiCamSq",1)
 				
 				if ((isProperty obj.baseObject "MultiCamAttributeData") == true) then 
 				(
+					print("attribute update " + obj.name)
 					local row = findItem cameraObjIDs ((objID as string))
 					if (row != 0) then
 					(

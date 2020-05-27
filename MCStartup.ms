@@ -5,27 +5,24 @@
 -- Loads all the neccessary assets for MultiCam Suite of scripts
 -------------------------------------------------------------------------------
 
+--CICADA USE
 --global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
 --global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
 --global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
 
---DEADLINE_PATH = C:\Program Files\Thinkbox\Deadline10\bin
---%PROGRAMDATA%\Thinkbox\Deadline[VERSION]\deadline.ini
---NetworkRoot=C:/DeadlineRepository10
+--HOME USE
 global DeadlineRoot = @"C:\DeadlineRepository10"
-
-print ("current dir is " + getThisScriptFilename() )
-
 global multiCamRepo = @"C:\temp\Repo\"
 global multiCamHDRILibrary = multiCamRepo + "MultiCamHDRI\\"
 
+--NOTES:
+--DEADLINE_PATH = C:\Program Files\Thinkbox\Deadline10\bin
+--%PROGRAMDATA%\Thinkbox\Deadline[VERSION]\deadline.ini
+--NetworkRoot=C:/DeadlineRepository10
+--print ("current dir is " + getThisScriptFilename() )
 
 
 multiCamUsable = false
-
---global drCreateNewCam,drDeleteNewCam,getHideCamsCategory,setHideCamsCategory
---global multiCamHideCams = false
---global multiCamPrerenderSelection
 
 fn checkINIEncode iniFile = 
 (
@@ -128,7 +125,7 @@ fn loadIcons =
 (
 	local result = false
 	local iconCopyError = false
-	local localDirs = #((getDir #ui_ln + "IconsDark"),(getDir #ui_ln + "Icons"))
+	local localDirs = #(((getDir #ui_ln) + "IconsDark"),((getDir #ui_ln) + "Icons"))
 	local remoteIcons = (getfiles (multiCamRepo + "icons\\MultiCam*.bmp"))
 	
 	for dir in localDirs while iconCopyError == false do
@@ -254,8 +251,14 @@ fn loadIcons =
 fn loadMacro macro =
 (
 	local update = false
-	local localScript = (getDir #scripts + "\\MultiCam\\" + macro + ".ms")
-	local remoteScript = ((getfiles (multiCamRepo + macro + "*.ms")))[(getfiles (multiCamRepo + macro + "*.ms")).count]
+	local localScript = ((getDir #scripts) + "\\MultiCam\\" + macro + ".ms")
+	local remoteScriptsArray = getfiles (multiCamRepo + macro + "*.ms")
+	local remoteScript = ""
+	
+	if remoteScriptsArray.count > 0 then
+	(
+		remoteScript = remoteScriptsArray[remoteScriptsArray.count]
+	)
 	
 	print ("--------------- Info for Macro: "+macro+" ---------------")
 	
@@ -321,7 +324,7 @@ fn loadMacro macro =
 	)
 	else
 	(
-		print ("INFO: Local file for macro "+macro+" does is not found, trying to load remote file.")
+		print ("INFO: Local file for macro "+macro+" is not found, trying to load remote file.")
 		if (doesFileExist remoteScript) then 
 		(
 			print ("INFO: Remote file for macro "+macro+" is found.")
@@ -375,11 +378,6 @@ fn addMCCallbacks =
 )
 */
 
-fn nullVariables = 
-(
-
-)
-
 DeadlineRoot = getDeadlineRoot()
 
 if DeadlineRoot != undefined then
@@ -393,7 +391,7 @@ if DeadlineRoot != undefined then
 
 	--MCCB = addMCCallbacks()
 
-	if (MCIco == true and MCL == true and MCA == true and MCS == true and MD == true and MCHDlib==true and DeadlineRoot != undefined) then
+	if (MCIco == true and MCL == true and MCA == true and MCS == true and MD == true and MCHDlib == true and DeadlineRoot != undefined) then
 	(
 		multiCamUsable = true
 		print ("--------------- Info for MultiCam Suite ---------------")

@@ -413,6 +413,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					local camAnimation = AniCheck_fn cam
 					firstFrame_sp = camAnimation[1]
 					lastFrame_sp = camAnimation[camAnimation.count]
+
+					emitUpdateEvent()
 				)
 				else (MessageBox ("No Animation"))
 				getFrameRange_btn = false
