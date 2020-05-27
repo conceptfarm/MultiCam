@@ -3750,7 +3750,7 @@ Icon:#("MultiCamSq",2)
 			print ("Using " + vrayRend as string +" to render.")
 			
 			setBitmapIOClasses()
-			FFmpegExe = DeadlineRoot + "\\submission\\FFmpeg_20190826\\bin\\ffmpeg.exe"
+			FFmpegExe = DeadlineRoot + "\\custom\\submission\\FFmpeg\\bin\\ffmpeg.exe"
 			UnixDeadlineRoot = substituteString DeadlineRoot @"\" "/"
 			sceneCams = for o in cameras where (superclassof o == camera) collect o
 			
