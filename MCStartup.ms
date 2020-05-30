@@ -6,14 +6,14 @@
 -------------------------------------------------------------------------------
 
 --CICADA USE
---global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
---global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
---global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
+global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
+global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
 
 --HOME USE
-global DeadlineRoot = @"C:\DeadlineRepository10"
-global multiCamRepo = @"C:\temp\Repo\"
-global multiCamHDRILibrary = multiCamRepo + "MultiCamHDRI\\"
+--global DeadlineRoot = @"C:\DeadlineRepository10"
+--global multiCamRepo = @"C:\temp\Repo\"
+--global multiCamHDRILibrary = multiCamRepo + "MultiCamHDRI\\"
 
 --NOTES:
 --DEADLINE_PATH = C:\Program Files\Thinkbox\Deadline10\bin
@@ -378,7 +378,7 @@ fn addMCCallbacks =
 )
 */
 
-DeadlineRoot = getDeadlineRoot()
+--DeadlineRoot = getDeadlineRoot()
 
 if DeadlineRoot != undefined then
 (

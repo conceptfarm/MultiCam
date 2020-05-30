@@ -104,17 +104,22 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	(
 		local cam = (refs.dependentNodes (custattributes.getowner this))
 		local camName = ""
-		if cam[1] != undefined then camName = cam[1].name
-		--cols = #(yellow,red,blue,green,black)
-		gw.setTransform (matrix3 1)
-		gw.text (execute(this.sP_txt)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
-		gw.text (execute(this.sT_txt)) ("SunTarget_" + camName) color:yellow
-		gw.Marker (execute(this.sP_txt)) #plusSign color:red
-		gw.Marker (execute(this.sT_txt)) #plusSign color:red
-		gw.setColor #line red
-		gw.Polyline #((execute(this.sP_txt)),(execute(this.sT_txt))) false --rgb:#([255,0,0],[255,0,0],[255,0,0])
-		gw.enlargeUpdateRect #whole
-		
+		if cam != undefined then
+		(
+			if cam[1] != undefined then 
+			(
+				camName = cam[1].name
+				--cols = #(yellow,red,blue,green,black)
+				gw.setTransform (matrix3 1)
+				gw.text (execute(this.sP_txt)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
+				gw.text (execute(this.sT_txt)) ("SunTarget_" + camName) color:yellow
+				gw.Marker (execute(this.sP_txt)) #plusSign color:red
+				gw.Marker (execute(this.sT_txt)) #plusSign color:red
+				gw.setColor #line red
+				gw.Polyline #((execute(this.sP_txt)),(execute(this.sT_txt))) false --rgb:#([255,0,0],[255,0,0],[255,0,0])
+				gw.enlargeUpdateRect #whole
+			)
+		)
 		--check if the dependent is still there, in this case the camera
  		if ((refs.dependentNodes (custattributes.getowner this)).count  == 0) then
  		(
@@ -175,11 +180,16 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	fn emitUpdateEvent = 
 	(
 		--workaround: need to find a good way to emit an event for callback function to catch
-		if this.params.cameraObject_btn.object != undefined then
+		local cam = (refs.dependentNodes (custattributes.getowner this))
+		if cam != undefined then
 		(
-			if isProperty this.params.cameraObject_btn.object "MultiCamAttributeData" then
+			if cam[1] != undefined then 
 			(
-				this.params.cameraObject_btn.object.multicamattributedata.hiddenController_spn = random 0 500
+				if isProperty cam[1] "MultiCamAttributeData" then
+				(
+					r = (random 0 500)
+					cam[1].baseObject.hiddenController_spn = r
+				)
 			)
 		)
 	)
