@@ -1,26 +1,245 @@
---------------------------------------------------------------------
--- Generic radius manipulator 
--- Written by Scott Morrison
--- This manipulator sets the radius on any object or modifier with 
--- a parameter named "radius". It creates a circle gizmo of the appropriate 
--- radius centered at the origin in the XY plane.
+---------------------------------------------------------------------------------------
+-- MultiCamManipulator.ms
+-- By Ilya Floussov (ilya@conceptfarm.ca)
+-- Jun 15th 2020
+-- Manipulator for editing sun positions of the camera with MultiCam Custom
+-- Attribute
+---------------------------------------------------------------------------------------
 
---http://docs.autodesk.com/3DSMAX/15/ENU/MAXScript-Help/index.html?url=files/GUID-2B1DAC46-F27F-44A1-91F9-6E6C426AAAF1.htm,topicNumber=d30e645360
---https://help.autodesk.com/view/3DSMAX/2017/ENU/?guid=__files_GUID_1E2277FE_7854_4404_89A9_9D72C07CDBDB_htm
-
-plugin simpleManipulator radiusManip
-name:"RadiusManip"
+plugin simpleManipulator MultiCamSunManipX
+name:"MultiCamSunManipX"
 invisible:true
 (
-	-- Create the green and red colors for the gizmo
-	local g = [0, 1, 0], r = [1, 0, 0]
 	local start = [50,50,50]
-	local end = [0,0,0]
-	local movePlane = z_axis
+	local localPlaneName = "x_plane"
+	-- This manipulator manipulates any node with a "radius" property
+	on canManipulate target return	isProperty target "MultiCamAttributeData"
+	
+	on updateGizmos do
+	(
+		-- Clear the current gizmo cache
+		this.clearGizmos()
+		
+		start = node.baseObject.MultiCamAttributeData.sP_val --[50,50,50]
+					
+		local nodeTMInv = (inverse node.objecttransform)
+		local startWorld = start * nodeTMInv
+		
+		scaleFactor = gw.nonScalingObjectSize() * (gw.getVPWorldWidth start) / 360.0
+		
+		
+		up0Line = manip.makeGizmoShape()
+		up0Line.startNewLine()
+		up0Line.addPoint startWorld
+		up0LineEnd = ([start.x+25*scaleFactor,start.y,start.z] * nodeTMInv)
+		up0Line.addPoint up0LineEnd
+		--need to convert x,y,z coords to world after separating into components
+				
+						
+		this.addGizmoShape up0Line 0 [1,0,0] [1,1,0] 
+		this.addGizmoMarker #bigbox  up0LineEnd 0 [1,0,0] [1,1,0] 
+			
+		-- return the ToolTip string
+		return node.name + " Sun Location = " + startWorld as string
+	)
+	
+	on mouseMove m which do
+	(
+		-- Compute the hit-ray in local coordinates
+		local viewRay = this.getLocalViewRay m
+		--local dir = getViewDirection()
+		
+		-- Create the XY plane. 
+		-- manip.makePlaneFromNormal takes a normal vector and a point 
+		-- and creates a plane passing through the point with the given normal
+		local localPlane = [0,0,1] *  inverse ((node.transform).rotationPart as Matrix3)
+		localPlaneName = "y_plane"
+		local pl = manip.makePlaneFromNormal localPlane (start * (inverse node.objecttransform))
+			
+		local projectedPoint = [0,0,0]
+			
+		-- Intersect the plane with the view ray
+		local res = pl.intersect viewRay &projectedPoint
+		
+		-- If the intersection worked, set the radius
+		if res then
+		(
+			node.targeted = node.targeted
+			sp_val = node.baseObject.MultiCamAttributeData.sP_val
+			newStart = projectedPoint * (node.objecttransform)
+			start = [newStart.x, sP_val.y, sP_val.z]
+			node.baseObject.MultiCamAttributeData.sP_val = start 
+		)
+	)
+
+	on mouseUp m which do
+	(
+		drawOrtho = false
+		node.baseObject.MultiCamAttributeData.sP_val = start 
+		node.targeted = node.targeted
+	)
+)
+
+plugin simpleManipulator MultiCamSunManipY
+name:"MultiCamSunManipY"
+invisible:true
+(
+	local start = [50,50,50]
+	local localPlaneName = "y_plane"
+	-- This manipulator manipulates any node with a "radius" property
+	on canManipulate target return	isProperty target "MultiCamAttributeData"
+	
+	on updateGizmos do
+	(
+		-- Clear the current gizmo cache
+		this.clearGizmos()
+		
+		start = node.baseObject.MultiCamAttributeData.sP_val --[50,50,50]
+					
+		local nodeTMInv = (inverse node.objecttransform)
+		local startWorld = start * nodeTMInv
+		
+		scaleFactor = gw.nonScalingObjectSize() * (gw.getVPWorldWidth start) / 360.0
+		
+		up0Line = manip.makeGizmoShape()
+		up0Line.startNewLine()
+		up0Line.addPoint startWorld
+		up0LineEnd = ([start.x,start.y+25*scaleFactor,start.z] * nodeTMInv)
+		up0Line.addPoint up0LineEnd
+		--need to convert x,y,z coords to world after separating into components
+				
+						
+		this.addGizmoShape up0Line 0 [0,1,0] [1,1,0] 
+		this.addGizmoMarker #bigbox  up0LineEnd 0 [0,1,0] [1,1,0] 
+			
+		-- return the ToolTip string
+		return node.name + " Sun Location = " + startWorld as string
+	)
+	
+	on mouseMove m which do
+	(
+		-- Compute the hit-ray in local coordinates
+		local viewRay = this.getLocalViewRay m
+		--local dir = getViewDirection()
+		
+		-- Create the XY plane. 
+		-- manip.makePlaneFromNormal takes a normal vector and a point 
+		-- and creates a plane passing through the point with the given normal
+		local localPlane = [0,0,1] *  inverse ((node.transform).rotationPart as Matrix3)
+		localPlaneName = "y_plane"
+		local pl = manip.makePlaneFromNormal localPlane (start * (inverse node.objecttransform))
+			
+		local projectedPoint = [0,0,0]
+			
+		-- Intersect the plane with the view ray
+		local res = pl.intersect viewRay &projectedPoint
+		
+		-- If the intersection worked, set the radius
+		if res then
+		(
+			node.targeted = node.targeted
+			sp_val = node.baseObject.MultiCamAttributeData.sP_val
+			newStart = projectedPoint * (node.objecttransform)
+			start = [sP_val.x, newStart.y, sP_val.z]
+			node.baseObject.MultiCamAttributeData.sP_val = start 
+		)
+	)
+
+	on mouseUp m which do
+	(
+		drawOrtho = false
+		node.baseObject.MultiCamAttributeData.sP_val = start 
+		node.targeted = node.targeted
+	)
+)
+
+plugin simpleManipulator MultiCamSunManipZ
+name:"MultiCamSunManipZ"
+invisible:true
+(
+	local start = [50,50,50]
+	local end = [5,5,5]
+	local localPlaneName = "z_plane"
+	-- This manipulator manipulates any node with a "radius" property
+	on canManipulate target return	isProperty target "MultiCamAttributeData"
+	
+	on updateGizmos do
+	(
+		-- Clear the current gizmo cache
+		this.clearGizmos()
+		
+		start = node.baseObject.MultiCamAttributeData.sP_val --[50,50,50]
+					
+		local nodeTMInv = (inverse node.objecttransform)
+		local startWorld = start * nodeTMInv
+		
+		scaleFactor = gw.nonScalingObjectSize() * (gw.getVPWorldWidth start) / 360.0
+			
+		up0Line = manip.makeGizmoShape()
+		up0Line.startNewLine()
+		up0Line.addPoint startWorld
+		up0LineEnd = ([start.x,start.y,start.z+25*scaleFactor] * nodeTMInv)
+		up0Line.addPoint up0LineEnd
+		--need to convert x,y,z coords to world after separating into components
+				
+						
+		this.addGizmoShape up0Line 0 [0,0,1] [1,1,0] 
+		this.addGizmoMarker #bigbox  up0LineEnd 0 [0,0,1] [1,1,0]  
+			
+		-- return the ToolTip string
+		return node.name + " Sun Location = " + startWorld as string
+	)
+	
+	on mouseMove m which do
+	(
+		-- Compute the hit-ray in local coordinates
+		local viewRay = this.getLocalViewRay m
+		--local dir = getViewDirection()
+		
+		-- Create the XY plane. 
+		-- manip.makePlaneFromNormal takes a normal vector and a point 
+		-- and creates a plane passing through the point with the given normal
+		local localPlane = [0,1,0] *  inverse ((node.transform).rotationPart as Matrix3)
+		localPlaneName = "z_plane"
+		local pl = manip.makePlaneFromNormal localPlane (start * (inverse node.objecttransform))
+			
+		local projectedPoint = [0,0,0]
+			
+		-- Intersect the plane with the view ray
+		local res = pl.intersect viewRay &projectedPoint
+		
+		-- If the intersection worked, set the radius
+		if res then
+		(
+			node.targeted = node.targeted
+			sp_val = node.baseObject.MultiCamAttributeData.sP_val
+			newStart = projectedPoint * (node.objecttransform)
+			start = [sP_val.x, sP_val.y, newStart.z]
+			node.baseObject.MultiCamAttributeData.sP_val = start 
+		)
+	)
+
+	on mouseUp m which do
+	(
+		drawOrtho = false
+		node.baseObject.MultiCamAttributeData.sP_val = start 
+		node.targeted = node.targeted
+	)
+)
+
+
+plugin simpleManipulator MultiCamSunManip
+name:"MultiCamSunManip"
+invisible:true
+(
+	local start = [50,50,50]
+	local end = [5,5,5]
 	
 	-- This manipulator manipulates any node with a "radius" property
-	on canManipulate target return (findItem (getPropNames target) #radius) != 0
-
+	on canManipulate target return	isProperty target "MultiCamAttributeData"
+	
+	-- on canManipulate target return true--(findItem (getPropNames target) #radius) != 0
+	
 	-- Create the manipulator gizmo.
 	-- This is called initially and whenever the manipulator targetchanges
 	on updateGizmos do
@@ -28,130 +247,26 @@ invisible:true
 		-- Clear the current gizmo cache
 		this.clearGizmos()
 		
-		-- Set the radius of circle gizmo a little bigger than thetarget radius
-		--giz = manip.makeCircle [0,0,0] (target.radius * 1.01) 28
+		start = node.baseObject.MultiCamAttributeData.sP_val
+		end = node.baseObject.MultiCamAttributeData.sT_val
+			
+		local nodeTMInv = (inverse node.objecttransform)
+		local endWorld = end * nodeTMInv
+		local startWorld = start * nodeTMInv
 
 		
 		gizLine = manip.makeGizmoShape()
 		gizLine.startNewLine()
-		local endWorld = end* (inverse node.objecttransform)
-		local startWorld = start* (inverse node.objecttransform)
 		gizLine.addPoint endWorld 
 		gizLine.addPoint startWorld
 		
-		up0Line = manip.makeGizmoShape()
-		up0Line.startNewLine()
-		right0Line = manip.makeGizmoShape()
-		right0Line.startNewLine()
-		up1Line = manip.makeGizmoShape()
-		up1Line.startNewLine()
-		right1Line = manip.makeGizmoShape()
-		right1Line.startNewLine()
-		dropLine = manip.makeGizmoShape()
-		dropLine.startNewLine()
-		--need to convert x,y,z coords to world after separating into components
-		case movePlane of
-		(
-			x_axis:(
-				up0Line.addPoint endWorld
-				up0Line.addPoint [endWorld.x,endWorld.y,startWorld.z]
-				
-				up1Line.addPoint [endWorld.x,startWorld.y,endWorld.z]
-				up1Line.addPoint [endWorld.x,startWorld.y,startWorld.z]
-				
-				right0Line.addPoint endWorld
-				right0Line.addPoint [endWorld.x,startWorld.y,endWorld.z]
-				
-				right1Line.addPoint [endWorld.x,endWorld.y,startWorld.z]
-				right1Line.addPoint [endWorld.x,startWorld.y,startWorld.z]
-				
-				dropLine.addPoint startWorld
-				dropLine.addPoint [endWorld.x,startWorld.y,startWorld.z]
-				
-				)
-			y_axis:(
-				up0Line.addPoint endWorld
-				up0Line.addPoint [endWorld.x,endWorld.y,startWorld.z]
-				
-				up1Line.addPoint [startWorld.x,endWorld.y,endWorld.z]
-				up1Line.addPoint [startWorld.x,endWorld.y,startWorld.z]
-				
-				right0Line.addPoint endWorld
-				right0Line.addPoint [startWorld.x,endWorld.y,endWorld.z]
-				
-				right1Line.addPoint  [endWorld.x,endWorld.y,startWorld.z]
-				right1Line.addPoint [startWorld.x,endWorld.y,startWorld.z]
-				
-				dropLine.addPoint startWorld
-				dropLine.addPoint [startWorld.x,endWorld.y,startWorld.z]
-
-				)
-			z_axis:(
-				up0Line.addPoint endWorld
-				up0Line.addPoint [endWorld.x,startWorld.y,endWorld.z]
-				
-				up1Line.addPoint [startWorld.x,endWorld.y,endWorld.z]
-				up1Line.addPoint [startWorld.x,startWorld.y,endWorld.z]
-				
-				right0Line.addPoint endWorld
-				right0Line.addPoint [startWorld.x,endWorld.y,endWorld.z]
-				
-				right1Line.addPoint  [endWorld.x,startWorld.y,endWorld.z]
-				right1Line.addPoint [startWorld.x,startWorld.y,endWorld.z]
-				
-				dropLine.addPoint startWorld
-				dropLine.addPoint [startWorld.x,startWorld.y,endWorld.z]
-
-				)
-		)
-		
-		
-		-- Add the circle to the manipulator
-		--this.addGizmoShape giz 2 g r
-		this.addGizmoShape gizLine 2 g r
-		this.addGizmoShape up0Line 2 g r
-		this.addGizmoShape up1Line 2 g r
-		this.addGizmoShape right0Line 2 g r
-		this.addGizmoShape right1Line 2 g r
-		this.addGizmoShape dropLine 2 g r
-		this.addGizmoMarker #bigbox startWorld 0 g r
-		this.addGizmoMarker #hollowBox  endWorld 2 g r
+		this.addGizmoShape gizLine 2 [1,1,0] [1,1,0]
+		this.addGizmoMarker #hollowBox startWorld 2 [1,1,0] [1,1,0]
+		this.addGizmoMarker #hollowBox  endWorld 2 [1,1,0] [1,1,0]
+			
 		-- return the ToolTip string
-		return node.name + " radius = " + target.radius as string
+		--return node.name + " Sun Location = " + startWorld as string
 	)
-	
-
-	fn getMostOrthoWorld dir =
-	(
-		result = z_axis 
-		if (abs(dir.x) > abs(dir.y) and abs(dir.x) > abs(dir.z)) then result = x_axis
-		else if (abs(dir.y) > abs(dir.x) and abs(dir.y) > abs(dir.z)) then result = y_axis
-		result
-	)
-	
-	
-	-- mouseMove is called on every mouse move when dragging the manip -- It needs to convert the mouse position 'm' into a new value for the radius
-	on mouseMove m which do
-	(
-		-- Compute the hit-ray in local coordinates
-		viewRay = this.getLocalViewRay m
-		print(viewRay.dir)
-		
-		-- Create the XY plane. -- manip.makePlaneFromNormal takes a normal vector and a point -- and creates a plane passing through the point with the given normal
-		movePlane = (getMostOrthoWorld viewRay.dir)
-		local pl = manip.makePlaneFromNormal movePlane (start* (inverse node.objecttransform)),
-		projectedPoint = [0,0,0]
 		
 
-		
-		-- Intersect the plane with the view ray
-		res = pl.intersect viewRay &projectedPoint
-		
-		-- If the intersection worked, set the radius
-		if (res) then target.radius = target.radius
-		if res then
-		(
-			start = projectedPoint * node.objecttransform
-		)
-	)
 )
