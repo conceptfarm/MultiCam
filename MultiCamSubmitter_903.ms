@@ -330,8 +330,8 @@
 
 macroScript MultiCamSubmitter
 category:"ilya_s Scripts"
-tooltip:"v.903.1"
-buttontext:"v.903.1"
+tooltip:"v.903.4"
+buttontext:"v.903.4"
 Icon:#("MultiCamSq",2)
 (
 	global SMTDSettings
@@ -902,7 +902,7 @@ Icon:#("MultiCamSq",2)
 			activeViewportRegion = viewport.getRegionRect viewport.activeViewport
 			
 			viewport.ResetAllViews()
-			viewport.activeViewport = 4
+			try(viewport.activeViewport = 4)catch("Viewport out of index range")
 			max tool maximize
 			
 			if activeViewportType == #view_camera then viewport.setCamera activeViewportCamera
@@ -2614,6 +2614,7 @@ Icon:#("MultiCamSq",2)
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
+		resetViewports()
 		--not sure why this is here?
 		--getOldEnvLayers()
 
@@ -2740,6 +2741,7 @@ Icon:#("MultiCamSq",2)
 		getOldRPS()
 		local hideCatCams = hideByCategory.cameras
 		hideByCategory.cameras = true
+		resetViewports()
 		--not sure why this is here?
 		--getOldEnvLayers()
 
@@ -2921,7 +2923,7 @@ Icon:#("MultiCamSq",2)
 --########################--
 	
 
-	rollout multiCamSubmitter "MultiCam Submitter v.903.1" width:570 height:625
+	rollout multiCamSubmitter "MultiCam Submitter v.903.4" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
@@ -3237,7 +3239,7 @@ Icon:#("MultiCamSq",2)
 	( 
 		jobPrefix_txt.text = rootnode.CA_jobPrefix
 		updateFrameOut()
-		resetViewports()
+		--resetViewports()
 		displaySafeFrames = true
 
 		--if both are enabled
