@@ -330,8 +330,8 @@
 
 macroScript MultiCamSubmitter
 category:"ilya_s Scripts"
-tooltip:"v.903.4"
-buttontext:"v.903.4"
+tooltip:"v.903.71"
+buttontext:"v.903.71"
 Icon:#("MultiCamSq",2)
 (
 	global SMTDSettings
@@ -738,7 +738,15 @@ Icon:#("MultiCamSq",2)
 		hideByCategory.shapes =  true
 		hideByCategory.lights = true
 		hideByCategory.cameras = true
-		hideByCategory.helpers = true
+		local animaHelpers = for o in objects where classof o == animaScene collect o
+		if animaHelpers.count > 0 then
+		(
+			hideByCategory.helpers = false
+		)
+		else
+		(
+			hideByCategory.helpers = true
+		)
 		hideByCategory.spacewarps = true
 		hideByCategory.particles = true
 		hideByCategory.bones = true
@@ -939,7 +947,7 @@ Icon:#("MultiCamSq",2)
 				)
 				
 				viewport.ResetAllViews()
-				viewport.activeViewport = 4
+				try(viewport.activeViewport = 4)catch("Viewport out of index range")
 				max tool maximize
 
 				if viewportIndex > 0 then 
@@ -955,7 +963,7 @@ Icon:#("MultiCamSq",2)
 				activeViewportCamera = getActiveCamera()
 				activeViewportRegion = viewport.getRegionRect viewport.activeViewport
 				viewport.ResetAllViews()
-				viewport.activeViewport = 4
+				try(viewport.activeViewport = 4)catch("Viewport out of index range")
 				max tool maximize
 				viewport.setCamera activeViewportCamera
 				
@@ -2923,7 +2931,7 @@ Icon:#("MultiCamSq",2)
 --########################--
 	
 
-	rollout multiCamSubmitter "MultiCam Submitter v.903.4" width:570 height:625
+	rollout multiCamSubmitter "MultiCam Submitter v.903.71" width:570 height:625
 	(
 	
 	label JobPrefixLbl "Job Prefix:" pos:[24,18] width:56 height:18
@@ -3775,7 +3783,7 @@ Icon:#("MultiCamSq",2)
 			)
 
 			qsort sceneCams compareByObjectName
-			sceneCamsNames = for o in sceneCams collect o.name
+			sceneCamsNames = for o in sceneCams collect (toLower o.name)
 			sceneCamsNames = makeUniqueArray sceneCamsNames
 			
 			if sceneCamsNames.count != sceneCams.count then 
