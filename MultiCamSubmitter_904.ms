@@ -375,7 +375,7 @@ Icon:#("MultiCamSq",2)
 	local oldRenderRegion = #()
 	
 	
-	local utvideoDir = @"C:\Program Files\utvideo\utv_logc.exe"
+	local utvideoDir = @"C:\Program Files\utvideo\unins000.exe"
 	local avidDir = @"C:\Program Files (x86)\QuickTime\QTComponents\AvidAVdnCodec.qtx"
 	local FFmpegExe = ""
 	local UnixDeadlineRoot = "" 
@@ -557,7 +557,7 @@ Icon:#("MultiCamSq",2)
 			
 		local outputFile = ""
 		
-		if rootnode.CA_extension == ".exr" then
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then
 		(
 			outputFile = vrayRend.output_rawfilename
 		)
@@ -583,7 +583,7 @@ Icon:#("MultiCamSq",2)
 	(
 		local outputFile = ""
 		
-		if rootnode.CA_extension == ".exr" then
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then
 		(
 			outputFile = vrayRend.output_rawfilename
 		)
@@ -1412,7 +1412,7 @@ Icon:#("MultiCamSq",2)
 			
 			theMOVFile = tempFilter[1] + "\\" + tempFilter[2] + "\\" + "03_Previews" +"\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + ".avi"
 			
-			if rootnode.CA_extension == ".exr" then
+			if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then
 			(
 				outputFile = vrayRend.output_rawfilename
 			)
