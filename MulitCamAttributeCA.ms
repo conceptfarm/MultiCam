@@ -111,20 +111,27 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				camName = cam[1].name
 				--cols = #(yellow,red,blue,green,black)
 				gw.setTransform (matrix3 1)
-				gw.text (execute(this.sP_txt)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
-				gw.text (execute(this.sT_txt)) ("SunTarget_" + camName) color:yellow
-				gw.Marker (execute(this.sP_txt)) #plusSign color:red
-				gw.Marker (execute(this.sT_txt)) #plusSign color:red
+				gw.text ((this.sP_val)) ("Sun_" + camName) color:yellow--color:cols[( cols.count)]
+				gw.text ((this.sT_val)) ("SunTarget_" + camName) color:yellow
+				gw.Marker ((this.sP_val)) #plusSign color:red
+				gw.Marker ((this.sT_val)) #plusSign color:red
 				gw.setColor #line red
-				gw.Polyline #((execute(this.sP_txt)),(execute(this.sT_txt))) false --rgb:#([255,0,0],[255,0,0],[255,0,0])
+				gw.Polyline #(((this.sP_val)),((this.sT_val))) false --rgb:#([255,0,0],[255,0,0],[255,0,0])
 				gw.enlargeUpdateRect #whole
 			)
 		)
 		--check if the dependent is still there, in this case the camera
- 		if ((refs.dependentNodes (custattributes.getowner this)).count  == 0) then
- 		(
- 			unregisterRedrawViewsCallback gwDisplay
- 		)
+ 		try
+		(
+			if ((refs.dependentNodes (custattributes.getowner this)).count  == 0) then
+			(
+				unregisterRedrawViewsCallback gwDisplay
+			)
+		)
+		catch
+		(
+			unregisterRedrawViewsCallback gwDisplay
+		)
 	)
 
 	fn gwActiveSettings = gwShowActiveSettings()
@@ -177,7 +184,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		result
 	)
 
-	fn emitUpdateEvent = 
+	fn emitUpdateEvent2 = 
 	(
 		--workaround: need to find a good way to emit an event for callback function to catch
 		local cam = (refs.dependentNodes (custattributes.getowner this))
@@ -191,6 +198,14 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					cam[1].baseObject.hiddenController_spn = r
 				)
 			)
+		)
+	)
+
+	fn emitUpdateEvent =
+	(
+		if MultiCamLister != undefined then
+		(
+			MultiCamLister.updateRowFromObj $ MultiCamLister.MultiCamLister_ro.dgv
 		)
 	)
 
@@ -296,7 +311,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				unregisterRedrawViewsCallback gwActiveSettings
 			)
 		)
-		*/
+		
 
 		on main reload do 
 		(
@@ -313,16 +328,15 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				--allMods[i].customPass_txt.text = passNames[i]
 			)
 		)
+		*/
 	)
 	
 	parameters sunpoints_params rollout:sunpoints_ro
 	(
 		--SUNPOINTS
 		useSunpoints_param type:#boolean animatable:false ui:useSunpoints_chb default:true
-		sP_txt type:#string animatable:false ui:sp_txt default:"[10000,-7000,5500]"
-		sT_txt type:#string animatable:false ui:sT_txt default:"[0,0,0]"
-		sP_name type:#string animatable:false default:""
-		sT_name type:#string animatable:false default:""
+		sP_val type:#point3 animatable:false default:[10000,-7000,5500]
+		sT_val type:#point3 animatable:false default:[0,0,0]
 		showSunPoint_btn type:#boolean animatable:false ui:showSunPoint_btn default:false
 		viewFromSun_btn type:#boolean animatable:false ui:viewFromSun_btn default:false
 		readSunPos_btn type:#boolean animatable:false ui:readSunPos_btn default:false
@@ -350,7 +364,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			emitUpdateEvent()
 		)
 		
-
 		on showSunPoint_btn set state do
 		(
 			if state == true then
@@ -384,8 +397,11 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				(
 					
 					local sun = getVraySunInScene()
-					sP_txt = sun.position as string
-					sT_txt = sun.target.position as string
+					this.sP_val = sun.position
+					this.sT_val = sun.target.position
+					this.sunpoints_ro.sP_txt.text = this.sP_val as string
+					this.sunpoints_ro.sT_txt.text = this.sT_val as string
+
 				)
 				readSunPos_btn = false	
 			)
@@ -398,8 +414,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				if ((getVraySunInScene()) != undefined) then
 				(
 					local sun = getVraySunInScene()
-					sun.pos = (execute sP_txt)
-					sun.target.pos = (execute sT_txt)
+					sun.pos = (this.sP_val)
+					sun.target.pos = (this.sT_val)
 				)
 				moveSunToPos_btn = false
 			)
@@ -708,7 +724,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		(
 			if (classof val == VRayHDRI or classof val == VraySky) then
 			(
-				print ("val is " + val as string)
 				hdriMap_btn = val				
 			)
 			else
@@ -717,7 +732,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			)
 		)
 		
-
 		on hdriMapEdit_btn set val do
 		(
 			if val == true then
@@ -734,7 +748,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			)
 		)
 
-
 		on hdriMapLink_chb set val do
 		(
 			local hdriMapLinkButtonCaption = "Link HDRI to Sun"
@@ -746,7 +759,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
 					(
 						local m = hdriMap_btn
-						print m.name
 						m.cropplace_u.controller = float_script()
 						
 						local sun = getVraySunInScene()
@@ -859,8 +871,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	)
 	
 
-
-	
 	-----------------------------------------------------
 	--ROLLOUTS--------------------------------------
 	-----------------------------------------------------
@@ -889,9 +899,11 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		(
 			unregisterRedrawViewsCallback gwDisplay
 			unregisterRedrawViewsCallback gwActiveSettings
-			--custAttributes.delete $ 1
 			deleteMCCustAttribute $
-			if multiCamListerFloater.open == true then ( multiCamListerFloater.rollouts[1].refresh_btn.pressed() )
+			if multiCamListerFloater != undefined then
+			(
+				if multiCamListerFloater.open == true then ( multiCamListerFloater.rollouts[1].refresh_btn.pressed() )
+			)
 		)
 
 		on params open do
@@ -908,8 +920,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		checkbox useSunpoints_chb "Use Sunpoints" pos:[13,7] align:#center checked:useSunpoints_param
 		checkbutton showSunPoint_btn images:#(MCiconImg , MCiconImgMask, 8,3,3,4,4,true) toolTip:"Show sun points" checked:false enabled:useSunpoints_param width:(buttonWidth/2) pos:[14,27]  align:#left
 		checkbutton viewFromSun_btn images:#(MCiconImg , MCiconImgMask, 8,5,5,6,6,true) toolTip:"Set viewport to Sun's POV"  checked:false  enabled:useSunpoints_param width:(buttonWidth/2) pos:[82,27] align:#right
-		edittext sP_txt "sP" text:"[10000,-7000,5500]" readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,53] align:#center
-		edittext sT_txt "sT" text:"[0,0,0]" readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,75] align:#center
+		edittext sP_txt "sP" text:(this.sP_val as string) readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,53] align:#center
+		edittext sT_txt "sT" text:(this.sT_val as string) readonly:true enabled:useSunpoints_param width:buttonWidth pos:[14,75] align:#center
 		checkbutton moveSunToPos_btn images:#(MCiconImg , MCiconImgMask, 8,1,1,2,2,true) toolTip:"Move Sun to point position" checked:false  enabled:useSunpoints_param width:buttonWidth pos:[14,123] align:#center
 		checkbutton readSunPos_btn images:#(MCiconImg , MCiconImgMask, 8,7,7,8,8,true) toolTip:"Move Point to current sun position" checked:false  enabled:useSunpoints_param width:buttonWidth pos:[14,97] align:#center
 		button createSunPoint_btn "Create Sun Helpers" enabled:useSunpoints_param width:buttonWidth pos:[14,175] align:#center
@@ -946,8 +958,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			(
 				sunPointName = "Sun_" + selection[1].name
 				sunTargetName = "SunTarget_" + selection[1].name
-				sunPoint = point name: sunPointName pos: (execute sP_txt.text) constantscreensize: on
-				sunTarget = point name: sunTargetName pos: (execute sT_txt.text) constantscreensize: on
+				sunPoint = point name: sunPointName pos: ( this.sP_val) constantscreensize: on
+				sunTarget = point name: sunTargetName pos: ( this.sT_val) constantscreensize: on
 				MessageBox ("Submitter no longer uses these helpers, use these as a placeholder or for debugging purposes.")
 			)
 		)
@@ -1019,7 +1031,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		
 		on hdriMap_ro open do
 		(
-			print "hdrimap_ro open"
 			this.checkHDRIconnection()
 		)
 		
@@ -1129,13 +1140,13 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			if (getNodebyName ("Sun_" + selection[1].name)) != undefined then
 			(
 				changeStateSunpoints true
-				this.sP_txt = (getNodebyName ("Sun_" + selection[1].name)).pos as string
+				this.sP_val = (getNodebyName ("Sun_" + selection[1].name)).pos --as string
 				
 				if ((getVraySunInScene()) != undefined) then
 				(
 					local sun = getVraySunInScene()
 					
-					this.sT_txt = sun.target.pos as string
+					this.sT_val = sun.target.pos --as string
 				)
 			)
 			else
@@ -1147,8 +1158,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					changeStateSunpoints true
 					
 					local sun = getVraySunInScene()
-					this.sP_txt = sun.pos as string
-					this.sT_txt = sun.target.pos as string
+					this.sP_val = sun.pos --as string
+					this.sT_val = sun.target.pos --as string
 				)
 				else
 				(
@@ -1167,7 +1178,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	
 	on load do
 	(
-		print "loading"
 		if (multiCamUsable == true) then
 		(
 			if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
@@ -1293,7 +1303,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	*/	
 	on deleted  do
 	(
-		print "deleting"
+
 		-- store map's handle as custom attribute
 		-- convert float_expression to bezier_float with the result of the previous float_expression
 		-- hdriMap_btn.cropplace_u.controller = Bezier_Float()
@@ -1303,7 +1313,6 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 
 	on detachedFromNode this do
 	(	
-		print "detaching"
 		for i=1 to 24 do
 		(
 			if (getmeditmaterial i == hdriMap_btn) then
