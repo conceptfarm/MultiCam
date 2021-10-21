@@ -26,14 +26,14 @@ fn copyMultiCamAttributeData souce target =
 
 */
 global MultiCamCustomAttribute
-MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0, 0x29a2ba02) version:1
+MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0, 0x29a2ba02) version:2
 (
 	local hdriMapName = "None"
 	local objectName = ""
 	local buttonWidth = 135
 	local gwDisplaySunpoints
 	local gwShowActiveSettings
-	local version = "0.909"
+	local versionText = "0.910"
 	--local layers_ro
 	--local sunpoints_ro
 	--local resolution_ro
@@ -255,15 +255,18 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
 		this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
 		this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+		this.hdriMap_ro.hdriMapGI_chb.enabled = state
+		this.hdriMap_ro.hdriMapRefl_chb.enabled = state
+		this.hdriMap_ro.hdriMapRefr_chb.enabled = state
 	)
 		
 	fn checkHDRIconnection =
 	(
-		if (this.hdriMap_btn != undefined and (classof this.hdriMap_btn) == VrayHDRI) then
+		if (this.hdriMap_val != undefined and (classof this.hdriMap_val == VrayHDRI or classof this.hdriMap_val == VRayBitmap)) then
 		(
-			if ((classof this.hdriMap_btn.cropplace_u.controller) == float_script) then
+			if ((classof this.hdriMap_val.cropplace_u.controller) == float_script) then
 			(
-				if (refs.dependentNodes ((this.hdriMap_btn.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
+				if (refs.dependentNodes ((this.hdriMap_val.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
 				(
 					this.hdriMapLink_chb = false
 					this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
@@ -276,14 +279,15 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			)
 		)
 
-		if (this.hdriMap_btn != undefined) then
+		if (this.hdriMap_val != undefined) then
 		(
-			hdriMapName = this.hdriMap_btn.name
+			hdriMapName = this.hdriMap_val.name
 			this.hdrimap_ro.hdriMapLoader_btn.caption = hdriMapName
 		)
 		else
 		(
 			this.hdriMapLink_chb = false
+			this.hdrimap_ro.hdriMapLoader_btn.caption = "None"
 			this.hdrimap_ro.hdriMapLink_chb.caption = "Link HDRI to Sun"
 		)
 	)
@@ -341,6 +345,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		viewFromSun_btn type:#boolean animatable:false ui:viewFromSun_btn default:false
 		readSunPos_btn type:#boolean animatable:false ui:readSunPos_btn default:false
 		moveSunToPos_btn type:#boolean animatable:false ui:moveSunToPos_btn default:false
+		--old variables for backwards compatibility
+		sP_txt type:#string animatable:false default:"[10000,-7000,5500]"
+		sT_txt type:#string animatable:false default:"[0,0,0]"
 		
 		on useSunpoints_param set state do 
 		(
@@ -614,17 +621,26 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	parameters hdriMap_params rollout:hdriMap_ro
 	(
 		--HDRI MAP
-		useHDRIMap_chb type:#boolean animatable:false ui:useHDRIMap_chb default:false
-		hdriMapLoader_btn type:#boolean animatable:false ui:hdriMapLoader_btn default:false
-		hdriMap_btn type:#texturemap animatable:false ui:hdriMap_btn --this actually holds the map, hidden in ui
+		useHDRIMap_val type:#boolean animatable:false ui:useHDRIMap_chb default:false
+		hdriMapLoader_val type:#boolean animatable:false ui:hdriMapLoader_btn default:false
+		hdriMap_val type:#texturemap animatable:false ui:hdriMap_btn --this actually holds the map, hidden in ui
+		
+		--old variable for backwards compatibility
+		hdriMap_btn type:#texturemap animatable:false
+		useHDRIMap_chb type:#boolean animatable:false
+		
 		hdriMapLink_chb type:#boolean animatable:false ui:hdriMapLink_chb default:false
 		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
-		--hdriMapOffset_sp type:#float animatable:true ui:hdriMapOffset_sp default:0.0
+		
 		hdriMapGIMult_sp type:#float animatable:false ui:hdriMapGIMult_sp default:1.0
 		hdriMapReflMult_sp type:#float animatable:false ui:hdriMapReflMult_sp default:1.0
 		hdriMapRefrMult_sp type:#float animatable:false ui:hdriMapRefrMult_sp default:1.0
+		
+		hdriMapGI_val type:#boolean animatable:false ui:hdriMapGI_chb default:false
+		hdriMapRefl_val type:#boolean animatable:false ui:hdriMapRefl_chb default:false
+		hdriMapRefr_val type:#boolean animatable:false ui:hdriMapRefr_chb default:false
 
-		on useHDRIMap_chb set state do 
+		on useHDRIMap_val set state do 
 		(
 			if getObjectFromThis() == $ then
 			(
@@ -632,15 +648,34 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				this.hdriMap_ro.hdriMapLink_chb.enabled = state
 				this.hdriMap_ro.hdriMapLoader_btn.enabled = state
 				this.hdriMap_ro.hdriMapEdit_btn.enabled = state
-				--this.hdriMap_ro.hdriMapOffset_sp.enabled = state
-				this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
-				this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
-				this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+				
+				this.hdriMap_ro.hdriMapGIMult_sp.enabled = (state and hdriMapGI_val)
+				this.hdriMap_ro.hdriMapReflMult_sp.enabled = (state and hdriMapRefl_val)
+				this.hdriMap_ro.hdriMapRefrMult_sp.enabled = (state and hdriMapRefr_val)
+				
+				this.hdriMap_ro.hdriMapGI_chb.enabled = state
+				this.hdriMap_ro.hdriMapRefl_chb.enabled = state
+				this.hdriMap_ro.hdriMapRefr_chb.enabled = state
 			)
 			emitUpdateEvent()
 		)
+		
+		on hdriMapGI_val set state do 
+		(
+			this.hdriMap_ro.hdriMapGIMult_sp.enabled = state
+		)
+		
+		on hdriMapRefl_val set state do 
+		(
+			this.hdriMap_ro.hdriMapReflMult_sp.enabled = state
+		)
+		
+		on hdriMapRefr_val set state do 
+		(
+			this.hdriMap_ro.hdriMapRefrMult_sp.enabled = state
+		)
 
-		on hdriMapLoader_btn set val do
+		on hdriMapLoader_val set val do
 		(
 			if val == true then
 			(
@@ -650,10 +685,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				
 				if selectedMap != undefined then 
 				(
-					if (classof selectedMap == VrayHDRI) then
+					if (classof selectedMap == VrayHDRI or classof selectedMap == VRayBitmap) then
 					(
 						selectedMap.name = "HDRI for " + (getThisCameraName())
-						hdriMap_btn = selectedMap
+						hdriMap_val = selectedMap
 						hdriMapLoaderButtonCaption = selectedMap.name
 
 						-- ask to link here --
@@ -679,7 +714,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					)
 					else if (selectedMap == "none") then
 					(
-						hdriMap_btn = undefined
+						hdriMap_val = undefined
 						hdriMapLoaderButtonCaption = "None"
 						hdriMapLink_chb = false
 						hdriMapLinkButtonCaption = "Link HDRI to Sun"
@@ -689,16 +724,16 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 						local newVraySky = VraySky()
 						newVraySky.name = "VraySky for " + (getThisCameraName())
 						
-						hdriMap_btn = newVraySky
+						hdriMap_val = newVraySky
 						hdriMapLoaderButtonCaption = newVraySky.name
 						hdriMapLink_chb = false
 						hdriMapLinkButtonCaption = "Link HDRI to Sun"
 					)
 				)
 				--cancelled selection but map alredy there
-				else if (selectedMap == undefined and hdriMap_btn != undefined) then
+				else if (selectedMap == undefined and hdriMap_val != undefined) then
 				(
-					hdriMapLoaderButtonCaption = hdriMap_btn.name
+					hdriMapLoaderButtonCaption = hdriMap_val.name
 				)
 				--cancelled selection with no map already present
 				else 
@@ -714,21 +749,21 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					this.hdrimap_ro.hdriMapLoader_btn.caption = hdriMapLoaderButtonCaption
 				)
 
-				hdriMapLoader_btn = false
+				hdriMapLoader_val = false
 			)
 			emitUpdateEvent()
 
 		)
 		
-		on hdriMap_btn set val do
+		on hdriMap_val set val do
 		(
-			if (classof val == VRayHDRI or classof val == VraySky) then
+			if (classof val == VRayHDRI or classof val == VRayBitmap or classof val == VraySky) then
 			(
-				hdriMap_btn = val				
+				hdriMap_val = val				
 			)
 			else
 			(
-				hdriMap_btn = undefined
+				hdriMap_val = undefined
 			)
 		)
 		
@@ -736,10 +771,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		(
 			if val == true then
 			(
-				if (hdriMap_btn != undefined) then
+				if (hdriMap_val != undefined) then
 				(
 					MatEditor.Open() 
-					medit.PutMtlToMtlEditor hdriMap_btn 1
+					medit.PutMtlToMtlEditor hdriMap_val 1
 					medit.SetActiveMtlSlot 1 true
 				)
 				else (MessageBox ("No VrayHDRI map in the map slot."))
@@ -756,9 +791,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			(	
 				if ((getVraySunInScene()) != undefined) then
 				(
-					if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
+					if (hdriMap_val != undefined and (classof hdriMap_val == VrayHDRI or classof hdriMap_val == VRayBitmap)) then
 					(
-						local m = hdriMap_btn
+						local m = hdriMap_val
 						m.cropplace_u.controller = float_script()
 						
 						local sun = getVraySunInScene()
@@ -785,6 +820,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 					else
 					(
 						MessageBox ("The map is not a VrayHDRI map.")
+						if (hdriMap_val == undefined) then print "HDRI Settings is undefined"
+						else print (classof hdriMap_val)
+						if (hdriMap_btn == undefined) then print "HDRI old Settings is undefined"
+						else print (classof hdriMap_btn)
 						hdriMapLink_chb = false
 						hdriMapLinkButtonCaption = "Link HDRI to Sun"
 					)
@@ -797,9 +836,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 			)
 			else
 			(
-				if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
+				if (hdriMap_val != undefined and (classof hdriMap_val == VrayHDRI or classof hdriMap_val == VRayBitmap)) then
 				(
-					hdriMap_btn.cropplace_u.controller = Bezier_Float()
+					hdriMap_val.cropplace_u.controller = Bezier_Float()
 				)
 
 				hdriMapLink_chb = false
@@ -1023,11 +1062,13 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		
 		groupBox hdriMults_gpb "HDRI Multipliers" pos:[4,126] width:154 height:83
 			
-		spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[38,145] fieldWidth:60 width:(buttonWidth - 24)
-		spinner hdriMapReflMult_sp "Reflection:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[25,166] fieldWidth:60 width:(buttonWidth - 11)
-		spinner hdriMapRefrMult_sp "Refraction:"  type:#float range:[-1000000,1000000,1] enabled:useHDRIMap_chb.state pos:[23,187] fieldWidth:60 width:(buttonWidth - 9)
-		
-		
+		spinner hdriMapGIMult_sp   "        GI:"  type:#float range:[-1000000,1000000,1] enabled:(hdriMapGI_val and useHDRIMap_chb.state) pos:[38,145] fieldWidth:40 width:(buttonWidth - 32) align:#left across:2
+		checkbox hdriMapGI_chb ""  checked:false enabled:useHDRIMap_chb.state tooltip:"Enable/Disable HDRI from affecting GI, current map in GI channel is unaffected if off." pos:[135,145] width: 15
+		spinner hdriMapReflMult_sp "Reflection:"  type:#float range:[-1000000,1000000,1] enabled:(hdriMapRefl_val and useHDRIMap_chb.state) pos:[25,166] fieldWidth:40 width:(buttonWidth - 19) align:#left across:2
+		checkbox hdriMapRefl_chb ""  checked:false enabled:useHDRIMap_chb.state tooltip:"Enable/Disable HDRI from affecting Reflection/Refraction, current map in Reflection/Refraction channel is unaffected if off." pos:[135,166] width: 15
+		spinner hdriMapRefrMult_sp "Refraction:"  type:#float range:[-1000000,1000000,1] enabled:(hdriMapRefr_val and useHDRIMap_chb.state) pos:[23,187] fieldWidth:40 width:(buttonWidth - 17) align:#left across:2
+		checkbox hdriMapRefr_chb ""  checked:false enabled:useHDRIMap_chb.state tooltip:"Enable/Disable HDRI from affecting Refraction, current map in Refraction channel is unaffected if off." pos:[135,187] width: 15
+			
 		
 		on hdriMap_ro open do
 		(
@@ -1172,19 +1213,20 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	
 	rollout about_ro "About" 
 	(
-		label version_lbl version pos:[63,7] align:#center
+		label version_lbl versionText pos:[63,7] align:#center
 	)
 		
 	
 	on load do
 	(
+		
 		if (multiCamUsable == true) then
 		(
-			if (hdriMap_btn != undefined and classof hdriMap_btn == VrayHDRI) then
+			if (hdriMap_val != undefined and (classof hdriMap_val == VrayHDRI or classof hdriMap_val == VRayBitmap)) then
 			(
-				if ((classof hdriMap_btn.cropplace_u.controller) == float_script) then
+				if ((classof hdriMap_val.cropplace_u.controller) == float_script) then
 				(
-					m = hdriMap_btn
+					m = hdriMap_val
 					if (refs.dependentNodes ((m.cropplace_u.controller.Gettarget "t_x_pos").parent)).count < 1 then
 					(
 						relink = queryBox "Sun and HDRI Map link is broken.\nYES - to relink.\nNO  - leave unlinked." title:"Missing Link" beep:false
@@ -1231,16 +1273,35 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		showSunPoint_btn = false
 	)
 	
+	on update do
+ 	(
+ 		print("Current MultiCam Attribute version is " + version as string)
+		if version == 1 then 
+		( 
+			print ("Beginning the update of MultiCam Attribute from v1")
+			try
+			(
+				sP_val = (execute sP_txt)
+				sT_val = (execute sT_txt)
+				hdriMap_val = hdriMap_btn
+				useHDRIMap_val = useHDRIMap_chb 
+				print ("Updated the MultiCam Attribute from v1")
+			)
+			catch
+			(
+				print "Unable to update the MultiCam Attribute"
+			)
+			
+		)
+		
+ 	)
 	/*
  	on postload do
  	(
  		MessageBox "postloaded"
  	)
  	
- 	on update do
- 	(
- 		MessageBox "updated"
- 	)
+
  	
  	on params reload do
  	(
@@ -1315,7 +1376,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	(	
 		for i=1 to 24 do
 		(
-			if (getmeditmaterial i == hdriMap_btn) then
+			if (getmeditmaterial i == hdriMap_val) then
 			(
 				setmeditmaterial i (standard())
 			)

@@ -56,14 +56,14 @@ Icon:#("MultiCamSq",1)
 		prevSelectedRows = #(),
 		prevSelectedRowsLessSelf = #(),
 		prevSelectedRowsPlusSelf = #(),
-		multiCamLister_RO,
+		MultiCamLister_RO,
 		dgvMaxHeight = 800,
 		dgvRefreshing = false,
 		dgvPostDeleteUpdate = false,
 		disabledColor = (dotnetclass "system.drawing.color").fromARGB 128 128 128,
 		enabledColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255,
-		enabledStyle = dotnetobject "DataGridViewCellStyle",
-		disabledStyle = dotnetobject "DataGridViewCellStyle",
+		enabledStyle = undefined, --dotnetobject "DataGridViewCellStyle",
+		disabledStyle = undefined, --dotnetobject "DataGridViewCellStyle",
 		gapBetweenDGVs = 20,
 		prevScrollPos = 0,	
 		displayScale = 1,
@@ -316,6 +316,53 @@ Icon:#("MultiCamSq",1)
 			objToSelect
 		),
 		
+		fn initStyles = 
+		(
+			--when initializing styles, style options must be declared right after the initial object, otherwise styles become instances of each other
+			--could be a max bug or .net bug not sure
+			multiCamLister.disabledStyle = dotnetobject "DataGridViewCellStyle"
+			multiCamLister.disabledStyle.forecolor = (dotnetclass "system.drawing.color").fromARGB 128 128 128
+			multiCamLister.enabledStyle = dotnetobject "DataGridViewCellStyle"
+			multiCamLister.enabledStyle.forecolor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
+			--print (multiCamLister.disabledStyle == multiCamLister.enabledStyle)
+		),
+		
+		fn styleDGV dgvObject = 
+		(
+
+			--Colour and Styling
+			local oddColor=(dotnetclass "system.drawing.color").fromARGB 32 32 32
+			local evenColor= (dotnetclass "system.drawing.color").fromARGB 68 68 68  			
+			
+			local defaultCellStyle = dotnetobject "DataGridViewCellStyle"
+			defaultCellStyle.backColor = evenColor
+			defaultCellStyle.SelectionBackColor = (dotnetclass "system.drawing.color").fromARGB 80 200 69
+			
+			local altDefaultCellSyle = dotnetobject "DataGridViewCellStyle"
+			altDefaultCellSyle.backColor = oddColor
+
+			local ColumnHeadersDefaultCellStyle = dotnetobject "DataGridViewCellStyle"
+			ColumnHeadersDefaultCellStyle.backcolor = (dotnetclass "system.drawing.color").fromARGB 100 100 100
+			ColumnHeadersDefaultCellStyle.forecolor = (dotnetclass "system.drawing.color").fromARGB 255 255 255 
+			ColumnHeadersDefaultCellStyle.WrapMode = (dotnetclass "DataGridViewTriState").true
+
+			dgvObject.defaultCellStyle = defaultCellStyle
+			dgvObject.AlternatingRowsDefaultCellStyle = altDefaultCellSyle
+			dgvObject.BackgroundColor = (dotnetclass "system.drawing.color").fromARGB 68 68 68			
+			dgvObject.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
+			dgvObject.ColumnHeadersDefaultCellStyle = ColumnHeadersDefaultCellStyle
+			dgvObject.EnableHeadersVisualStyles = false
+			dgvObject.CellBorderStyle = (dotnetclass "DataGridViewCellBorderStyle").None
+			dgvObject.RowHeadersBorderStyle =  (dotnetclass "DataGridViewHeaderBorderStyle").Single
+			dgvObject.ColumnHeadersBorderStyle =(dotnetclass  "DataGridViewHeaderBorderStyle").Single
+			
+			dgvObject.ColumnHeadersHeight=dgvHeaderRowHeight
+			dgvObject.AllowUserToResizeColumns = false
+			dgvObject.ColumnHeadersHeightSizeMode = (dotnetclass "DataGridViewColumnHeadersHeightSizeMode").DisableResizing
+			dgvObject.AllowUserToResizeRows = false
+			dgvObject.RowHeadersWidthSizeMode = (dotnetclass "DataGridViewRowHeadersWidthSizeMode").DisableResizing
+		),
+
 		fn changeControlStatus dgvObject row val arr = 
 		(
 			for cell in arr do
@@ -324,11 +371,11 @@ Icon:#("MultiCamSq",1)
 				dgvObject.rows.item[row].cells.item[cell].ReadOnly = not val
 				if val == true then
 				(
-					dgvObject.rows.item[row].cells.item[cell].style = enabledStyle
+					dgvObject.rows.item[row].cells.item[cell].style = multiCamLister.enabledStyle
 				)
 				else
 				(
-					dgvObject.rows.item[row].cells.item[cell].style = disabledStyle
+					dgvObject.rows.item[row].cells.item[cell].style = multiCamLister.disabledStyle
 				)
 			)
 		),
@@ -338,9 +385,7 @@ Icon:#("MultiCamSq",1)
 			if dgvObject.Focused == false then 
 			(	
 				dgvObject.ClearSelection()
-
 				--local vals = for i = 0 to (dgvObject.rows.count - 1) collect dgvObject.rows.item[i].cells.item["ID"].value
-
 				for o in selection where superclassof o == camera do
 				(
 					local objID = (getHandleByAnim o) as string
@@ -432,15 +477,15 @@ Icon:#("MultiCamSq",1)
 			
 			if dgvObject.rows.item[rowIndex].cells.item[6].value == false then
 			(
-				dgvObject.rows.item[rowIndex].cells.item[7].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[8].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[9].style = disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[7].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[8].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[9].style = multiCamLister.disabledStyle
 			)
 			else
 			(
-				dgvObject.rows.item[rowIndex].cells.item[7].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[8].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[9].style = enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[7].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[8].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[9].style = multiCamLister.enabledStyle
 			)
 			
 			--if ((mod rowIndex 2 ) == 0) then (dgvObject.rows.item[rowIndex].cells.item[10].visible = false)
@@ -456,15 +501,15 @@ Icon:#("MultiCamSq",1)
 			
 			if dgvObject.rows.item[rowIndex].cells.item[10].value == false then
 			(
-				dgvObject.rows.item[rowIndex].cells.item[11].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[12].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[13].style = disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[11].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[12].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[13].style = multiCamLister.disabledStyle
 			)
 			else
 			(
-				dgvObject.rows.item[rowIndex].cells.item[11].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[12].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[13].style = enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[11].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[12].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[13].style = multiCamLister.enabledStyle
 			)
 			
 			dgvObject.rows.item[rowIndex].cells.item[14].ReadOnly = true
@@ -480,21 +525,21 @@ Icon:#("MultiCamSq",1)
 			
 			if dgvObject.rows.item[rowIndex].cells.item[15].value == false then
 			(
-				dgvObject.rows.item[rowIndex].cells.item[16].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[17].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[18].style = disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[16].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[17].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[18].style = multiCamLister.disabledStyle
 			)
 			else 
 			(
-				dgvObject.rows.item[rowIndex].cells.item[16].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[17].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[18].style = enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[16].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[17].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[18].style = multiCamLister.enabledStyle
 			)
 			
 			dgvObject.rows.item[rowIndex].cells.item[19].ReadOnly = true
 			
-			dgvObject.rows.item[rowIndex].cells.item[20].value = obj.baseObject.MultiCamAttributeData.useHDRIMap_chb
-			dgvObject.rows.item[rowIndex].cells.item[21].value = if (obj.baseObject.MultiCamAttributeData.hdriMap_btn != undefined) then (obj.baseObject.MultiCamAttributeData.hdriMap_btn.name) else ("None")
+			dgvObject.rows.item[rowIndex].cells.item[20].value = obj.baseObject.MultiCamAttributeData.useHDRIMap_val
+			dgvObject.rows.item[rowIndex].cells.item[21].value = if (obj.baseObject.MultiCamAttributeData.hdriMap_val != undefined) then (obj.baseObject.MultiCamAttributeData.hdriMap_val.name) else ("None")
 			dgvObject.rows.item[rowIndex].cells.item[21].flatstyle = (dotnetclass "FlatStyle").Flat
 			dgvObject.rows.item[rowIndex].cells.item[21].ReadOnly = not dgvObject.rows.item[rowIndex].cells.item[20].value
 			dgvObject.rows.item[rowIndex].cells.item[22].value = obj.baseObject.MultiCamAttributeData.hdriMapLink_chb
@@ -505,15 +550,15 @@ Icon:#("MultiCamSq",1)
 			
 			if dgvObject.rows.item[rowIndex].cells.item[20].value == false then
 			(
-				dgvObject.rows.item[rowIndex].cells.item[21].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[22].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[23].style = disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[21].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[22].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[23].style = multiCamLister.disabledStyle
 			)
 			else
 			(
-				dgvObject.rows.item[rowIndex].cells.item[21].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[22].style = enabledStyle
-				dgvObject.rows.item[rowIndex].cells.item[23].style = enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[21].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[22].style = multiCamLister.enabledStyle
+				dgvObject.rows.item[rowIndex].cells.item[23].style = multiCamLister.enabledStyle
 			)
 
 			dgvObject.rows.item[rowIndex].cells.item["Clipping On"].value = getCamaraClipping obj #clip
@@ -522,9 +567,9 @@ Icon:#("MultiCamSq",1)
 			
 			if dgvObject.rows.item[rowIndex].cells.item["Clipping On"].value == undefined then
 			(
-				dgvObject.rows.item[rowIndex].cells.item["Clipping On"].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item["Z-Depth Near"].style = disabledStyle
-				dgvObject.rows.item[rowIndex].cells.item["Z-Depth Far"].style = disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item["Clipping On"].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item["Z-Depth Near"].style = multiCamLister.disabledStyle
+				dgvObject.rows.item[rowIndex].cells.item["Z-Depth Far"].style = multiCamLister.disabledStyle
 
 				dgvObject.rows.item[rowIndex].cells.item["Clipping On"].ReadOnly = true
 				dgvObject.rows.item[rowIndex].cells.item["Z-Depth Near"].ReadOnly = true
@@ -534,7 +579,7 @@ Icon:#("MultiCamSq",1)
 
 			dgvObject.rows.item[rowIndex].cells.item["ID"].value = (GetHandleByAnim obj) as string
 			dgvObject.rows.item[rowIndex].cells.item["ID"].ReadOnly = true
-			dgvObject.rows.item[rowIndex].cells.item["IDMat"].value = if (obj.baseObject.MultiCamAttributeData.hdriMap_btn != undefined) then ((GetHandleByAnim obj.baseObject.MultiCamAttributeData.hdriMap_btn) as string) else ("None")
+			dgvObject.rows.item[rowIndex].cells.item["IDMat"].value = if (obj.baseObject.MultiCamAttributeData.hdriMap_val != undefined) then ((GetHandleByAnim obj.baseObject.MultiCamAttributeData.hdriMap_val) as string) else ("None")
 			dgvObject.rows.item[rowIndex].cells.item["IDMat"].ReadOnly = true
 			dgvObject.rows.item[rowIndex].cells.item["CamObject"].value = dotNetMXSValue obj
 			dgvObject.rows.item[rowIndex].cells.item["CamObject"].ReadOnly = true
@@ -614,8 +659,8 @@ Icon:#("MultiCamSq",1)
 
 		fn dgvUpdate = 
 		(
-			local dgv = MultiCamLister_RO.dgv
-			local dgvNoMod = MultiCamLister_RO.dgvNoMod
+			local dgv = MultiCamLister.MultiCamLister_RO.dgv
+			local dgvNoMod = MultiCamLister.MultiCamLister_RO.dgvNoMod
 			
 			dgvRefreshing = true
 			
@@ -648,43 +693,6 @@ Icon:#("MultiCamSq",1)
 			)
 		),
 		
-		fn styleDGV dgvObject = 
-		(
-			enabledStyle.forecolor = enabledColor
-			disabledStyle.forecolor = disabledColor
-
-			--Colour and Styling
-			local oddColor=(dotnetclass "system.drawing.color").fromARGB 32 32 32
-			local evenColor= (dotnetclass "system.drawing.color").fromARGB 68 68 68  			
-			
-			local defaultCellStyle = dotnetobject "DataGridViewCellStyle"
-			defaultCellStyle.backColor = evenColor
-			defaultCellStyle.SelectionBackColor = (dotnetclass "system.drawing.color").fromARGB 80 200 69
-			
-			local altDefaultCellSyle = dotnetobject "DataGridViewCellStyle"
-			altDefaultCellSyle.backColor = oddColor
-
-			local ColumnHeadersDefaultCellStyle = dotnetobject "DataGridViewCellStyle"
-			ColumnHeadersDefaultCellStyle.backcolor = (dotnetclass "system.drawing.color").fromARGB 100 100 100
-			ColumnHeadersDefaultCellStyle.forecolor = (dotnetclass "system.drawing.color").fromARGB 255 255 255 
-			ColumnHeadersDefaultCellStyle.WrapMode = (dotnetclass "DataGridViewTriState").true
-
-			dgvObject.defaultCellStyle = defaultCellStyle
-			dgvObject.AlternatingRowsDefaultCellStyle = altDefaultCellSyle
-			dgvObject.BackgroundColor = (dotnetclass "system.drawing.color").fromARGB 68 68 68			
-			dgvObject.ForeColor = (dotnetclass "system.drawing.color").fromARGB 255 255 255
-			dgvObject.ColumnHeadersDefaultCellStyle = ColumnHeadersDefaultCellStyle
-			dgvObject.EnableHeadersVisualStyles = false
-			dgvObject.CellBorderStyle = (dotnetclass "DataGridViewCellBorderStyle").None
-			dgvObject.RowHeadersBorderStyle =  (dotnetclass "DataGridViewHeaderBorderStyle").Single
-			dgvObject.ColumnHeadersBorderStyle =(dotnetclass  "DataGridViewHeaderBorderStyle").Single
-			
-			dgvObject.ColumnHeadersHeight=dgvHeaderRowHeight
-			dgvObject.AllowUserToResizeColumns = false
-			dgvObject.ColumnHeadersHeightSizeMode = (dotnetclass "DataGridViewColumnHeadersHeightSizeMode").DisableResizing
-			dgvObject.AllowUserToResizeRows = false
-			dgvObject.RowHeadersWidthSizeMode = (dotnetclass "DataGridViewRowHeadersWidthSizeMode").DisableResizing
-		),
 
 
 		--------------------------------------
@@ -698,16 +706,16 @@ Icon:#("MultiCamSq",1)
 			--local endT = timeStamp()
 			--print ("selectionFN: " + (endT- startT) as string)
 
-			local dgv = MultiCamLister_RO.dgv
-			local dgvNoMod = MultiCamLister_RO.dgvNoMod
+			local dgv = MultiCamLister.MultiCamLister_RO.dgv
+			local dgvNoMod = MultiCamLister.MultiCamLister_RO.dgvNoMod
 			
 			if dgv.Focused == false and dgvnomod.Focused == false then
 			(	
 				dgv.ClearSelection()
 				dgvNoMod.ClearSelection()
 				
-				cameraObjIDs = (for i = 0 to dgv.rows.count - 1 collect dgv.rows.item[i].cells.item["ID"].value)
-				cameraObjIDsNoMod = (for i = 0 to dgvNoMod.rows.count - 1 collect dgvNoMod.rows.item[i].cells.item["ID"].value)
+				local cameraObjIDs = (for i = 0 to dgv.rows.count - 1 collect dgv.rows.item[i].cells.item["ID"].value)
+				local cameraObjIDsNoMod = (for i = 0 to dgvNoMod.rows.count - 1 collect dgvNoMod.rows.item[i].cells.item["ID"].value)
 				
 				for id in ids where (superClassOf (getAnimByHandle id) == camera and (getAnimByHandle id).isSelected==true)  do 
 				(
@@ -730,13 +738,13 @@ Icon:#("MultiCamSq",1)
 		
 		fn nameChangeFN ev ids =
 		(
-			local dgv = MultiCamLister_RO.dgv
-			local dgvNoMod = MultiCamLister_RO.dgvNoMod
+			local dgv = MultiCamLister.MultiCamLister_RO.dgv
+			local dgvNoMod = MultiCamLister.MultiCamLister_RO.dgvNoMod
 			
 			if dgv.Focused == false and dgvnomod.Focused == false then
 			(	
-				cameraObjIDs = for i = 0 to dgv.rows.count - 1 collect dgv.rows.item[i].cells.item["ID"].value
-				cameraObjIDsNoMod = for i = 0 to dgvNoMod.rows.count - 1 collect dgvNoMod.rows.item[i].cells.item["ID"].value
+				local cameraObjIDs = for i = 0 to dgv.rows.count - 1 collect dgv.rows.item[i].cells.item["ID"].value
+				local cameraObjIDsNoMod = for i = 0 to dgvNoMod.rows.count - 1 collect dgvNoMod.rows.item[i].cells.item["ID"].value
 				
 				for id in ids where (superClassOf (getAnimByHandle id) == camera) do 
 				(
@@ -785,7 +793,7 @@ Icon:#("MultiCamSq",1)
 				(
 					if superclassof (GetAnimByHandle id) == camera then
 					(
-						dgvUpdate()
+						MultiCamLister.dgvUpdate()
 						cameraFound = true
 					)
 				)
@@ -824,8 +832,8 @@ Icon:#("MultiCamSq",1)
 			obj = GetAnimByHandle ids[1]
 			if (superclassof obj == camera and isAnimPlaying()==false) then
 			(
-				local dgv = MultiCamLister_RO.dgv
-				local dgvNoMod = MultiCamLister_RO.dgvNoMod
+				local dgv = MultiCamLister.MultiCamLister_RO.dgv
+				local dgvNoMod = MultiCamLister.MultiCamLister_RO.dgvNoMod
 				local objID = getHandleByAnim obj
 				
 				if dgv.Focused == false and dgvNoMod.Focused == false then
@@ -952,8 +960,10 @@ Icon:#("MultiCamSq",1)
 					dgvWidthWithBar = dgvWidth + 17--(scaleForDisplay 17 displayScale) --1212
 					dgvRowHeight = scaleForDisplay 25 displayScale
 					dgvHeaderRowHeight = scaleForDisplay 32 displayScale
-
-		  			dgv.Dock = dgv.Dock.Fill
+					
+					owner.initStyles()
+		  			
+					dgv.Dock = dgv.Dock.Fill
 		  			dgv.RowHeadersVisible = false
 					
 		  			populateColumns dgv defList
@@ -1203,11 +1213,11 @@ Icon:#("MultiCamSq",1)
 									if dgv.rows.item[row].cells.item[21].readonly != true then
 									(
 										local obj = owner.getObjectByRow2 dgv row
-										if (obj.baseObject.MultiCamAttributeData.hdriMap_btn == undefined) then
+										if (obj.baseObject.MultiCamAttributeData.hdriMap_val == undefined) then
 										(
 											local map = VrayHDRI()
 											map.name = "HDRI for " + obj.name
-											setProperty obj.baseObject.MultiCamAttributeData #hdriMapLoader_btn true
+											setProperty obj.baseObject.MultiCamAttributeData #hdriMapLoader_val true
 											dgv.rows.item[row].cells.item["ID"].value = (GetHandleByAnim map) as string
 											dgv.rows.item[row].cells.item[21].value = map.name
 											dgv.rows.item[row].cells.item[22].value = obj.baseObject.MultiCamAttributeData.hdriMapLink_chb
@@ -1219,7 +1229,7 @@ Icon:#("MultiCamSq",1)
 											(
 												local map = VrayHDRI()
 												map.name = "HDRI for " + obj.name
-												setProperty obj.baseObject.MultiCamAttributeData #hdriMapLoader_btn true
+												setProperty obj.baseObject.MultiCamAttributeData #hdriMapLoader_val true
 												dgv.rows.item[row].cells.item["ID"].value = (GetHandleByAnim map) as string
 												dgv.rows.item[row].cells.item[21].value = map.name
 												dgv.rows.item[row].cells.item[22].value = obj.baseObject.MultiCamAttributeData.hdriMapLink_chb
@@ -1431,7 +1441,7 @@ Icon:#("MultiCamSq",1)
 									owner.changeControlStatus dgv row thisValue #(21, 22, 23)
 								)	
 								local obj = owner.getObjectByRow2 dgv val.RowIndex
-								setProperty obj.baseObject.MultiCamAttributeData #useHDRIMap_chb thisValue
+								setProperty obj.baseObject.MultiCamAttributeData #useHDRIMap_val thisValue
 							)--end 20
 								
 							22:(--Link HDRI
@@ -1563,8 +1573,8 @@ Icon:#("MultiCamSq",1)
 
 		  	)--end rollout
 			
-			multiCamLister_RO.owner = this
-			multiCamLister_RO
+			MultiCamLister_RO.owner = this
+			MultiCamLister_RO
 		),--end rollout variable
 		
 		fn show =
@@ -1577,7 +1587,7 @@ Icon:#("MultiCamSq",1)
 		
 		on create do
 		(
-			multiCamLister_RO = createRO()	
+			MultiCamLister_RO = createRO()	
 		)
 	)--end struct
 	

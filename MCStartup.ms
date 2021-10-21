@@ -6,9 +6,9 @@
 -------------------------------------------------------------------------------
 
 --CICADA USE
-global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo\"
+global multiCamRepo = @"X:\00-000_ScriptTest\scripts\MultiCamRepo_vray5\"
 global DeadlineRoot = @"\\fs-01\DeadlineRepository10"
-global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI\"
+global multiCamHDRILibrary = @"Y:\Maps\HDRI\MultiCamHDRI_vray5\"
 
 --HOME USE
 --global DeadlineRoot = @"C:\DeadlineRepository10"
