@@ -26,14 +26,14 @@ fn copyMultiCamAttributeData souce target =
 
 */
 global MultiCamCustomAttribute
-MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0, 0x29a2ba02) version:2
+MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0, 0x29a2ba02) version:3
 (
 	local hdriMapName = "None"
 	local objectName = ""
 	local buttonWidth = 135
 	local gwDisplaySunpoints
 	local gwShowActiveSettings
-	local versionText = "0.910"
+	local versionText = "0.911"
 	--local layers_ro
 	--local sunpoints_ro
 	--local resolution_ro
@@ -628,6 +628,7 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 		--old variable for backwards compatibility
 		hdriMap_btn type:#texturemap animatable:false
 		useHDRIMap_chb type:#boolean animatable:false
+		useSunpoints_chb type:#boolean animatable:false
 		
 		hdriMapLink_chb type:#boolean animatable:false ui:hdriMapLink_chb default:false
 		hdriMapEdit_btn type:#boolean animatable:false ui:hdriMapEdit_btn default:false
@@ -1219,9 +1220,10 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	
 	on load do
 	(
-		
 		if (multiCamUsable == true) then
 		(
+			print("Current MultiCam Attribute version is " + version as string)
+			
 			if (hdriMap_val != undefined and (classof hdriMap_val == VrayHDRI or classof hdriMap_val == VRayBitmap)) then
 			(
 				if ((classof hdriMap_val.cropplace_u.controller) == float_script) then
@@ -1275,8 +1277,8 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 	
 	on update do
  	(
- 		print("Current MultiCam Attribute version is " + version as string)
-		if version == 1 then 
+ 		print("Updating, current MultiCam Attribute version is " + version as string)
+		if version == 1 or version == 0 then 
 		( 
 			print ("Beginning the update of MultiCam Attribute from v1")
 			try
@@ -1284,16 +1286,15 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 				sP_val = (execute sP_txt)
 				sT_val = (execute sT_txt)
 				hdriMap_val = hdriMap_btn
-				useHDRIMap_val = useHDRIMap_chb 
+				useHDRIMap_val = useHDRIMap_chb
+				useSunpoints_param = useSunpoints_chb
 				print ("Updated the MultiCam Attribute from v1")
 			)
 			catch
 			(
 				print "Unable to update the MultiCam Attribute"
 			)
-			
 		)
-		
  	)
 	/*
  	on postload do
