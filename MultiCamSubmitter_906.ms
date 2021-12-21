@@ -366,6 +366,7 @@ Icon:#("MultiCamSq",2)
 	
 	local oldRenderRes = #()
 	local oldHideLayers = #()
+	local oldNonRenderLayers = #()
 	local oldAnimationSettings = #()
 	local oldRenderTimeType = rendTimeType
 	local oldRenderNthFrame = rendNThFrame
@@ -398,10 +399,16 @@ Icon:#("MultiCamSq",2)
 		--not allowed space at beginning or end
 		
 		local result = undefined
+		local legalCharsSet = "1234567890-=!@#$%^&*()_+[]{}ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 		local illegalCharsSet = #("<",">",":","\"","/","\\","'","|",".") -- can use with matchpattern
 		local illegalCharsSet2 = #("?","*") --reserved chars for matchpattern need to use findstring instead
 		local illegalNameSet = #("CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9")
 		
+		for i=1 to str.count while result == undefined do
+		(
+			if ((matchpattern legalCharsSet pattern:("*"+str[i]+"*") caseSensitive:false) == false) then (result = #(str,("bad character " + (substring str 1 (i-1)) + "<bad>" + (substring str (i+1) -1))))
+		)
+			
 		for char in illegalCharsSet while result == undefined do
 		(
 			if ((matchpattern str pattern:("*"+char+"*")) == true) then (result = #(str,("illegal character " + char)))
@@ -684,7 +691,21 @@ Icon:#("MultiCamSq",2)
 				appendifunique result (layermanager.getlayer i).name
 			)
 		)
-		return result
+		result
+	)
+	
+	fn getNonRenderLayers =
+	(
+		local result = #()
+		local n = LayerManager.count
+		for i = 0 to n-1  do
+		(
+			if (layermanager.getlayer i).renderable == false then
+			(
+				appendifunique result (layermanager.getlayer i).name
+			)
+		)
+		result
 	)
 	
 	fn setHiddenLayers arr =
@@ -703,6 +724,25 @@ Icon:#("MultiCamSq",2)
 			(
 				layer = layerManager.getLayer i
 				layer.on = true
+				layer.renderable = true
+			)
+		)
+	)
+	
+	fn setNonRenderLayers arr =
+	(
+		for i = 0 to (LayerManager.count - 1 ) do 
+		(
+			local thisLayerName = (layermanager.getlayer i).name
+			if ((findItem arr thisLayerName) != 0) then
+			(
+				layer = layerManager.getLayer i
+				layer.renderable = false
+				print ("NonRender layer: " + thisLayerName)
+			)
+			else 
+			(
+				layer = layerManager.getLayer i
 				layer.renderable = true
 			)
 		)
@@ -900,6 +940,7 @@ Icon:#("MultiCamSq",2)
 	(
 		oldRenderRes = getRenderResolution()
 		oldHideLayers = getHiddenLayers()
+		oldNonRenderLayers = getNonRenderLayers()
 		oldEnvSettings = getEnvSettings()
 		print ("Old resolution is " + oldRenderRes as string)
 		print ("Old environmet is " + oldEnvSettings as string)
@@ -2965,6 +3006,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		print ("Setting old res on close " + oldRenderRes as string)
 		setRenderResolution oldRenderRes
 		setHiddenLayers oldHideLayers
+		setNonRenderLayers oldNonRenderLayers
 		setEnvSettings oldEnvSettings
 		setAnimation oldAnimationSettings
 		setVFBSize oldRenderRes setOldRegion:oldRenderRegion
