@@ -917,9 +917,9 @@ MultiCamCustomAttribute = attributes MultiCamAttributeData attribID:#(0x6c19f4d0
 
 	rollout params "Submitter Properties"
 	(
-		button openSubmitter_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,2,2,2,2,true) toolTip:"Open Submitter" width:24 height:24 pos:[14,7] align:#left
-		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,1,1,1,1,true) toolTip:"Open Camera Lister" width:24 height:24 pos:[69,7] align:#center
-		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 3,3,3,3,3,true) toolTip:"Delete this Custom Attribute" width:24 height:24 pos:[125,7] align:#right
+		button openSubmitter_btn images:#(MCIconImgSq , MCIconImgSqMask, 4,2,2,2,2,true) toolTip:"Open Submitter" width:24 height:24 pos:[14,7] align:#left
+		button openLister_btn images:#(MCIconImgSq , MCIconImgSqMask, 4,1,1,1,1,true) toolTip:"Open Camera Lister" width:24 height:24 pos:[69,7] align:#center
+		button deleteMultiCamCA_btn images:#(MCIconImgSq , MCIconImgSqMask, 4,3,3,3,3,true) toolTip:"Delete this Custom Attribute" width:24 height:24 pos:[125,7] align:#right
 		--checkbutton activateSettings_btn "Activate Settings" width:buttonWidth pos:[14,59] align:#center
 		spinner hiddenController_spn pos:[0,0] visible:false
 		pickbutton cameraObject_btn width:1 height:1 pos:[0,0] visible:false
