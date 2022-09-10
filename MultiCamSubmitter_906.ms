@@ -356,7 +356,7 @@ Icon:#("MultiCamSq",2)
 	local SingleFrame = false
 	local OverrideSingleFrame = false
 	local disableVFB = false
-	--local z_var = false --whether or not to repath Zdepth as exr
+	local ignoreVFB = true
 	local extensions = #(".tga", ".exr", ".exr", ".exr",".jpg")
 	local extensionsList = #(".tga", ".exr", ".exr + .jpg", ".exr (split)", ".jpg")
 	local zdeptharray = #()
@@ -370,11 +370,11 @@ Icon:#("MultiCamSq",2)
 	local oldAnimationSettings = #()
 	local oldRenderTimeType = rendTimeType
 	local oldRenderNthFrame = rendNThFrame
-	local oldEnvSettings = #()
 	local oldHideCats = #()
 	local oldViewportLayout = undefined
 	local oldRenderRegion = #()
 	local as_is_diag_settings = undefined
+	local envLighting = undefined
 	
 	
 	local utvideoDir = @"C:\Program Files\utvideo\unins000.exe"
@@ -435,18 +435,18 @@ Icon:#("MultiCamSq",2)
 		targa.itgaio.setColorDepth 32
 		targa.itgaio.setCompressed true
 		targa.itgaio.setAlphaSplit false
-		targa.itgaio.setPreMultAlpha true
+		targa.itgaio.setPreMultAlpha false
 		targa.itgaio.setAuthor "Cicada Design Inc."
 
 		--TODO: exr settings here--
 		--needs testing for best settings--
 		--http://help.autodesk.com/view/3DSMAX/2017/ENU/?guid=__files_GUID_FDECDBDE_C741_4CD8_9DE4_F3355490C796_htm
 		
-		--fopenexr.setLayerOutputFormat 0 0 -- set Main Render to 0: FLOAT32  1: FLOAT16
-		--fopenexr.setLayerOutputType 0 0 -- set Main Render to RGBA
-		--fopenexr.setSaveRegion false -- save full image
-		--fopenexr.setSaveScanline true -- save as scanline 
-		--fopenexr.SetCompression 2 -- 2:single line , 3:line 16 
+		fopenexr.setLayerOutputFormat 0 1 -- set Main Render to 0: FLOAT32  1: FLOAT16
+		fopenexr.setLayerOutputType 0 0 -- set Main Render to RGBA
+		fopenexr.setSaveRegion false -- save full image
+		fopenexr.setSaveScanline true -- save as scanline 
+		fopenexr.SetCompression 2 -- 2:single line , 3:line 16 
 	)
 
 
@@ -461,7 +461,6 @@ Icon:#("MultiCamSq",2)
 			seek drFile 0
 			try while not eof drFile do 
 			(
-				--print "Parsing vray_dr.cfg"
 				parsedLine = readline drFile
 				filterLine = filterString parsedLine " "
 				if ((filterLine[2] == "1") and (findItem drSettings filterLine[1]) == 0) then
@@ -469,15 +468,12 @@ Icon:#("MultiCamSq",2)
 					drServers = drServers + "," + filterLine[1] 
 				)
 			)
-			catch
-			(
-				print "end of vray_dr.cfg"
-			)
+			catch()
 			
 			close drFile
 			free drFile
 		)
-		else (print "Distributed Settings file does not exist")
+		else (print "ERRO: Distributed Settings file does not exist")
 		return (substring drServers 2 drServers.count)
 	)
 		
@@ -494,12 +490,16 @@ Icon:#("MultiCamSq",2)
 	
 	fn padNumber nr padLen = (local n = (nr as string)	for x = 1 to (padLen - n.count) do n = "0" + n 	return n)
 		
-	fn useToday =
+	fn useToday addTime:false =
 	(	
 		local todayDate = ""
 		local timenow = getlocaltime()
 		todayDate = timenow[1] as string + "_" + (padnumber timenow[2] 2) as string + "_" + (padnumber timenow[4] 2) as string
-		return todayDate
+		if addTime == true then
+		(
+			todayDate = todayDate + "_" + (padnumber timenow[5] 2) as string + "_" + (padnumber timenow[6] 2) as string 
+		)
+		todayDate
 	)
 	
 	fn getProjectName = 
@@ -509,8 +509,7 @@ Icon:#("MultiCamSq",2)
 		(
 			result = (filterstring maxfilepath "\\")[2]
 		)
-		
-		return result
+		result
 	)
 
 	fn getCamFocalLength cam =
@@ -589,7 +588,6 @@ Icon:#("MultiCamSq",2)
 		
 		--outFileRGB = getFilenamePath outputFile + getFilenameFile outputFile + ".jpg"
 		outFileRGB = rootnode.CA_frameOutput +"Latest" + "\\" + getFilenameFile outputFile + ".jpg"
-		print ("latest2 callback dir " + outFileRGB)
 		tempFile = (getDir #downloads)+ "\\Temp_.jpg"					
 		
 		local setChannel = ""
@@ -636,10 +634,9 @@ Icon:#("MultiCamSq",2)
 	-- this should be a rollout update function, update dropdown and updata LV_ITEMS, triggers when the submitter is open and user changes the name of the camera or adds or subtracts one.
 	fn SubmitterNodeEventFN ev nd = 
 	(
-		print "--submitter callbacksEnd function--"
 		if updateMultiCamSubmitterRollout == true then
 		(
-			try(destroydialog multiCamSubmitter;destroydialog camChecklistRO )catch()
+			try(destroydialog multiCamSubmitter; destroydialog camChecklistRO )catch()
 			macros.run "ilya_s Scripts" "MultiCamSubmitter"
 			--createdialog multiCamSubmitter
 		)
@@ -648,7 +645,6 @@ Icon:#("MultiCamSq",2)
 	
 	fn SubmitterNodeEventSetUpdate ev nd =
 	(
-		print "--submitter callback added function--"
 		updateMultiCamSubmitterRollout = true
 	)
 
@@ -718,7 +714,7 @@ Icon:#("MultiCamSq",2)
 				layer = layerManager.getLayer i
 				layer.on = false
 				layer.renderable = false
-				print ("Hiding layer: " + thisLayerName)
+				print ("INFO: Hiding layer: " + thisLayerName)
 			)
 			else 
 			(
@@ -738,7 +734,7 @@ Icon:#("MultiCamSq",2)
 			(
 				layer = layerManager.getLayer i
 				layer.renderable = false
-				print ("NonRender layer: " + thisLayerName)
+				print ("INFO: NonRender layer: " + thisLayerName)
 			)
 			else 
 			(
@@ -754,13 +750,13 @@ Icon:#("MultiCamSq",2)
 	
 	fn getAnimation = 
 	(
-		print ("getting animation " + #(rendTimeType,rendNThFrame,animationRange) as string)
+		print ("INFO: Getting animation " + #(rendTimeType,rendNThFrame,animationRange) as string)
 		return #(rendTimeType,rendNThFrame,animationRange)
 	)
 	
 	fn setAnimation arr = 
 	(
-		print ("setting animation " + arr as string)
+		print ("INFO: Setting animation " + arr as string)
 		rendTimeType = arr[1]
 		rendNThFrame = arr[2]
 		animationRange = arr[3]
@@ -870,7 +866,6 @@ Icon:#("MultiCamSq",2)
 		
 		if submission == true then
 		(
-			print "submission true"
 			if arr[3] == true then 
 			(
 				vrayRend.output_getsetsfrommax = false
@@ -890,6 +885,7 @@ Icon:#("MultiCamSq",2)
 		)
 	)
 	
+	/*
 	fn setEnvSettings arr = 
 	(
 		environmentMap = arr[1]
@@ -933,7 +929,7 @@ Icon:#("MultiCamSq",2)
 		arr[13] = vrayRend.environment_refract_map
 		arr[14] = vrayRend.environment_refract_map_on
 		
-		return arr
+		arr
 	)
 
 	fn getOldEnvLayers = 
@@ -950,6 +946,7 @@ Icon:#("MultiCamSq",2)
 	(
 
 	)
+	*/
 	fn resetViewports = 
 	(
 		disableSceneRedraw()
@@ -986,7 +983,6 @@ Icon:#("MultiCamSq",2)
 					case (viewport.getType index:i) of
 					(
 						#view_camera: (
-							print "found cam"
 							viewportIndex = i
 							activeViewportType = viewport.getType index:i
 							activeViewportCamera = viewport.getCamera index:i
@@ -1033,7 +1029,54 @@ Icon:#("MultiCamSq",2)
 		enableSceneRedraw() 
 	)
 
-
+	------------------------------------
+	--Render Element Functions
+	------------------------------------
+	fn clearRenderElementsPaths = 
+	(
+		if renderSceneDialog.isOpen() then renderSceneDialog.close()
+		local rendOutputFilename = ""
+		local re = maxops.getcurrenderelementmgr()
+		local ele_num = re.numrenderelements() as integer
+		for i = 0 to (ele_num - 1) do
+		(
+			re.setrenderelementfilename i ""
+		)	
+	)
+	
+	fn repathRenderElements =
+	(
+		local re = maxops.getcurrenderelementmgr()
+		local ele_num = re.numrenderelements() as integer
+		for i = 0 to (ele_num - 1) do
+		(
+			local this_ele = re.getrenderelement i 
+			local this_ele_name = this_ele.elementname as string
+			local save_path = rendoutputFilename 
+			local newpath = replace save_path (save_path.count - 3) 1 ("__" + this_ele_name + ".")
+			re.setrenderelementfilename i newpath
+		)
+	)
+	
+	fn findRenderElement reClass =
+	(
+		local result = -1
+		
+		local re = maxops.getcurrenderelementmgr()
+		local i = 0
+		
+		while result == -1 and i <  re.numrenderelements() do
+		(
+			local this_ele = re.getrenderelement i 
+			if classof this_ele == reClass then
+			(
+				result = i
+			)
+			i = i + 1
+		)
+		result
+	)
+	
 	------------------------------------
 	--UI Functions
 	------------------------------------
@@ -1150,17 +1193,17 @@ Icon:#("MultiCamSq",2)
 
 	fn setOldRenderRegion arr = 
 	(
-		print "setting old region"
+		print "INFO: Setting old region"
 		if arr[1]=="vray" then
 		(
-			print "rr is vray"
+			print "INFO: Regin Render is vray type."
 			setRenderType #view
 			vrayVFBSetRegionEnabled true
 			vrayVFBSetRegion arr[2] arr[3] arr[4] arr[5]
 		)
 		else if arr[1]=="max" then
 		(
-			print "rr is max"
+			print "INFO: Region Render is max type."
 			setRenderType #region
 			vrayVFBSetRegionEnabled false
 			viewport.setRegionRect viewport.activeViewport arr[2]
@@ -1217,7 +1260,7 @@ Icon:#("MultiCamSq",2)
 		
 		if (getRenderType() == #region or vrayVFBGetRegionEnabled() == true) then 
 		(
-			print "--region rendering enabled--"
+			print "INFO: Region Rendering is enabled"
 			convertMaxRegionToVray()
 		)
 	)
@@ -1244,6 +1287,316 @@ Icon:#("MultiCamSq",2)
 	------------------------------------
 	-- PARSE  Functions
 	------------------------------------
+	struct envDomeStruct
+	(
+		/*
+		reflective dome if vray env reflection is on
+		
+		*/
+		domes = #(),
+		envDome = undefined,
+		envDomeLayer = undefined,
+		oldDomeProps = #(),
+		oldDomeLayer = undefined,
+		singleDome = false,
+		oldEnvSettings = #(),
+		envLightingSettings = #(false, undefined, undefined),
+		
+		private
+		fn setNoEnv = 
+		(
+			local vrayRend = renderers.current
+			useEnvironmentMap = false
+			backgroundColor  = (color 0 0 0)
+			vrayRend.environment_gi_on = false
+			vrayRend.environment_rr_on = false
+			vrayRend.environment_refract_on = false
+			vrayRend.environment_secondaryMatte_on = false
+		),
+		
+		fn setEnvSettings arr = 
+		(
+			local vrayRend = renderers.current
+			
+			environmentMap = arr[1]
+			useEnvironmentMap = arr[2]
+			backgroundColor = arr[3]
+			
+			vrayRend.environment_gi_on = arr[4]
+			vrayRend.environment_gi_color= arr[5]
+			vrayRend.environment_gi_color_multiplier = arr[6]
+			vrayRend.environment_gi_map = arr[7]
+			vrayRend.environment_gi_map_on = arr[8]
+			
+			vrayRend.environment_rr_on = arr[9]
+			vrayRend.environment_rr_color = arr[10]
+			vrayRend.environment_rr_color_multiplier = arr[11]
+			vrayRend.environment_rr_map = arr[12]
+			vrayRend.environment_rr_map_on = arr[13]
+
+			vrayRend.environment_refract_on = arr[14]
+			vrayRend.environment_refract_color = arr[15]
+			vrayRend.environment_refract_color_multiplier = arr[16]
+			vrayRend.environment_refract_map = arr[17]
+			vrayRend.environment_refract_map_on = arr[18]
+			
+			vrayRend.environment_secondaryMatte_on = arr[19]
+			vrayRend.environment_secondaryMatte_color = arr[20]
+			vrayRend.environment_secondaryMatte_color_multiplier = arr[21]
+			vrayRend.environment_secondaryMatte_map = arr[22]
+			vrayRend.environment_secondaryMatte_map_on = arr[23]
+		),
+
+		fn getEnvSettings = 
+		(
+			local arr = #()
+			local vrayRend = renderers.current
+			
+			arr[1] = environmentMap
+			arr[2] = useEnvironmentMap
+			arr[3] = backgroundColor
+			
+			arr[4] = vrayRend.environment_gi_on
+			arr[5] = vrayRend.environment_gi_color
+			arr[6] = vrayRend.environment_gi_color_multiplier
+			arr[7] = vrayRend.environment_gi_map
+			arr[8] = vrayRend.environment_gi_map_on
+			
+			arr[9] = vrayRend.environment_rr_on
+			arr[10] = vrayRend.environment_rr_color
+			arr[11] = vrayRend.environment_rr_color_multiplier
+			arr[12] = vrayRend.environment_rr_map
+			arr[13] = vrayRend.environment_rr_map_on
+
+			arr[14] = vrayRend.environment_refract_on
+			arr[15] = vrayRend.environment_refract_color
+			arr[16] = vrayRend.environment_refract_color_multiplier
+			arr[17] = vrayRend.environment_refract_map
+			arr[18] = vrayRend.environment_refract_map_on
+	
+			arr[19] = vrayRend.environment_secondaryMatte_on
+			arr[20] = vrayRend.environment_secondaryMatte_color
+			arr[21] = vrayRend.environment_secondaryMatte_color_multiplier
+			arr[22] = vrayRend.environment_secondaryMatte_map
+			arr[23] = vrayRend.environment_secondaryMatte_map_on
+					
+			arr
+		),
+		
+		fn setDomeDefaults dome =
+		(
+			--Create new layer here as well
+			envDomeLayer = LayerManager.newLayerFromName "Environment Dome"
+			if envDomeLayer == undefined then envDomeLayer = LayerManager.getLayerFromName  "Environment Dome"
+			envDomeLayer.on = true
+			
+			envDomeLayer.addNode dome
+			
+			dome.on = true
+			dome.castShadows = true
+			dome.type = 1
+			dome.dome_adaptive = true
+			dome.invisible = true
+			dome.texmap_locktodome = 0
+			dome.affect_diffuse = true
+			dome.affect_specualr = true
+			dome.affect_reflections = true
+			dome.affect_atmospherics = true
+			dome.dome_affect_alpha = false		
+		),
+		
+		fn createDefaultDome = 
+		(		
+			local result = VRayLight on:on castShadows:on rgb:(color 255 255 255) rgbFilter:(color 255 255 255) intensity:1.0 intensityType:0 \
+			useMultiplier:off multiplier:1.0 shiftColorWhenDimming:off useFarAttenuation:off displayFarAttenuationGizmo:off startFarAttenuation:80 \
+			endFarAttenuation:200 contrast:0 softenDiffuseEdge:0 projector:off affectDiffuse:on affectSpecular:on ambientOnly:off targetDistance:240 light_length:48 \
+			light_Width:24 light_Radius:10 atmosShadows:off atmosOpacity:100 atmosColorAmt:100 shadowMultiplier:1 shadowColorMapEnable:off shadowColor:(color 0 0 0) \
+			lightAffectsShadow:off useGlobalShadowSettings:off hotspot:30 falloff:60 showCone:off xRotation:0 yRotation:0 zRotation:0
+
+			setDomeDefaults result
+			result
+		),
+		
+		fn checkEnvLighting = 
+		(
+			local result = #(false, undefined, undefined)
+			local rend = renderers.current
+			
+			--Environment Background Setting
+			if (useEnvironmentMap == true and environmentMap != undefined) then (result = #(true, environmentMap, 1.0))
+			if (backgroundColor  != (color 0 0 0)) then 
+			(
+				local newColor = VrayColor()
+				newColor.rgb_primaries = 1
+				newColor.color = backgroundColor
+				result = #(true, newColor, 1.0)
+			)
+
+			--Vray Environment Settings
+			if (rend.environment_gi_on == true and rend.environment_gi_map != undefined and rend.environment_gi_map_on == true) then 
+			(
+				result = #(true, rend.environment_gi_map, 1.0)
+			)
+			if (rend.environment_gi_on == true and rend.environment_gi_color != (color 0 0 0) and rend.environment_gi_color_multiplier > 0.0) then 
+			(
+				local newColor = VrayColor()
+				newColor.rgb_primaries = 1
+				newColor.color = rend.environment_gi_color
+				result = #(true, newColor, rend.environment_gi_color_multiplier)
+			)
+			result
+		),
+		
+		fn getDomes =
+		(
+			for o in lights where classof o == VRayLight and o.renderable == true do
+			(
+				if (renderers.current.options_hiddenLights ) then --render hidden lights is enabled
+				(
+					if o.type == 1 and o.on == true do append domes o
+				)
+				else
+				(
+					if o.type == 1 and o.on == true and o.layer.on == true do append domes o
+				)
+			)
+		),
+		
+		public
+		fn prepareDomeEnv =
+		(
+			/*
+			
+			FIX NEEDED:
+			- Looks like GI Env and Env is ignored if there is a dome light present, on and mult >  0
+			
+			1. No Dome in scene
+			- dome might not be needed
+			- check environment
+			- if set -> create
+			- if not set -> create but turn off, use in the future if a camera has hdri setting
+			
+			2. More than one exists
+			- check environment
+			- if set -> create
+			- if not set 
+				- if hdri map needs setting
+					-> warn too many domes 
+				- else do nothing
+
+			3. One Dome exists
+			- check environment
+			- if set -> copy existing , set existing off
+			- if not set -> copy existing , set existing off
+			*/
+			
+			print "INFO: Preparing dome environment lighting."
+			envLightingSettings = checkEnvLighting()
+			
+			if domes.count == 0 then
+			(
+				if envLightingSettings[1] == true then 
+				(
+					envDome = createDefaultDome()
+				)
+				else if envLightingSettings[1] == false then 
+				(
+					--create dome here in case the hdri map is used, we set to dome to off
+					envDome = createDefaultDome()
+					envDome.on = false
+					oldDomeProps = for prop in (getPropNames envDome) collect #(prop, getProperty envDome prop)
+				)
+			)
+			else if domes.count > 1 then
+			(
+				--if envLightingSettings[1] == true then 
+				--(
+					-- no dome needed here because the env is already ignored
+					-- we just turn off the env
+					--envDome = createDefaultDome()
+				--)
+				--else 
+				--(
+					-- this doesn't matter if we are not setting hdri map to the dome, in that case we do nothing
+				--)
+			)
+			else if domes.count == 1 then 
+			(
+				envDome = domes[1]
+				oldDomeLayer = domes[1].layer
+				oldDomeProps = for prop in (getPropNames envDome) collect #(prop, getProperty envDome prop)
+				singleDome = true
+			)
+			setNoEnv()
+		),
+		
+		fn setMapToDome map:undefined =
+		(	
+			if envDome != undefined then 
+			(
+				if map == undefined and envLightingSettings[1] == true and singleDome == false then
+				(
+					-- an issue here, because the dome overrides the env map 
+					-- it should not get the map from env
+					-- but we don't know if this dome is newly created or already existing
+					-- if new then we DO want the map, if existing we don't
+					setDomeDefaults envDome
+					envDome.texmap_on = true
+					envDome.multiplier = envLightingSettings[3]
+					envDome.texmap = envLightingSettings[2]
+				)
+				else if map == undefined and envLightingSettings[1] == false then
+				(
+					-- in this case dome might not have existed originally
+					-- or was a single dome originally
+					-- if signle originally we leave as is and set the old settings
+					-- if non-existant originally, it gets turned off
+					setDomeDefaults envDome
+					for prop in oldDomeProps do setProperty envDome prop[1] prop[2]
+				)
+				else if map != undefined then
+				(
+					setDomeDefaults envDome
+					envDome.texmap_on = true
+					envDome.multiplier = 1.0
+					envDome.texmap = map
+				)
+			)
+			else if envDome == undefined and domes.count > 1 and map != undefined then 
+			(
+				-- rare case where there are more then one domes and a supplied hdri map
+				messageBox "More than one dome in the scnene, it is unclear which dome to use for the HDRI map.\nHDRI map setting is ignored."
+			)
+			
+		),
+		
+		fn resetEnv = 
+		(
+			if domes.count == 1 and singleDome == true then 
+			(
+				for prop in oldDomeProps do setProperty envDome prop[1] prop[2]
+				oldDomeLayer.addNode envDome
+				LayerManager.deleteLayerByName envDomeLayer.name
+			)
+			else if envDome != undefined and singleDome == false then
+			(
+				delete envDome
+				LayerManager.deleteLayerByName envDomeLayer.name
+			)
+			setEnvSettings oldEnvSettings
+		),
+		
+		on create do 
+		(
+			oldEnvSettings = getEnvSettings()
+			getDomes()
+			prepareDomeEnv()
+			
+		)
+		
+	)--end struct
+	
+	
 	fn moveSunToPoint = 
 	(		
 		if ((isProperty currentCamera.baseObject "MultiCamAttributeData") == true) then
@@ -1266,45 +1619,51 @@ Icon:#("MultiCamSq",2)
 	(
 		if (EditRenderRegion.IsEditing == true) do (EditRenderRegion.EditRegion() )
 		begframe = endframe = undefined
-		
-		--local allMods = for m in c.modifiers where (classof m == MultiCamAttribute) collect m
-		--print("allmods count is: " + allmods.count as string)
-		
-		if (((isProperty c.baseObject "MultiCamAttributeData") == true) and OverrideSingleFrame == false) then
+			
+		if ((isProperty c.baseObject "MultiCamAttributeData") == true ) then
 		(
 			local mcData = c.baseObject.MultiCamAttributeData
 			
-			begframe = mcData.firstFrame_sp
-			endframe = mcData.lastFrame_sp 
-			
-			if begframe != endframe then 
+			if ( OverrideSingleFrame == true ) then
 			(
-				animationRange = interval begframe endframe
-				sliderTime = begframe
-				SingleFrame = false
-			)
-			else if begframe == endframe then 
-			( 
-				animationRange = interval begframe (begframe + 1)
-				sliderTime = begframe
+				begframe = (currenttime as integer)/(4800/framerate)
+				endframe = ((currenttime+1) as integer)/(4800/framerate)
 				SingleFrame = true
+			)
+			else
+			(
+				begframe = mcData.firstFrame_sp
+				endframe = mcData.lastFrame_sp 
+				
+				if begframe != endframe then 
+				(
+					animationRange = interval begframe endframe
+					sliderTime = begframe
+					SingleFrame = false
+				)
+				else if begframe == endframe then 
+				( 
+					animationRange = interval begframe (begframe + 1)
+					sliderTime = begframe
+					SingleFrame = true
+				)
 			)
 			
 			if (mcData.useHeightWidth_chb == true) then
 			(
-				print ("Setting old res in parse with found " + oldRenderRes as string)
+				print ("INFO: Setting old res in parse with found " + oldRenderRes as string)
 				setRenderResolution #(mcData.imgWidth_sp, mcData.imgHeight_sp) submission:true
 			)
 			else
 			(
-				print ("Setting old res in parse " + oldRenderRes as string)
+				print ("INFO: Setting old res in parse " + oldRenderRes as string)
 				setRenderResolution oldRenderRes submission:true
 			)
 			
 			if (mcData.useHideLayers_chb == true) then
 			(
 				local layer_array = mcData.hideLayers_tab
-				print ("Will hide these layers" + layer_array as string)
+				print ("INFO: Will hide these layers" + layer_array as string)
 				setHiddenLayers layer_array			
 			)
 			else 
@@ -1314,6 +1673,8 @@ Icon:#("MultiCamSq",2)
 			
 			if (mcData.useHDRIMap_val == true) then
 			(
+				envLighting.setMapToDome map:mcData.hdriMap_val
+				/*
 				local arr = #()
 				arr[1] = mcData.hdriMap_val
 				arr[2] = true
@@ -1334,35 +1695,27 @@ Icon:#("MultiCamSq",2)
 				arr[14] = if mcData.hdriMapRefr_val then true else vrayRend.environment_refract_map_on
 						
 				setEnvSettings arr
+				*/
 			)
 			else
 			(
-				setEnvSettings oldEnvSettings	
+				--setEnvSettings oldEnvSettings	
+				envLighting.setMapToDome()
 			)
-		
-		)
-		else if (OverrideSingleFrame == true) then
-		(
-			begframe = (currenttime as integer)/(4800/framerate)
-			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			print ("Setting old res in parse no mod with override " + oldRenderRes as string)
-			setRenderResolution oldRenderRes submission:true
-			setHiddenLayers oldHideLayers
-			setEnvSettings oldEnvSettings
-			SingleFrame = true
 		)
 		else
 		(
 			MessageBox ("Camera " + c.name + " does not have a Submitter Attribute.\nUsing one frame.") title:"Missing Submitter Attribute" beep:false
 			begframe = (currenttime as integer)/(4800/framerate)
 			endframe = ((currenttime+1) as integer)/(4800/framerate)
-			print ("Setting old resolution in parse no mod no override " + oldRenderRes as string)
+			print ("INFO: Setting old resolution in parse no mod no override " + oldRenderRes as string)
 			setRenderResolution oldRenderRes submission:true
 			setHiddenLayers oldHideLayers
-			setEnvSettings oldEnvSettings
+			--setEnvSettings oldEnvSettings
+			envLighting.setMapToDome()
 			SingleFrame = true
 		)
-		print ("Setting old res in parse at end " + oldRenderRes as string)
+		print ("INFO: Setting old res in parse at end " + oldRenderRes as string)
 	)
 	
 	
@@ -1683,7 +2036,7 @@ Icon:#("MultiCamSq",2)
 		MOVDest = "C:\\PreviewMOVs\\" + currentCameraName + ".mov"
 
 		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + framerate as string + " -y -start_number " + (begframe) as string + " -i " + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + renderWidth as string + ":" + renderHeight as string +", colormatrix=bt601:bt709" +  "\"" + " -vcodec dnxhd -r " + framerate as string + " -b:v 175M " + "\"" + MOVDest +  "\"\""
-		print command
+
 		DOSCommand (command)
 		escapeEnable = oldEscapeEnable
 	)
@@ -1771,7 +2124,7 @@ Icon:#("MultiCamSq",2)
 		)
 
 		command = "\"\"" + FFmpegExe + "\"" + " -f image2 -framerate " + (frameRate as string) + " -y -start_number " + (begframe as string) + " -i "  + "\"" + firstFrameFile + "\"" + " -vf " + "\"" + "scale=" + prevWidth + ":" + prevHeight  + ", drawtext=fontfile=/Windows/Fonts/calibri.ttf: text='camera\: " + currentCameraName + "    frame\: %{frame_num}    lens\: "+camLens+"mm': start_number=" + (begframe as string) + ": x=(w-tw)/10: y=h-(2*lh): fontcolor=black: fontsize=20: box=1: boxcolor=white: boxborderw=5" + "\"" + " -vcodec utvideo -pred left -pix_fmt gbrp -r " + (frameRate as string) + " " + "\"" + MOVDest +  "\"\""
-		print command
+
 		DOSCommand (command)
 		
 		progressEnd()
@@ -1783,6 +2136,8 @@ Icon:#("MultiCamSq",2)
 --RENDER SETTINGS
 --########################--	
 
+	--not used--
+	/*
 	fn exrSettingsOff = 
 	(
 		vrayRend.output_on=true
@@ -1796,12 +2151,13 @@ Icon:#("MultiCamSq",2)
 		vrayRend.output_splitfilename = ""		
 		vrayRend.output_rawfilename = ""
 	)
+	*/
 	
-	
-	fn exrSettings useRAM = 
+	--have option for 32bit, 16bit works fine but cryptomatte needs 32bit.
+	fn exrSettings useRAM ignoreVFB = 
 	(
 		vrayRend.output_on=true
-		defaultVFB()
+		if ignoreVFB then defaultVFB()
 		vrayRend.output_useram = (not useRAM) --false: show render window
 		vrayRend.output_saverawfile = true
 		vrayRend.output_splitgbuffer = false
@@ -1810,17 +2166,31 @@ Icon:#("MultiCamSq",2)
 		vrayRend.output_splitAlpha = false
 		vrayRend.output_splitfilename = ""		
 		vrayRend.output_force32bit_3dsmax_vfb = true
+		local cryptoCheck = findRenderElement VRayCryptomatte 
+		
+		if cryptoCheck >= 0 then 
+		(
+			vrayRend.output_rawExrUseHalf = false
+			fopenexr.setLayerOutputFormat 0 0 -- set Main Render to 0: FLOAT32  1: FLOAT16
+			fopenexr.setLayerOutputType 0 0 -- set Main Render to RGBA
+		) 
+		else 
+		(
+			vrayRend.output_rawExrUseHalf = true
+			fopenexr.setLayerOutputFormat 0 1 -- set Main Render to 0: FLOAT32  1: FLOAT16
+			fopenexr.setLayerOutputType 0 0 -- set Main Render to RGBA
+		)
+		
 		vrayRend.fileName_addDot = true
 		vrayRend.output_rawfilename = rootnode.CA_frameOutput + currentCameraName + "\\" + rootnode.CA_passDirectory + "\\" + currentCameraName + "_" + rootnode.CA_extension
-		
 	)
 		
-	fn nonExrSettings override = 
+	fn nonExrSettings overrideExt ignoreVFB = 
 	(
-		if override != "" then overrideExt = override 
-		else (overrideExt = rootnode.CA_extension)
+		if overrideExt == "" then rootnode.CA_extension
+		
 		vrayRend.output_on=true
-		defaultVFB()
+		if ignoreVFB then defaultVFB()
 		vrayRend.output_useram = true
 		vrayRend.output_saverawfile = false
 		vrayRend.output_rawfilename = ""
@@ -1835,20 +2205,6 @@ Icon:#("MultiCamSq",2)
 		vrayRend.output_splitbitmap = mybitmap
 		close mybitmap
 		free mybitmap
-		
-		--REMOVE--
-		/*
-		if (z_var == true) then
-		(
-			for i =1 to zdeptharray.count by 2 do 
-			( 
-				save_path = rendoutputFilename 
-				newpath = getFilenamePath save_path + getFilenameFile save_path + "__" + zdeptharray[i+ 1] + rootnode.CA_extension
-				re = maxops.getcurrenderelementmgr()
-				re.setrenderelementfilename zdeptharray[i] newpath
-			)
-		)
-		*/
 	)
 	
 	------------------------------------------------------------------
@@ -1965,8 +2321,6 @@ Icon:#("MultiCamSq",2)
 	------------------------------------------------------------------
 	fn nogi_settings begframe endframe = 
 	(
-
-						
 		--Vray Properties
 		renderSceneDialog.close()
 		rendOutputFilename = ""													    --reset render 
@@ -1980,9 +2334,9 @@ Icon:#("MultiCamSq",2)
 		rendSaveFile = false
 		
 		makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory)
-		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB
-		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr"
-		else nonExrSettings ""
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB ignoreVFB
+		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr" ignoreVFB
+		else nonExrSettings "" ignoreVFB
 
 		if rootnode.CA_latestDir == true then (AddCallbackLatest())
 		if (extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
@@ -2032,8 +2386,6 @@ Icon:#("MultiCamSq",2)
 	------------------------------------------------------------------
 	fn as_is_settings begframe endframe = 
 	(
-
-						
 		--Vray Properties
 		renderSceneDialog.close()
 		rendOutputFilename = ""													    --reset render 
@@ -2046,9 +2398,9 @@ Icon:#("MultiCamSq",2)
 		rendShowVFB = false
 		
 		makedir (rootnode.CA_frameOutput +"\\" + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
-		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB
-		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr"
-		else nonExrSettings ""
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB ignoreVFB
+		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr" ignoreVFB
+		else nonExrSettings "" ignoreVFB
 		
 		if rootnode.CA_latestDir == true then (AddCallbackLatest())
 		if (extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
@@ -2213,9 +2565,9 @@ Icon:#("MultiCamSq",2)
 		rendNThFrame = rootnode.CA_FRNthFrame
 
 		makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
-		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB
-		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr"
-		else nonExrSettings ""
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB ignoreVFB
+		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr" ignoreVFB
+		else nonExrSettings "" ignoreVFB
 		
 		if rootnode.CA_latestDir == true then (AddCallbackLatest())
 		if (extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
@@ -2267,8 +2619,6 @@ Icon:#("MultiCamSq",2)
 	------------------------------------------------------------------
 	fn bruteForceSphere_settings begframe endframe = 
 	(
-
-						
 		--Vray Properties
 		renderSceneDialog.close()
 		rendOutputFilename = ""								 --reset render 
@@ -2300,7 +2650,7 @@ Icon:#("MultiCamSq",2)
 		rendNThFrame = rootnode.CA_FRNthFrame
 
 		makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
-		nonExrSettings ".tga"
+		nonExrSettings ".tga" ignoreVFB
 			
 		-- correct frame pathing
 		frame_file = createFile (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory + "\\" + "SphereMask.ifl")
@@ -2309,7 +2659,6 @@ Icon:#("MultiCamSq",2)
 		
 		-- disable all render elements from affecting the vfb
 		re = maxOps.GetCurRenderElementMgr()
-		print ("number of eles pre Sphere " + re.NumRenderElements() as string)
 			
 		for i = 0 to (re.NumRenderElements()-1) do 
 		(
@@ -2329,10 +2678,6 @@ Icon:#("MultiCamSq",2)
 		newElement.B_gbufID = 0
 		newElement.MatID = false
 		newElement.vrayVFB = true
-		
-			
-		print ("number of eles post Sphere " + re.NumRenderElements()  as string)
-		
 		
 		vrayRend.imageSampler_renderMask_type = 0
 		vrayRend.imageSamper_renderMask_texmap = undefined 	
@@ -2404,13 +2749,8 @@ Icon:#("MultiCamSq",2)
 		vrayRend.lightcache_autosave = false
 		vrayRend.lightcache_autosaveFileName = ""			
 		vrayRend.options_dontRenderImage = false
-		
-		print ("number of eles pre delete " + re.NumRenderElements() as string)
-		
 		newElement = re.GetRenderElement (re.NumRenderElements()-1)
 		re.RemoveRenderElement newElement
-		
-		print ("number of eles post delete " + re.NumRenderElements()  as string)
 		
 		for i = 0 to (re.NumRenderElements()-1) do 
 		(
@@ -2431,9 +2771,9 @@ Icon:#("MultiCamSq",2)
 		rendHidden = oldRenderHidden
 		
 		makedir (rootnode.CA_frameOutput + currentCameraName +"\\"+ rootnode.CA_passDirectory) 
-		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB
-		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr"
-		else nonExrSettings ""
+		if extensionsList[rootnode.CA_extensionType] == ".exr" or extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" then exrSettings rootnode.CA_disableVFB ignoreVFB
+		else if extensionsList[rootnode.CA_extensionType] == ".exr (split)" then nonExrSettings ".exr" ignoreVFB
+		else nonExrSettings "" ignoreVFB
 		
 		if rootnode.CA_latestDir == true then (AddCallbackLatest())
 		if (extensionsList[rootnode.CA_extensionType] == ".exr + .jpg" or rootnode.CA_SubmitMOV == true and SingleFrame != true) then (AddCallbackJPG())	
@@ -2512,7 +2852,7 @@ Icon:#("MultiCamSq",2)
 				#bruteForceSpheres:bruteForceSphere_settings begframe endframe
 			)
 			iterator += 1  
-		)	--end for
+		)--end for
 		
 		if cancelProcessRO.cancelPreview_bn.checked == true or iterator != camArray.count then 
 		(
@@ -2699,6 +3039,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 			spinner fnthspinner "" pos:[121,275] width:48 height:16 enabled:true range:[1,100,rootnode.CA_FRNthFrame] type:#integer scale:1 tooltip:"Render animation every # frame, default: 1"	 
 			label priority_lbl "Job Priority" pos:[32,305] width:64 height:16 tooltip:"Job priority in Deadline Queue, higher renders sooner, default: 50"
 			spinner priority_spnr "" pos:[121,305] width:48 height:16 range:[1,97,rootnode.CA_Priority] type:#integer scale:1	tooltip:"Job priority in Deadline Queue, higher renders sooner, default: 50"
+			checkbox ignoreVFB_check "Ignore VFB Controls" pos:[32,329] height:16 checked:true tooltip:"Ignore Vritual Frame Buffer controls such as colour adjustment and test resolution. Uncheck at your own risk."
 			
 			button clearRend "Clear Render Paths" pos:[205,272] width:114 height:21 tooltip:"Clears output file paths from all render outputs, frame render and render elements."
 			button repath_btn "Assing Render Paths" pos:[205,305] width:114 height:21 tooltip:"Reassings output file paths for all render outputs, frame render and render elements based on a chosen master path."
@@ -2706,9 +3047,8 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 
 			checkbox submov_check "Submit ffmpeg job from frames" pos:[355,275] height:16 checked:rootnode.CA_SubmitMOV tooltip:"Submit a dependent job to compress output frames to a video file, good idea when rendering animations with exr output."
 			checkbox latestDir_check "Copy Output to Latest Dir" pos:[355,302]  height:16 checked:rootnode.CA_LatestDir tooltip:"Copies the output image to the 'Latest' folder, good idea when doing a lot of itteration of the same stills."
-			--checkbox z_check "Z-Depth as EXR" pos:[350,329] height:16
 			checkbox singleOverride_check "Submit First Frame Only" pos:[355,329] height:16 tooltip:"Overrides frame range of the camera and submits the first frame only, good for lighting previews."
-			checkbox vrfbDisplay_check "Disable VFB when rendering" pos:[355,356] height:16 checked:rootnode.CA_disableVFB tooltip:"Disable or Enables the display of the Vray Frame Buffer, disable to save more RAM."																																								   
+			checkbox vrfbDisplay_check "Disable VFB when rendering" pos:[355,356] height:16 checked:rootnode.CA_disableVFB tooltip:"Disable or Enables the display of the Vray Frame Buffer, disable to save more RAM."
 		
 		groupBox FAGrp "Submit: All Scene Cameras" pos:[16,400] width:groupWidth height:72
 			button FA_pv_btn "Viewport Preview" width:buttonW height:32 enabled:false across:5 pos:[FAGrp.pos.x+(2*buttonSpace),FAGrp.pos.y+24] tooltip:prvw_tooltip --pos:[FA_as_is_btn.pos.x+buttonW+buttonSpace,FAGrp.pos.y+24] tooltip:prvw_tooltip
@@ -2761,7 +3101,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 
 			)
 			pathButton.enabled = true
-			print ("Root Directory is " + rootnode.CA_frameOutput  as string )
+			print ("INFO: Root Output Directory is " + rootnode.CA_frameOutput  as string )
 		)--end if
 		else
 		(
@@ -2815,55 +3155,29 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 			*/
 			rootnode.CA_frameOutputType = pathRootChoice.state
 			if (pathRootChoice.state != 4) then (pathButton.enabled = false)
-			print ("Root Directory is " + rootnode.CA_frameOutput as string )
+			print ("INFO: Root Output Directory is " + rootnode.CA_frameOutput as string )
 		)--end else
 		
 		if (out_type.state == 10) then (customPass.enabled = true)
 		if (out_type.state == 6) then (customPassDate.enabled = true)	
 	)-- end updateFrameOut
 	
-	fn clearRenderElementsPaths = 
-	(
-		if renderSceneDialog.isOpen() then renderSceneDialog.close()
-		rendOutputFilename = ""
-		re = maxops.getcurrenderelementmgr()
-		ele_num = re.numrenderelements() as integer
-		for i= 0 to (ele_num - 1) do
-		(
-			re.setrenderelementfilename i ""
-		)	
-	)
-	
-	fn repathRenderElements =
-	(
-		re = maxops.getcurrenderelementmgr()
-		ele_num = re.numrenderelements() as integer
-		for i= 0 to (ele_num - 1) do
-		(
-			this_ele = re.getrenderelement i 
-			this_ele_name = this_ele.elementname as string
-			save_path = rendoutputFilename 
-			newpath = replace save_path  (save_path.count - 3) 1 ("__" + this_ele_name + ".")
-			re.setrenderelementfilename i newpath
-		)
-	)
-	
 	on nthspinner changed n do
 	(
 		rootnode.CA_IRNthFrame = n
-		print ("IR nth frame is " + rootnode.CA_IRNthFrame as string)
+		print ("INFO: IR nth frame is " + rootnode.CA_IRNthFrame as string)
 	)
 	
 	on fnthspinner changed n do
 	(
 		rootnode.CA_FRNthFrame = n
-		print ("FR nth frame is " + rootnode.CA_FRNthFrame as string)
+		print ("INFO: FR nth frame is " + rootnode.CA_FRNthFrame as string)
 	)
 	
 	on priority_spnr changed n do
 	(
 		rootnode.CA_Priority = n
-		print ("Priority is " + rootnode.CA_Priority as string)
+		print ("INFO: Priority is " + rootnode.CA_Priority as string)
 	)
 	
 	on repath_btn pressed do
@@ -2877,10 +3191,16 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		)
 	)
 		
+	on ignoreVFB_check changed thestate do
+	(
+		ignoreVFB = thestate
+	)
+	
   	on vrfbDisplay_check changed thestate do
 	(
 		rootnode.CA_disableVFB = thestate
 	)
+	
 	on singleOverride_check changed thestate do
 	(
 		OverrideSingleFrame = singleOverride_check.state
@@ -2929,7 +3249,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		if (out_type.state != 10) then (customPass.enabled = false)
 		if (out_type.state != 6) then (customPassDate.enabled = false)	
 		rootnode.CA_passDirectoryType = out_type.state		
-		print ("Pass Directory is " + rootnode.CA_passDirectory as string )
+		print ("INFO: Pass Directory is " + rootnode.CA_passDirectory as string )
 	)
 	
 	on preview_type changed state do 
@@ -2941,7 +3261,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 			3:".mov"
 		)
 		rootnode.CA_previewOutputExtType = preview_type.state
-		print ("Preview Extension is " + rootnode.CA_previewOutputExt)
+		print ("INFO: Preview Extension is " + rootnode.CA_previewOutputExt)
 	)
 	
 	on multiCamSubmitter open do 
@@ -2994,33 +3314,36 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		callBacks.AddScript #systemPreNew "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		callBacks.AddScript #filePreOpen "destroydialog multiCamSubmitter;unregisterRedrawViewsCallback gwActiveSettings" id:#MultiCamSubmitterDialog
 		--callbacks.addScript #renderParamsChanged "renderParamsFN()" id:#MultiCamSubmitterDialog
+		print "INFO: Adding Node Event Callbacks"
 		if SubmitterNodeEventCallback == undefined then	
 		(
 			SubmitterNodeEventCallback = NodeEventCallback mouseUp:true delay:500  added:SubmitterNodeEventSetUpdate nameChanged:SubmitterNodeEventSetUpdate deleted:SubmitterNodeEventSetUpdate callbackEnd:SubmitterNodeEventFN
 		)
-		else SubmitterNodeEventCallback.enabled = true
+		else SubmitterNodeEventCallback.enabled = true	
 	)--end on buttons open
 	
 	on multiCamSubmitter close do
 	(
-		print ("Setting old res on close " + oldRenderRes as string)
+		--Remove Callbacks
+		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
+		if SubmitterNodeEventCallback != undefined then SubmitterNodeEventCallback.enabled = false
+		SubmitterNodeEventCallback = undefined
+		unregisterRedrawViewsCallback gwActiveSettings
+		
+		print ("INFO: Setting old res on close " + oldRenderRes as string)
 		setRenderResolution oldRenderRes
 		setHiddenLayers oldHideLayers
 		setNonRenderLayers oldNonRenderLayers
-		setEnvSettings oldEnvSettings
+		--setEnvSettings oldEnvSettings
+		envLighting.resetEnv()
+		envLighting = undefined
 		setAnimation oldAnimationSettings
 		setVFBSize oldRenderRes setOldRegion:oldRenderRegion
 
 		try(destroydialog camChecklistRO)catch()
 		try(destroydialog cancelProcessRO)catch()
 		--try(DestroyDialog diagnosticJobSelectorRO)catch()
-		
-		callBacks.RemoveScripts id:#MultiCamSubmitterDialog
-		if SubmitterNodeEventCallback != undefined then SubmitterNodeEventCallback.enabled = false
-		
-		--SubmitterNodeEventCallback = undefined
-		unregisterRedrawViewsCallback gwActiveSettings
-		--gc light:true
+		gc light:true
 	)
 	
 	on extSelection selected i do
@@ -3041,7 +3364,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 			--z_var = old_state
 			rootnode.CA_extensionType = i
 		)
-		print ("Extension is " + rootnode.CA_extension)
+		print ("INFO: Extension is " + rootnode.CA_extension)
 	)
 
 	on MLCLister_btn pressed do
@@ -3078,7 +3401,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 
 			--currentCameraName = sceneCamsNames[i] as string
 			currentCameraName = currentCamera.name
-			print ("Current camera is " + currentCameraName)
+			print ("INFO: Current camera is " + currentCameraName)
 			parseRangeFile currentCamera
 			moveSunToPoint()
 		)
@@ -3088,7 +3411,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 	(
 		rootnode.CA_frameOutputCustom = pathLable.text
 		rootnode.CA_frameOutput = rootnode.CA_frameOutputCustom
-		print ("Root Directory is " + rootnode.CA_frameOutput as string )
+		print ("INFO: Root Output Directory is " + rootnode.CA_frameOutput as string )
 	)
 	
 	on customPass entered txt do
@@ -3105,7 +3428,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		(
 			rootnode.CA_passCustom = customPass.text
 			rootnode.CA_passDirectory = rootnode.CA_passCustom
-			print ("Pass Directory is " + rootnode.CA_passDirectory as string )
+			print ("INFO: Pass Directory is " + rootnode.CA_passDirectory as string )
 		)
 	)
 	
@@ -3123,7 +3446,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		(
 			rootnode.CA_passDateCustom = customPassDate.text
 			rootnode.CA_passDirectory = rootnode.CA_passDirectory + rootnode.CA_passDateCustom
-			print ("Pass Directory is " + rootnode.CA_passDirectory)
+			print ("INFO: Pass Directory is " + rootnode.CA_passDirectory)
 		)
 	)
 	
@@ -3139,7 +3462,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 			if maxfilename != "" then rootnode.CA_jobPrefix = (filterstring maxfilename ".")[1]
 			jobPrefix_txt.text = rootnode.CA_jobPrefix
 		)
-		print ("Project Prefix is " + rootnode.CA_jobPrefix as string)
+		print ("INFO: Project Prefix is " + rootnode.CA_jobPrefix as string)
 	)
 		
 	on pathRootChoice changed state do 
@@ -3272,7 +3595,6 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		local camArray = collectCamerasFromRO()
 		clearRenderElementsPaths()
 		FA_submission_fn camArray #asIs
-		--SA_as_is_fn()
 	)
 	
 	on SA_nogi_btn pressed do
@@ -3280,7 +3602,6 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		local camArray = collectCamerasFromRO()
 		clearRenderElementsPaths()
 		FA_submission_fn camArray #noGI
-		--SA_nogi_fn()
 	)
 	
 	on SA_pv_btn pressed do
@@ -3294,7 +3615,6 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		local camArray = collectCamerasFromRO()
 		clearRenderElementsPaths()
 		FA_submission_fn camArray #bruteForce
-		--SA_bruteForce_fn()
 	)
 	
 	on SA_BFS_btn pressed do
@@ -3302,7 +3622,6 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		local camArray = collectCamerasFromRO()
 		clearRenderElementsPaths()
 		FA_submission_fn camArray #bruteForceSpheres
-		--SA_bruteForceSphere_fn()
 	)
 	
 	on SA_Diag_btn pressed do
@@ -3424,6 +3743,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 		
 		while errorCheck != true do
 		(
+			print ("INFO: Entering Execution")
 			vrayRend = renderers.current
 			
 			if(vrayRend != undefined) then 
@@ -3449,7 +3769,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 
 			if (doesfileexist (systemTools.getEnvVariable "deadline_path")) != true then
 			(
-				MessageBox ("Deadline Client is not installed or DEADLINE_PATH Environment variable is not configured on this machine") title:"Deadline Error"
+				MessageBox ("Deadline Client is not installed or DEADLINE_PATH Environment variable is not configured on this machine.\nSet DEADLINE_PATH Environment variable to your Deadline's location.") title:"Deadline Error"
 				exit
 			)
 
@@ -3459,7 +3779,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 				exit
 			)
 				
-			print ("Using " + vrayRend as string +" to render.")
+			print ("INFO: Using " + vrayRend as string +" to render.")
 			
 			setBitmapIOClasses()
 			FFmpegExe = DeadlineRoot + "\\custom\\submission\\FFmpeg\\bin\\ffmpeg.exe"
@@ -3494,7 +3814,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 				exit
 			)
 			
-			print ("Found " + sceneCams.count as string + " cameras in the scene.")
+			print ("INFO: Found " + sceneCams.count as string + " cameras in the scene.")
 			local spacer = #("Select Camera to Render")
 			sceneCamsNames = join spacer sceneCamsNames
 			
@@ -3506,9 +3826,18 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 				exit
 			)
 
-			getOldEnvLayers()
+			
+			oldRenderRes = getRenderResolution()
+			print ("INFO: Old resolution is " + oldRenderRes as string)
+			oldHideLayers = getHiddenLayers()
+			oldNonRenderLayers = getNonRenderLayers()
+
+			envLighting = envDomeStruct()
+
+
+			
 			oldAnimationSettings = getAnimation()
-			print ("Old animation settings are " + oldAnimationSettings as string)
+			print ("INFO: Old animation settings are " + oldAnimationSettings as string)
 			
 			projectName = getProjectName()
 			if projectName != "Project Noname" then 
@@ -3520,7 +3849,7 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 				outputPaths = #("X:\\ProjectName\\07_Production\\02_RawImageRender\\", "Z:\\ProjectName\\01_Frames\\", "Z:\\ProjectName\\03_Previews\\", "Custom")
 			)
 			
-			print ("Project name is " + projectName)
+			print ("INFO: Project name is " + projectName)
 			
 			--------------------------------------
 			---Deadline Load Submitter script	
@@ -3539,15 +3868,15 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 						(
 							deleteFile localScript
 							copyFile remoteScript localScript
-							print "Old Functions Script is deleted."
-							print "New Functions Script is updated."
+							print "INFO: Old Functions Script is deleted."
+							print "INFO: New Functions Script is updated."
 							fileIn localScript
 							SMTDFunctions.loadSettings()
 						)
 					)
 					else 
 					(
-						print "No local script found, copied the remote script"
+						print "INFO: No local script found, copied the remote script"
 						copyFile remoteScript localScript
 					)
 					
@@ -3555,13 +3884,13 @@ Submits two passes one for sphere masks the other for rendering frames. To use c
 					(
 						fileIn localScript
 						SMTDFunctions.loadSettings()
-						print "No script update, running localy."
+						print "INFO: No script update, running localy."
 					)
 				)
 				else
 				(
 					fileIn remoteScript
-					print "Scripts folder is not accessable, running remotely."
+					print "INFO: Scripts folder is not accessable, running remotely."
 					SMTDFunctions.loadSettings()
 				)
 			)
